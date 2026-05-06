@@ -1,0 +1,766 @@
+{
+  "meta": {
+    "race_id": "giro2026",
+    "edition": 109,
+    "stage_count": 21,
+    "total_distance_km": 3459.2,
+    "total_elevation_gain_m": 50000,
+    "grande_partenza": "Nessebar, Bulgaria",
+    "finish": "Roma, Italy",
+    "start_date": "2026-05-08",
+    "end_date": "2026-05-31",
+    "layer": "Layer 1 — Race-State (Course Structure)",
+    "sprint_kom_status": "ESTIMATED — km positions derived from public stage guides, not official Giro roadbooks. Verify against official roadbooks before using for EV computation. Update roadbook_confirmed flag per stage when confirmed.",
+    "provenance": {
+      "source": "giroditalia.it official route; domestiquecycling.com stage-by-stage guide; inrng.com stage guide (2026-05-04)",
+      "retrieved_at": "2026-05-04T00:00:00Z"
+    }
+  },
+  "stages": [
+    {
+      "race_id": "giro2026",
+      "stage_number": 1,
+      "stage_name": "Stage 1 — Nessebar › Burgas",
+      "date": "2026-05-08",
+      "distance_km": 147.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "flat",
+      "elevation_gain_m": 800,
+      "summit_finish": false,
+      "sprint_locations": [
+        {
+          "sprint_id": "s1_sp1",
+          "km_from_start": 72.0,
+          "name": "Intermediate sprint (Bulgaria)"
+        }
+      ],
+      "kom_locations": [],
+      "start_city": "Nessebar",
+      "finish_city": "Burgas",
+      "provenance": {
+        "source": "giroditalia.it / domestiquecycling.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 2,
+      "stage_name": "Stage 2 — Burgas › Veliko Tarnovo",
+      "date": "2026-05-09",
+      "distance_km": 221.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "hilly",
+      "elevation_gain_m": 2800,
+      "summit_finish": false,
+      "sprint_locations": [
+        {
+          "sprint_id": "s2_sp1",
+          "km_from_start": 110.0,
+          "name": "Intermediate sprint (Bulgaria)"
+        }
+      ],
+      "kom_locations": [
+        {
+          "kom_id": "s2_k1",
+          "km_from_start": 140.0,
+          "name": "Climb before Lyaskovets",
+          "category": "3"
+        },
+        {
+          "kom_id": "s2_k2",
+          "km_from_start": 195.0,
+          "name": "Final ascent out of Lyaskovets",
+          "category": "2"
+        }
+      ],
+      "start_city": "Burgas",
+      "finish_city": "Veliko Tarnovo",
+      "provenance": {
+        "source": "giroditalia.it / domestiquecycling.com / inrng.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 3,
+      "stage_name": "Stage 3 — Plovdiv › Sofia",
+      "date": "2026-05-10",
+      "distance_km": 175.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "flat",
+      "elevation_gain_m": 1400,
+      "summit_finish": false,
+      "sprint_locations": [
+        {
+          "sprint_id": "s3_sp1",
+          "km_from_start": 88.0,
+          "name": "Intermediate sprint"
+        }
+      ],
+      "kom_locations": [
+        {
+          "kom_id": "s3_k1",
+          "km_from_start": 75.0,
+          "name": "Borovec sedlovina",
+          "category": "3"
+        }
+      ],
+      "start_city": "Plovdiv",
+      "finish_city": "Sofia",
+      "provenance": {
+        "source": "giroditalia.it / inrng.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 4,
+      "stage_name": "Stage 4 — Catanzaro › Cosenza",
+      "date": "2026-05-12",
+      "distance_km": 138.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "flat",
+      "elevation_gain_m": 1600,
+      "summit_finish": false,
+      "sprint_locations": [
+        {
+          "sprint_id": "s4_sp1",
+          "km_from_start": 65.0,
+          "name": "Intermediate sprint"
+        }
+      ],
+      "kom_locations": [
+        {
+          "kom_id": "s4_k1",
+          "km_from_start": 70.0,
+          "name": "Cozzo Tunno",
+          "category": "2"
+        }
+      ],
+      "start_city": "Catanzaro",
+      "finish_city": "Cosenza",
+      "provenance": {
+        "source": "giroditalia.it / domestiquecycling.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 5,
+      "stage_name": "Stage 5 — Praia a Mare › Potenza",
+      "date": "2026-05-13",
+      "distance_km": 203.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "hilly",
+      "elevation_gain_m": 3700,
+      "summit_finish": false,
+      "sprint_locations": [
+        {
+          "sprint_id": "s5_sp1",
+          "km_from_start": 100.0,
+          "name": "Intermediate sprint"
+        }
+      ],
+      "kom_locations": [
+        {
+          "kom_id": "s5_k1",
+          "km_from_start": 155.0,
+          "name": "Montagna Grande di Viggiano (ski station)",
+          "category": "2"
+        }
+      ],
+      "start_city": "Praia a Mare",
+      "finish_city": "Potenza",
+      "provenance": {
+        "source": "giroditalia.it / domestiquecycling.com / inrng.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 6,
+      "stage_name": "Stage 6 — Paestum › Napoli",
+      "date": "2026-05-14",
+      "distance_km": 142.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "flat",
+      "elevation_gain_m": 900,
+      "summit_finish": false,
+      "sprint_locations": [
+        {
+          "sprint_id": "s6_sp1",
+          "km_from_start": 70.0,
+          "name": "Intermediate sprint"
+        }
+      ],
+      "kom_locations": [
+        {
+          "kom_id": "s6_k1",
+          "km_from_start": 130.0,
+          "name": "Fuorigrotta climb",
+          "category": "4"
+        }
+      ],
+      "start_city": "Paestum",
+      "finish_city": "Napoli",
+      "provenance": {
+        "source": "giroditalia.it / domestiquecycling.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 7,
+      "stage_name": "Stage 7 — Formia › Blockhaus",
+      "date": "2026-05-15",
+      "distance_km": 244.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "mountain",
+      "elevation_gain_m": 4500,
+      "summit_finish": true,
+      "sprint_locations": [
+        {
+          "sprint_id": "s7_sp1",
+          "km_from_start": 120.0,
+          "name": "Intermediate sprint"
+        }
+      ],
+      "kom_locations": [
+        {
+          "kom_id": "s7_k1",
+          "km_from_start": 226.0,
+          "name": "Blockhaus summit (1665m)",
+          "category": "1"
+        }
+      ],
+      "start_city": "Formia",
+      "finish_city": "Blockhaus",
+      "provenance": {
+        "source": "giroditalia.it / inrng.com (18km at 8%+ avg)",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 8,
+      "stage_name": "Stage 8 — Chieti › Fermo",
+      "date": "2026-05-16",
+      "distance_km": 156.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "hilly",
+      "elevation_gain_m": 2600,
+      "summit_finish": false,
+      "sprint_locations": [
+        {
+          "sprint_id": "s8_sp1",
+          "km_from_start": 78.0,
+          "name": "Intermediate sprint"
+        }
+      ],
+      "kom_locations": [
+        {
+          "kom_id": "s8_k1",
+          "km_from_start": 140.0,
+          "name": "Capodarco (22% section)",
+          "category": "2"
+        }
+      ],
+      "start_city": "Chieti",
+      "finish_city": "Fermo",
+      "provenance": {
+        "source": "giroditalia.it / domestiquecycling.com / inrng.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 9,
+      "stage_name": "Stage 9 — Cervia › Corno alle Scale",
+      "date": "2026-05-17",
+      "distance_km": 184.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "hilly",
+      "elevation_gain_m": 3200,
+      "summit_finish": true,
+      "sprint_locations": [
+        {
+          "sprint_id": "s9_sp1",
+          "km_from_start": 92.0,
+          "name": "Intermediate sprint"
+        }
+      ],
+      "kom_locations": [
+        {
+          "kom_id": "s9_k1",
+          "km_from_start": 155.0,
+          "name": "Querciola",
+          "category": "2"
+        },
+        {
+          "kom_id": "s9_k2",
+          "km_from_start": 184.0,
+          "name": "Corno alle Scale (summit finish)",
+          "category": "1"
+        }
+      ],
+      "start_city": "Cervia",
+      "finish_city": "Corno alle Scale",
+      "provenance": {
+        "source": "giroditalia.it / domestiquecycling.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 10,
+      "stage_name": "Stage 10 — Viareggio › Massa (ITT)",
+      "date": "2026-05-19",
+      "distance_km": 42.0,
+      "is_ttt": false,
+      "is_itt": true,
+      "terrain_classification": "itt",
+      "elevation_gain_m": 180,
+      "summit_finish": false,
+      "sprint_locations": [],
+      "kom_locations": [],
+      "start_city": "Viareggio",
+      "finish_city": "Massa",
+      "provenance": {
+        "source": "giroditalia.it / cyclingnews.com (40.2km coastal flat ITT)",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 11,
+      "stage_name": "Stage 11 — Porcari › Chiavari",
+      "date": "2026-05-20",
+      "distance_km": 195.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "hilly",
+      "elevation_gain_m": 3100,
+      "summit_finish": false,
+      "sprint_locations": [
+        {
+          "sprint_id": "s11_sp1",
+          "km_from_start": 98.0,
+          "name": "Intermediate sprint"
+        }
+      ],
+      "kom_locations": [
+        {
+          "kom_id": "s11_k1",
+          "km_from_start": 150.0,
+          "name": "Colle di Gualtarola",
+          "category": "3"
+        },
+        {
+          "kom_id": "s11_k2",
+          "km_from_start": 180.0,
+          "name": "San Bartolomeo",
+          "category": "2"
+        }
+      ],
+      "start_city": "Porcari",
+      "finish_city": "Chiavari",
+      "provenance": {
+        "source": "giroditalia.it / domestiquecycling.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 12,
+      "stage_name": "Stage 12 — Imperia › Novi Ligure",
+      "date": "2026-05-21",
+      "distance_km": 175.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "flat",
+      "elevation_gain_m": 1800,
+      "summit_finish": false,
+      "sprint_locations": [
+        {
+          "sprint_id": "s12_sp1",
+          "km_from_start": 87.0,
+          "name": "Intermediate sprint"
+        }
+      ],
+      "kom_locations": [
+        {
+          "kom_id": "s12_k1",
+          "km_from_start": 125.0,
+          "name": "Bric Berton (4km ~7%)",
+          "category": "3"
+        }
+      ],
+      "start_city": "Imperia",
+      "finish_city": "Novi Ligure",
+      "provenance": {
+        "source": "giroditalia.it / domestiquecycling.com / inrng.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 13,
+      "stage_name": "Stage 13 — Alessandria › Verbania",
+      "date": "2026-05-22",
+      "distance_km": 189.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "flat",
+      "elevation_gain_m": 2000,
+      "summit_finish": false,
+      "sprint_locations": [
+        {
+          "sprint_id": "s13_sp1",
+          "km_from_start": 94.0,
+          "name": "Intermediate sprint"
+        }
+      ],
+      "kom_locations": [
+        {
+          "kom_id": "s13_k1",
+          "km_from_start": 160.0,
+          "name": "Bieno",
+          "category": "3"
+        },
+        {
+          "kom_id": "s13_k2",
+          "km_from_start": 175.0,
+          "name": "Ungiasca (stinging finish approach)",
+          "category": "2"
+        }
+      ],
+      "start_city": "Alessandria",
+      "finish_city": "Verbania",
+      "provenance": {
+        "source": "giroditalia.it / domestiquecycling.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 14,
+      "stage_name": "Stage 14 — Aosta › Pila",
+      "date": "2026-05-23",
+      "distance_km": 133.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "mountain",
+      "elevation_gain_m": 4200,
+      "summit_finish": true,
+      "sprint_locations": [
+        {
+          "sprint_id": "s14_sp1",
+          "km_from_start": 50.0,
+          "name": "Intermediate sprint"
+        }
+      ],
+      "kom_locations": [
+        {
+          "kom_id": "s14_k1",
+          "km_from_start": 80.0,
+          "name": "Saint-Barthélémy (17.6km)",
+          "category": "1"
+        },
+        {
+          "kom_id": "s14_k2",
+          "km_from_start": 133.0,
+          "name": "Pila ski station (summit finish, ~17km)",
+          "category": "HC"
+        }
+      ],
+      "start_city": "Aosta",
+      "finish_city": "Pila",
+      "provenance": {
+        "source": "giroditalia.it / domestiquecycling.com / inrng.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 15,
+      "stage_name": "Stage 15 — Voghera › Milano",
+      "date": "2026-05-24",
+      "distance_km": 157.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "flat",
+      "elevation_gain_m": 700,
+      "summit_finish": false,
+      "sprint_locations": [
+        {
+          "sprint_id": "s15_sp1",
+          "km_from_start": 78.0,
+          "name": "Intermediate sprint"
+        }
+      ],
+      "kom_locations": [],
+      "start_city": "Voghera",
+      "finish_city": "Milano",
+      "provenance": {
+        "source": "giroditalia.it / inrng.com (four-lap circuit near Vigorelli)",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 16,
+      "stage_name": "Stage 16 — Bellinzona › Carì",
+      "date": "2026-05-26",
+      "distance_km": 113.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "mountain",
+      "elevation_gain_m": 3000,
+      "summit_finish": true,
+      "sprint_locations": [],
+      "kom_locations": [
+        {
+          "kom_id": "s16_k1",
+          "km_from_start": 85.0,
+          "name": "Climb before Carì",
+          "category": "2"
+        },
+        {
+          "kom_id": "s16_k2",
+          "km_from_start": 113.0,
+          "name": "Carì summit (11.8km at 8%)",
+          "category": "1"
+        }
+      ],
+      "start_city": "Bellinzona",
+      "finish_city": "Carì",
+      "provenance": {
+        "source": "giroditalia.it / domestiquecycling.com / inrng.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 17,
+      "stage_name": "Stage 17 — Cassano d'Adda › Andalo",
+      "date": "2026-05-27",
+      "distance_km": 202.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "hilly",
+      "elevation_gain_m": 3400,
+      "summit_finish": true,
+      "sprint_locations": [
+        {
+          "sprint_id": "s17_sp1",
+          "km_from_start": 100.0,
+          "name": "Intermediate sprint"
+        }
+      ],
+      "kom_locations": [
+        {
+          "kom_id": "s17_k1",
+          "km_from_start": 170.0,
+          "name": "Climb 10km from finish (Paganella area)",
+          "category": "2"
+        },
+        {
+          "kom_id": "s17_k2",
+          "km_from_start": 202.0,
+          "name": "Andalo uphill finish",
+          "category": "1"
+        }
+      ],
+      "start_city": "Cassano d'Adda",
+      "finish_city": "Andalo",
+      "provenance": {
+        "source": "giroditalia.it / domestiquecycling.com / inrng.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 18,
+      "stage_name": "Stage 18 — Fai della Paganella › Pieve di Soligo",
+      "date": "2026-05-28",
+      "distance_km": 171.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "flat",
+      "elevation_gain_m": 1600,
+      "summit_finish": false,
+      "sprint_locations": [
+        {
+          "sprint_id": "s18_sp1",
+          "km_from_start": 85.0,
+          "name": "Intermediate sprint"
+        }
+      ],
+      "kom_locations": [
+        {
+          "kom_id": "s18_k1",
+          "km_from_start": 160.0,
+          "name": "Muro di Ca' del Poggio",
+          "category": "2"
+        }
+      ],
+      "start_city": "Fai della Paganella",
+      "finish_city": "Pieve di Soligo",
+      "provenance": {
+        "source": "giroditalia.it / domestiquecycling.com / inrng.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 19,
+      "stage_name": "Stage 19 — Feltre › Piani di Pezzè (Alleghe)",
+      "date": "2026-05-29",
+      "distance_km": 151.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "mountain",
+      "elevation_gain_m": 4800,
+      "summit_finish": true,
+      "sprint_locations": [],
+      "kom_locations": [
+        {
+          "kom_id": "s19_k1",
+          "km_from_start": 40.0,
+          "name": "Passo Duran",
+          "category": "2"
+        },
+        {
+          "kom_id": "s19_k2",
+          "km_from_start": 65.0,
+          "name": "Forcella Staulanza",
+          "category": "1"
+        },
+        {
+          "kom_id": "s19_k3",
+          "km_from_start": 100.0,
+          "name": "Passo Giau (2305m, Cima Coppi 2026)",
+          "category": "HC"
+        },
+        {
+          "kom_id": "s19_k4",
+          "km_from_start": 125.0,
+          "name": "Passo Falzarego",
+          "category": "1"
+        },
+        {
+          "kom_id": "s19_k5",
+          "km_from_start": 151.0,
+          "name": "Piani di Pezzè summit finish (4.9km at 9.8%)",
+          "category": "1"
+        }
+      ],
+      "start_city": "Feltre",
+      "finish_city": "Piani di Pezzè",
+      "provenance": {
+        "source": "giroditalia.it / cyclingnews.com / inrng.com (5000m+ elevation queen stage)",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 20,
+      "stage_name": "Stage 20 — Gemona del Friuli › Piancavallo",
+      "date": "2026-05-30",
+      "distance_km": 200.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "mountain",
+      "elevation_gain_m": 4000,
+      "summit_finish": true,
+      "sprint_locations": [
+        {
+          "sprint_id": "s20_sp1",
+          "km_from_start": 100.0,
+          "name": "Intermediate sprint"
+        }
+      ],
+      "kom_locations": [
+        {
+          "kom_id": "s20_k1",
+          "km_from_start": 140.0,
+          "name": "Piancavallo first ascent (14.4km at 7.8%)",
+          "category": "1"
+        },
+        {
+          "kom_id": "s20_k2",
+          "km_from_start": 200.0,
+          "name": "Piancavallo second ascent — summit finish",
+          "category": "HC"
+        }
+      ],
+      "start_city": "Gemona del Friuli",
+      "finish_city": "Piancavallo",
+      "provenance": {
+        "source": "giroditalia.it / domestiquecycling.com / inrng.com",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    },
+    {
+      "race_id": "giro2026",
+      "stage_number": 21,
+      "stage_name": "Stage 21 — Roma › Roma (circuit)",
+      "date": "2026-05-31",
+      "distance_km": 131.0,
+      "is_ttt": false,
+      "is_itt": false,
+      "terrain_classification": "flat",
+      "elevation_gain_m": 500,
+      "summit_finish": false,
+      "sprint_locations": [
+        {
+          "sprint_id": "s21_sp1",
+          "km_from_start": 65.0,
+          "name": "Intermediate sprint (circuit lap)"
+        },
+        {
+          "sprint_id": "s21_sp2",
+          "km_from_start": 100.0,
+          "name": "Intermediate sprint (circuit lap)"
+        }
+      ],
+      "kom_locations": [],
+      "start_city": "Roma",
+      "finish_city": "Roma",
+      "provenance": {
+        "source": "giroditalia.it / inrng.com (city-centre circuit laps)",
+        "retrieved_at": "2026-05-04T00:00:00Z"
+      },
+      "roadbook_confirmed": false
+    }
+  ]
+}

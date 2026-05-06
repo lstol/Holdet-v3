@@ -1,0 +1,311 @@
+[
+  {
+    "stage": 1,
+    "distance_km": 156.0,
+    "stage_type": "flat",
+    "finish_type": "sprint",
+    "intermediate_sprints": [
+      {"km": 72.0, "points_available": 3, "label": "Intermediate sprint (Burgas Lake area)"}
+    ],
+    "kom_climbs": [],
+    "final_climb_gradient_pct": null,
+    "notes": "Flat coastal profile. Sprint finish in Burgas. One intermediate sprint at ~72km near small 3.9% ramp."
+  },
+  {
+    "stage": 2,
+    "distance_km": 219.0,
+    "stage_type": "hilly",
+    "finish_type": "sprint",
+    "intermediate_sprints": [
+      {"km": 78.5, "points_available": 3, "label": "Intermediate sprint (Bulgaria)"}
+    ],
+    "kom_climbs": [
+      {"km": 117.0, "category": 3, "points_available": 5, "name": "Byala Pass (7.7km/4.6%)"},
+      {"km": 135.0, "category": 2, "points_available": 8, "name": "Vratnik Pass (5.3km/5.4%)"},
+      {"km": 199.0, "category": 2, "points_available": 8, "name": "Lyaskovets Monastery Pass (3.6km/6.6%)"}
+    ],
+    "final_climb_gradient_pct": 6.6,
+    "notes": "Long hilly stage. Three significant climbs. Finishes with a descent into Veliko Tarnovo — puncheur or surviving breakaway favoured."
+  },
+  {
+    "stage": 3,
+    "distance_km": 176.0,
+    "stage_type": "hilly",
+    "finish_type": "sprint",
+    "intermediate_sprints": [
+      {"km": 88.0, "points_available": 3, "label": "Intermediate sprint (before climb)"}
+    ],
+    "kom_climbs": [
+      {"km": 103.5, "category": 2, "points_available": 8, "name": "Borovec Pass (8.9km/5.3%)"}
+    ],
+    "final_climb_gradient_pct": null,
+    "notes": "Cat 2 Borovec Pass at 103.5km, long descent into Sofia. Reduced sprinters field but fast finishers may reorganise."
+  },
+  {
+    "stage": 4,
+    "distance_km": 143.0,
+    "stage_type": "hilly",
+    "finish_type": "uphill",
+    "intermediate_sprints": [
+      {"km": 62.0, "points_available": 3, "label": "Intermediate sprint (coast)"}
+    ],
+    "kom_climbs": [
+      {"km": 100.0, "category": 2, "points_available": 8, "name": "Cozzo Tunno (14.4km/5.9%)"}
+    ],
+    "final_climb_gradient_pct": 5.9,
+    "notes": "Long Cat 2 climb Cozzo Tunno at 100km. Descent to Cosenza (242m). Puncheur finish."
+  },
+  {
+    "stage": 5,
+    "distance_km": 205.0,
+    "stage_type": "hilly",
+    "finish_type": "uphill",
+    "intermediate_sprints": [
+      {"km": 85.0, "points_available": 3, "label": "Intermediate sprint"}
+    ],
+    "kom_climbs": [
+      {"km": 23.5, "category": 3, "points_available": 5, "name": "Prestieri (13.6km/4.8%)"},
+      {"km": 155.0, "category": 2, "points_available": 8, "name": "Monte Grande di Viggiano (6.6km/9.2%)"}
+    ],
+    "final_climb_gradient_pct": 5.8,
+    "notes": "Big Cat 2 Monte Grande di Viggiano at 155km. Uphill finish into Potenza (720m). GC climbers favoured."
+  },
+  {
+    "stage": 6,
+    "distance_km": 160.0,
+    "stage_type": "flat",
+    "finish_type": "sprint",
+    "intermediate_sprints": [
+      {"km": 41.5, "points_available": 3, "label": "Intermediate sprint"}
+    ],
+    "kom_climbs": [
+      {"km": 153.0, "category": 4, "points_available": 3, "name": "Fuorigrotta (2km/6.2%)"}
+    ],
+    "final_climb_gradient_pct": null,
+    "notes": "Flat to Naples. Late Cat 4 bump at 153km (Fuorigrotta) is short and puncheur-manageable. Sprint expected in Napoli."
+  },
+  {
+    "stage": 7,
+    "distance_km": 245.0,
+    "stage_type": "mountain",
+    "finish_type": "summit",
+    "intermediate_sprints": [
+      {"km": 119.0, "points_available": 3, "label": "Intermediate sprint"}
+    ],
+    "kom_climbs": [
+      {"km": 157.5, "category": 2, "points_available": 8, "name": "Roccaraso (7.2km/6.3%)"},
+      {"km": 245.0, "category": 1, "points_available": 15, "name": "Blockhaus (14km/8.3%)"}
+    ],
+    "final_climb_gradient_pct": 8.3,
+    "notes": "Queen mountain stage. Cat 2 Roccaraso then Cat 1 Blockhaus summit finish at 1658m. Pure climbers favoured."
+  },
+  {
+    "stage": 8,
+    "distance_km": 158.0,
+    "stage_type": "hilly",
+    "finish_type": "uphill",
+    "intermediate_sprints": [
+      {"km": 92.5, "points_available": 3, "label": "Intermediate sprint"}
+    ],
+    "kom_climbs": [
+      {"km": 105.0, "category": 3, "points_available": 5, "name": "Montefiore d'Aso (9.1km/3.8%)"},
+      {"km": 116.0, "category": 4, "points_available": 3, "name": "Monterubbiano (4.7km/5.8%)"},
+      {"km": 155.0, "category": 4, "points_available": 3, "name": "Capodarco (4km/5.3%)"}
+    ],
+    "final_climb_gradient_pct": 6.1,
+    "notes": "Rolling Adriatic hilly stage finishing uphill in Fermo (3.4km/6.1%). Puncheur/attacker stage."
+  },
+  {
+    "stage": 9,
+    "distance_km": 185.0,
+    "stage_type": "hilly",
+    "finish_type": "summit",
+    "intermediate_sprints": [
+      {"km": 131.5, "points_available": 3, "label": "Intermediate sprint"}
+    ],
+    "kom_climbs": [
+      {"km": 168.0, "category": 3, "points_available": 5, "name": "Querciola (9.7km/4.3%)"},
+      {"km": 185.0, "category": 1, "points_available": 15, "name": "Corno alle Scale (12.8km/5.9%)"}
+    ],
+    "final_climb_gradient_pct": 5.9,
+    "notes": "Summit finish at Corno alle Scale (1471m). Final 2.9km at steeper gradient. Climbers/GC riders favoured."
+  },
+  {
+    "stage": 10,
+    "distance_km": 40.0,
+    "stage_type": "itt",
+    "finish_type": "tt",
+    "intermediate_sprints": [],
+    "kom_climbs": [],
+    "final_climb_gradient_pct": null,
+    "notes": "Flat individual time trial Viareggio to Massa, ~40km. Three intermediate time checks. TT specialists favoured."
+  },
+  {
+    "stage": 11,
+    "distance_km": 179.0,
+    "stage_type": "hilly",
+    "finish_type": "sprint",
+    "intermediate_sprints": [
+      {"km": 80.0, "points_available": 3, "label": "Intermediate sprint"}
+    ],
+    "kom_climbs": [
+      {"km": 106.0, "category": 3, "points_available": 5, "name": "Passo del Termine (7km/5.1%)"},
+      {"km": 133.5, "category": 2, "points_available": 8, "name": "Colle di Guaitarola (9.7km/6.3%)"},
+      {"km": 163.5, "category": 3, "points_available": 5, "name": "San Bartolomeo (4.6km/6.4%)"}
+    ],
+    "final_climb_gradient_pct": null,
+    "notes": "Three climbs including Cat 2 Colle di Guaitarola. Long descent to Chiavari (7m). Reduced sprinters or puncheur expected."
+  },
+  {
+    "stage": 12,
+    "distance_km": 178.0,
+    "stage_type": "flat",
+    "finish_type": "sprint",
+    "intermediate_sprints": [
+      {"km": 30.5, "points_available": 3, "label": "Intermediate sprint (Ligure coast)"}
+    ],
+    "kom_climbs": [
+      {"km": 108.5, "category": 3, "points_available": 5, "name": "Colle Giovo (7.8km/4.9%)"},
+      {"km": 124.5, "category": 3, "points_available": 5, "name": "Bric Berton (7.5km/4.9%)"}
+    ],
+    "final_climb_gradient_pct": null,
+    "notes": "Two Cat 3 climbs inland then flat run-in to Novi Ligure. Sprint finish expected."
+  },
+  {
+    "stage": 13,
+    "distance_km": 187.0,
+    "stage_type": "flat",
+    "finish_type": "sprint",
+    "intermediate_sprints": [
+      {"km": 28.5, "points_available": 3, "label": "Intermediate sprint (Po plain)"},
+      {"km": 81.5, "points_available": 3, "label": "Intermediate sprint (Piedmont)"}
+    ],
+    "kom_climbs": [
+      {"km": 162.5, "category": 4, "points_available": 3, "name": "Bieno (2.4km/5.7%)"},
+      {"km": 173.0, "category": 3, "points_available": 5, "name": "Ungiasca/Finestra (4.7km/7.0%)"}
+    ],
+    "final_climb_gradient_pct": null,
+    "notes": "Flat Po plain then Lake Maggiore. Two intermediate sprints. Cat 4 + Cat 3 near finish but long descent into Verbania. Sprint expected."
+  },
+  {
+    "stage": 14,
+    "distance_km": 133.0,
+    "stage_type": "mountain",
+    "finish_type": "summit",
+    "intermediate_sprints": [
+      {"km": 51.0, "points_available": 3, "label": "Intermediate sprint (Aosta valley)"}
+    ],
+    "kom_climbs": [
+      {"km": 20.0, "category": 1, "points_available": 15, "name": "Saint-Barthelemy (17.6km/5.5%)"},
+      {"km": 58.5, "category": 3, "points_available": 5, "name": "Doues (5.5km/6.5%)"},
+      {"km": 82.0, "category": 1, "points_available": 15, "name": "Lin Noir (7.5km/7.8%)"},
+      {"km": 92.0, "category": 2, "points_available": 8, "name": "Verrogne (5.4km/7.2%)"},
+      {"km": 133.0, "category": 1, "points_available": 15, "name": "Pila summit (16.6km/7.0%)"}
+    ],
+    "final_climb_gradient_pct": 7.0,
+    "notes": "Two Cat 1 climbs plus Cat 2 before a long Cat 1 summit finish at Pila (1794m). Extreme mountain stage."
+  },
+  {
+    "stage": 15,
+    "distance_km": 136.0,
+    "stage_type": "flat",
+    "finish_type": "sprint",
+    "intermediate_sprints": [
+      {"km": 109.0, "points_available": 3, "label": "Intermediate sprint (Milano circuit)"}
+    ],
+    "kom_climbs": [],
+    "final_climb_gradient_pct": null,
+    "notes": "Flat run to Milan with 3-lap finishing circuit. Classic sprint finale. No climbs."
+  },
+  {
+    "stage": 16,
+    "distance_km": 113.0,
+    "stage_type": "mountain",
+    "finish_type": "summit",
+    "intermediate_sprints": [],
+    "kom_climbs": [
+      {"km": 32.5, "category": 3, "points_available": 5, "name": "Torre (4.1km/6.2%)"},
+      {"km": 43.5, "category": 2, "points_available": 8, "name": "Leontica 1st pass (3km/8.2%)"},
+      {"km": 65.5, "category": 2, "points_available": 8, "name": "Leontica 2nd pass (3km/8.2%)"},
+      {"km": 113.0, "category": 1, "points_available": 15, "name": "Cari summit (11.6km/8.0%)"}
+    ],
+    "final_climb_gradient_pct": 8.0,
+    "notes": "Short mountain stage in Switzerland. Route passes through Leontica twice. Cat 1 summit finish at Cari (1642m). No intermediate sprint."
+  },
+  {
+    "stage": 17,
+    "distance_km": 201.0,
+    "stage_type": "hilly",
+    "finish_type": "uphill",
+    "intermediate_sprints": [
+      {"km": 35.0, "points_available": 3, "label": "Intermediate sprint (Lombardy plain)"}
+    ],
+    "kom_climbs": [
+      {"km": 62.5, "category": 3, "points_available": 5, "name": "Passo dei Tre Termini (8.2km/5.9%)"},
+      {"km": 78.5, "category": 3, "points_available": 5, "name": "Cocca di Lodrino (8.1km/4.1%)"},
+      {"km": 201.0, "category": 3, "points_available": 5, "name": "Andalo finish (5.7km/3.1%)"}
+    ],
+    "final_climb_gradient_pct": 3.1,
+    "notes": "Long Lombardy stage with three Cat 3 climbs finishing uphill at Andalo (1015m). Puncheur/attacker stage."
+  },
+  {
+    "stage": 18,
+    "distance_km": 167.0,
+    "stage_type": "flat",
+    "finish_type": "sprint",
+    "intermediate_sprints": [
+      {"km": 19.0, "points_available": 3, "label": "Intermediate sprint"}
+    ],
+    "kom_climbs": [
+      {"km": 81.5, "category": 3, "points_available": 5, "name": "Fastro (2.2km/5.4%)"},
+      {"km": 157.0, "category": 4, "points_available": 3, "name": "Muro Ca Del Poggio (1.1km/11.5%)"}
+    ],
+    "final_climb_gradient_pct": null,
+    "notes": "Mostly flat Veneto stage. Famous Muro Ca Del Poggio (1.1km/11.5%) at 157km then fast descent. Sprint or puncheur finish in Pieve di Soligo."
+  },
+  {
+    "stage": 19,
+    "distance_km": 152.0,
+    "stage_type": "mountain",
+    "finish_type": "summit",
+    "intermediate_sprints": [],
+    "kom_climbs": [
+      {"km": 59.0, "category": 1, "points_available": 15, "name": "Passo Duran (12.3km/8.0%)"},
+      {"km": 67.5, "category": 2, "points_available": 8, "name": "Coi (5.9km/9.3%)"},
+      {"km": 73.5, "category": 2, "points_available": 8, "name": "Forcella Staulanza (6.9km/6.1%)"},
+      {"km": 102.0, "category": "HC", "points_available": 40, "name": "Passo Giau (9.7km/9.4%)"},
+      {"km": 122.5, "category": 2, "points_available": 8, "name": "Passo Falzarego (11km/5.3%)"},
+      {"km": 152.0, "category": 2, "points_available": 8, "name": "Piani di Pezze summit (4.9km/9.7%)"}
+    ],
+    "final_climb_gradient_pct": 9.7,
+    "notes": "Brutal mountain stage. HC Passo Giau. Summit finish at Piani di Pezze (1459m, 4.9km/9.7%). No intermediate sprint. Top GC climbers only."
+  },
+  {
+    "stage": 20,
+    "distance_km": 199.0,
+    "stage_type": "mountain",
+    "finish_type": "summit",
+    "intermediate_sprints": [
+      {"km": 48.0, "points_available": 3, "label": "Intermediate sprint (Friuli plain)"}
+    ],
+    "kom_climbs": [
+      {"km": 80.5, "category": 4, "points_available": 3, "name": "Clauzetto (6.7km/5.6%)"},
+      {"km": 141.0, "category": 1, "points_available": 15, "name": "Piancavallo 1st pass (14.25km/7.8%)"}
+    ],
+    "final_climb_gradient_pct": 7.8,
+    "notes": "Route climbs Piancavallo twice. Cat 1 summit finish at Piancavallo (1288m, 14.4km/7.8%). Key penultimate GC stage."
+  },
+  {
+    "stage": 21,
+    "distance_km": 133.0,
+    "stage_type": "flat",
+    "finish_type": "sprint",
+    "intermediate_sprints": [
+      {"km": 41.5, "points_available": 3, "label": "Intermediate sprint (Rome circuit lap 1)"},
+      {"km": 99.0, "points_available": 3, "label": "Intermediate sprint (Rome circuit lap 5)"}
+    ],
+    "kom_climbs": [],
+    "final_climb_gradient_pct": null,
+    "notes": "Final stage. Flat circuit in Rome (7 laps of city circuit via Fori Imperiali). Ceremonial until final laps then sprint. Two sprint points on circuit."
+  }
+]

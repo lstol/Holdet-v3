@@ -1,0 +1,333 @@
+conservative:
+  profile: Conservative
+  captain: Giulio Pellizzari
+  budget_spent: 50000000
+  team_ev_lookahead: 275599
+  team_ev_sigma: 8618
+  riders:
+  - name: Giulio Pellizzari
+    rider_id: pellizzari_giulio
+    holdet_id: 47358
+    team: Red Bull BORA hansgrohe
+    price: 9500000
+    archetype: gc_leader
+    captain: true
+    ev_lookahead: 45192
+    stddev: 3518
+    ev_per_sigma: 12.846
+    ev_stage_1: 7937
+    ev_stage_2: 22735
+    ev_stage_3: 14520
+  - name: Jonas Vingegaard
+    rider_id: vingegaard_jonas
+    holdet_id: 47372
+    team: Team Visma Lease a Bike
+    price: 17500000
+    archetype: gc_leader
+    captain: false
+    ev_lookahead: 44827
+    stddev: 3518
+    ev_per_sigma: 12.742
+    ev_stage_1: 6407
+    ev_stage_2: 24043
+    ev_stage_3: 14377
+  - name: Johannes Staune-Mittet
+    rider_id: staunemittet_johannes
+    holdet_id: 48480
+    team: Decathlon CMA CGM
+    price: 3000000
+    archetype: climber
+    captain: false
+    ev_lookahead: 43546
+    stddev: 3518
+    ev_per_sigma: 12.378
+    ev_stage_1: 7847
+    ev_stage_2: 21716
+    ev_stage_3: 13983
+  - name: Lennert Van Eetvelt
+    rider_id: vaneetvelt_lennert
+    holdet_id: 47377
+    team: Lotto-Intermarché
+    price: 7500000
+    archetype: climber
+    captain: false
+    ev_lookahead: 43546
+    stddev: 3518
+    ev_per_sigma: 12.378
+    ev_stage_1: 7847
+    ev_stage_2: 21716
+    ev_stage_3: 13983
+  - name: Nick Schultz
+    rider_id: schultz_nick
+    holdet_id: 47394
+    team: NSN Cycling
+    price: 3000000
+    archetype: climber
+    captain: false
+    ev_lookahead: 33508
+    stddev: 2873
+    ev_per_sigma: 11.665
+    ev_stage_1: 5849
+    ev_stage_2: 16971
+    ev_stage_3: 10688
+  - name: Fredrik Dversnes
+    rider_id: dversnes_fredrik
+    holdet_id: 48628
+    team: Uno-X Mobility
+    price: 3000000
+    archetype: all_rounder
+    captain: false
+    ev_lookahead: 32190
+    stddev: 2873
+    ev_per_sigma: 11.206
+    ev_stage_1: 5849
+    ev_stage_2: 16070
+    ev_stage_3: 10271
+  - name: Robert Donaldson
+    rider_id: donaldson_robert
+    holdet_id: 48584
+    team: Team Jayco AlUla
+    price: 3000000
+    archetype: all_rounder
+    captain: false
+    ev_lookahead: 32190
+    stddev: 2873
+    ev_per_sigma: 11.206
+    ev_stage_1: 5849
+    ev_stage_2: 16070
+    ev_stage_3: 10271
+  - name: Luke Tuckwell
+    rider_id: luke_tuckwell
+    holdet_id: 48575
+    team: Red Bull - BORA - hansgrohe
+    price: 3500000
+    archetype: all_rounder
+    captain: false
+    ev_lookahead: 600
+    stddev: 0
+    ev_per_sigma: 600.0
+    ev_stage_1: 200
+    ev_stage_2: 200
+    ev_stage_3: 200
+balanced:
+  profile: Balanced
+  captain: Jonathan Milan
+  budget_spent: 50000000
+  team_ev_lookahead: 2046754
+  team_ev_sigma: 387278
+  riders:
+  - name: Jonathan Milan
+    rider_id: milan_jonathan
+    holdet_id: 47373
+    team: Lidl-Trek
+    price: 11500000
+    archetype: sprinter
+    captain: true
+    ev_lookahead: 350871
+    stddev: 167763
+    ev_per_sigma: 2.091
+    ev_stage_1: 115410
+    ev_stage_2: 118697
+    ev_stage_3: 116764
+  - name: Kaden Groves
+    rider_id: groves_kaden
+    holdet_id: 47375
+    team: Alpecin-Premier Tech
+    price: 8500000
+    archetype: sprinter
+    captain: false
+    ev_lookahead: 347692
+    stddev: 166618
+    ev_per_sigma: 2.087
+    ev_stage_1: 113547
+    ev_stage_2: 118522
+    ev_stage_3: 115623
+  - name: Arnaud De Lie
+    rider_id: delie_arnaud
+    holdet_id: 48650
+    team: Lotto-Intermarché
+    price: 8000000
+    archetype: sprinter
+    captain: false
+    ev_lookahead: 347692
+    stddev: 166618
+    ev_per_sigma: 2.087
+    ev_stage_1: 113547
+    ev_stage_2: 118522
+    ev_stage_3: 115623
+  - name: Dylan Groenewegen
+    rider_id: groenewegen_dylan
+    holdet_id: 47342
+    team: Unibet Rose Rockets
+    price: 10000000
+    archetype: sprinter
+    captain: false
+    ev_lookahead: 305047
+    stddev: 158035
+    ev_per_sigma: 1.93
+    ev_stage_1: 100919
+    ev_stage_2: 102547
+    ev_stage_3: 101581
+  - name: Luca Mozzato
+    rider_id: mozzato_luca
+    holdet_id: 48600
+    team: Tudor Pro Cycling
+    price: 4000000
+    archetype: sprinter
+    captain: false
+    ev_lookahead: 267204
+    stddev: 147110
+    ev_per_sigma: 1.816
+    ev_stage_1: 87362
+    ev_stage_2: 90984
+    ev_stage_3: 88858
+  - name: Tord Gudmestad
+    rider_id: gudmestad_tord
+    holdet_id: 47406
+    team: Decathlon CMA CGM
+    price: 3000000
+    archetype: sprinter
+    captain: false
+    ev_lookahead: 183713
+    stddev: 105474
+    ev_per_sigma: 1.742
+    ev_stage_1: 58887
+    ev_stage_2: 63863
+    ev_stage_3: 60963
+  - name: Jasper De Buyst
+    rider_id: debuyst_jasper
+    holdet_id: 48651
+    team: Lotto-Intermarché
+    price: 2500000
+    archetype: all_rounder
+    captain: false
+    ev_lookahead: 148890
+    stddev: 91484
+    ev_per_sigma: 1.627
+    ev_stage_1: 48083
+    ev_stage_2: 51370
+    ev_stage_3: 49437
+  - name: Markus Hoelgaard
+    rider_id: hoelgaard_markus
+    holdet_id: 48629
+    team: Uno-X Mobility
+    price: 2500000
+    archetype: puncheur
+    captain: false
+    ev_lookahead: 95645
+    stddev: 14353
+    ev_per_sigma: 6.664
+    ev_stage_1: 28707
+    ev_stage_2: 35402
+    ev_stage_3: 31536
+all_in:
+  profile: All-In
+  captain: Jonathan Milan
+  budget_spent: 45500000
+  team_ev_lookahead: 2120599
+  team_ev_sigma: 401480
+  riders:
+  - name: Jonathan Milan
+    rider_id: milan_jonathan
+    holdet_id: 47373
+    team: Lidl-Trek
+    price: 11500000
+    archetype: sprinter
+    captain: true
+    ev_lookahead: 350871
+    stddev: 167763
+    ev_per_sigma: 2.091
+    ev_stage_1: 115410
+    ev_stage_2: 118697
+    ev_stage_3: 116764
+  - name: Kaden Groves
+    rider_id: groves_kaden
+    holdet_id: 47375
+    team: Alpecin-Premier Tech
+    price: 8500000
+    archetype: sprinter
+    captain: false
+    ev_lookahead: 347692
+    stddev: 166618
+    ev_per_sigma: 2.087
+    ev_stage_1: 113547
+    ev_stage_2: 118522
+    ev_stage_3: 115623
+  - name: Arnaud De Lie
+    rider_id: delie_arnaud
+    holdet_id: 48650
+    team: Lotto-Intermarché
+    price: 8000000
+    archetype: sprinter
+    captain: false
+    ev_lookahead: 347692
+    stddev: 166618
+    ev_per_sigma: 2.087
+    ev_stage_1: 113547
+    ev_stage_2: 118522
+    ev_stage_3: 115623
+  - name: Luca Mozzato
+    rider_id: mozzato_luca
+    holdet_id: 48600
+    team: Tudor Pro Cycling
+    price: 4000000
+    archetype: sprinter
+    captain: false
+    ev_lookahead: 267204
+    stddev: 147110
+    ev_per_sigma: 1.816
+    ev_stage_1: 87362
+    ev_stage_2: 90984
+    ev_stage_3: 88858
+  - name: Jensen Plowright
+    rider_id: plowright_jensen
+    holdet_id: 48466
+    team: Alpecin-Premier Tech
+    price: 4000000
+    archetype: sprinter
+    captain: false
+    ev_lookahead: 266729
+    stddev: 147110
+    ev_per_sigma: 1.813
+    ev_stage_1: 87362
+    ev_stage_2: 90650
+    ev_stage_3: 88717
+  - name: Davide Ballerini
+    rider_id: ballerini_davide
+    holdet_id: 47337
+    team: XDS Astana
+    price: 4000000
+    archetype: sprinter
+    captain: false
+    ev_lookahead: 266729
+    stddev: 147110
+    ev_per_sigma: 1.813
+    ev_stage_1: 87362
+    ev_stage_2: 90650
+    ev_stage_3: 88717
+  - name: Tord Gudmestad
+    rider_id: gudmestad_tord
+    holdet_id: 47406
+    team: Decathlon CMA CGM
+    price: 3000000
+    archetype: sprinter
+    captain: false
+    ev_lookahead: 183713
+    stddev: 105474
+    ev_per_sigma: 1.742
+    ev_stage_1: 58887
+    ev_stage_2: 63863
+    ev_stage_3: 60963
+  - name: Tobias Bayer
+    rider_id: bayer_tobias
+    holdet_id: 48470
+    team: Alpecin-Premier Tech
+    price: 2500000
+    archetype: breakaway_artist
+    captain: false
+    ev_lookahead: 89969
+    stddev: 38344
+    ev_per_sigma: 2.346
+    ev_stage_1: 25972
+    ev_stage_2: 34415
+    ev_stage_3: 29582

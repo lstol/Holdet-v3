@@ -1,0 +1,1213 @@
+[
+  {
+    "stage": 1,
+    "stage_type": "flat",
+    "finish_type": "sprint",
+    "kom_climbs": [],
+    "finish_points": [
+      50,
+      35,
+      25,
+      18,
+      14,
+      12,
+      10,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "flat",
+    "intermediate_sprint": {
+      "km": 72.0,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 2,
+    "stage_type": "hilly",
+    "finish_type": "sprint",
+    "kom_climbs": [
+      {
+        "km": 117.0,
+        "category": 3,
+        "name": "Byala Pass (7.7km/4.6%)",
+        "points": [
+          8,
+          5,
+          3,
+          1
+        ]
+      },
+      {
+        "km": 135.0,
+        "category": 2,
+        "name": "Vratnik Pass (5.3km/5.4%)",
+        "points": [
+          15,
+          10,
+          6,
+          4,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 199.0,
+        "category": 2,
+        "name": "Lyaskovets Monastery Pass (3.6km/6.6%)",
+        "points": [
+          15,
+          10,
+          6,
+          4,
+          2,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      25,
+      18,
+      12,
+      8,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "hilly",
+    "intermediate_sprint": {
+      "km": 78.5,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 3,
+    "stage_type": "hilly",
+    "finish_type": "sprint",
+    "kom_climbs": [
+      {
+        "km": 103.5,
+        "category": 2,
+        "name": "Borovec Pass (8.9km/5.3%)",
+        "points": [
+          15,
+          10,
+          6,
+          4,
+          2,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      50,
+      35,
+      25,
+      18,
+      14,
+      12,
+      10,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "flat",
+    "intermediate_sprint": {
+      "km": 88.0,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 4,
+    "stage_type": "hilly",
+    "finish_type": "uphill",
+    "kom_climbs": [
+      {
+        "km": 100.0,
+        "category": 2,
+        "name": "Cozzo Tunno (14.4km/5.9%)",
+        "points": [
+          15,
+          10,
+          6,
+          4,
+          2,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      50,
+      35,
+      25,
+      18,
+      14,
+      12,
+      10,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "flat",
+    "intermediate_sprint": {
+      "km": 62.0,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 5,
+    "stage_type": "hilly",
+    "finish_type": "uphill",
+    "kom_climbs": [
+      {
+        "km": 23.5,
+        "category": 3,
+        "name": "Prestieri (13.6km/4.8%)",
+        "points": [
+          8,
+          5,
+          3,
+          1
+        ]
+      },
+      {
+        "km": 155.0,
+        "category": 2,
+        "name": "Monte Grande di Viggiano (6.6km/9.2%)",
+        "points": [
+          15,
+          10,
+          6,
+          4,
+          2,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      25,
+      18,
+      12,
+      8,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "hilly",
+    "intermediate_sprint": {
+      "km": 85.0,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 6,
+    "stage_type": "flat",
+    "finish_type": "sprint",
+    "kom_climbs": [
+      {
+        "km": 153.0,
+        "category": 4,
+        "name": "Fuorigrotta (2km/6.2%)",
+        "points": [
+          4,
+          2,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      50,
+      35,
+      25,
+      18,
+      14,
+      12,
+      10,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "flat",
+    "intermediate_sprint": {
+      "km": 41.5,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 7,
+    "stage_type": "mountain",
+    "finish_type": "summit",
+    "kom_climbs": [
+      {
+        "km": 157.5,
+        "category": 2,
+        "name": "Roccaraso (7.2km/6.3%)",
+        "points": [
+          15,
+          10,
+          6,
+          4,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 245.0,
+        "category": 1,
+        "name": "Blockhaus (14km/8.3%)",
+        "points": [
+          25,
+          16,
+          10,
+          7,
+          5,
+          3,
+          2,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      15,
+      12,
+      9,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "mountain",
+    "intermediate_sprint": {
+      "km": 119.0,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 8,
+    "stage_type": "hilly",
+    "finish_type": "uphill",
+    "kom_climbs": [
+      {
+        "km": 105.0,
+        "category": 3,
+        "name": "Montefiore d'Aso (9.1km/3.8%)",
+        "points": [
+          8,
+          5,
+          3,
+          1
+        ]
+      },
+      {
+        "km": 116.0,
+        "category": 4,
+        "name": "Monterubbiano (4.7km/5.8%)",
+        "points": [
+          4,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 155.0,
+        "category": 4,
+        "name": "Capodarco (4km/5.3%)",
+        "points": [
+          4,
+          2,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      25,
+      18,
+      12,
+      8,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "hilly",
+    "intermediate_sprint": {
+      "km": 92.5,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 9,
+    "stage_type": "hilly",
+    "finish_type": "summit",
+    "kom_climbs": [
+      {
+        "km": 168.0,
+        "category": 3,
+        "name": "Querciola (9.7km/4.3%)",
+        "points": [
+          8,
+          5,
+          3,
+          1
+        ]
+      },
+      {
+        "km": 185.0,
+        "category": 1,
+        "name": "Corno alle Scale (12.8km/5.9%)",
+        "points": [
+          25,
+          16,
+          10,
+          7,
+          5,
+          3,
+          2,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      25,
+      18,
+      12,
+      8,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "hilly",
+    "intermediate_sprint": {
+      "km": 131.5,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 10,
+    "stage_type": "itt",
+    "finish_type": "tt",
+    "kom_climbs": [],
+    "finish_points": [
+      15,
+      12,
+      9,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "mountain",
+    "intermediate_sprint": {
+      "km": null,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ],
+      "note": "km location not parsed from image"
+    }
+  },
+  {
+    "stage": 11,
+    "stage_type": "hilly",
+    "finish_type": "sprint",
+    "kom_climbs": [
+      {
+        "km": 106.0,
+        "category": 3,
+        "name": "Passo del Termine (7km/5.1%)",
+        "points": [
+          8,
+          5,
+          3,
+          1
+        ]
+      },
+      {
+        "km": 133.5,
+        "category": 2,
+        "name": "Colle di Guaitarola (9.7km/6.3%)",
+        "points": [
+          15,
+          10,
+          6,
+          4,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 163.5,
+        "category": 3,
+        "name": "San Bartolomeo (4.6km/6.4%)",
+        "points": [
+          8,
+          5,
+          3,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      25,
+      18,
+      12,
+      8,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "hilly",
+    "intermediate_sprint": {
+      "km": 80.0,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 12,
+    "stage_type": "flat",
+    "finish_type": "sprint",
+    "kom_climbs": [
+      {
+        "km": 108.5,
+        "category": 3,
+        "name": "Colle Giovo (7.8km/4.9%)",
+        "points": [
+          8,
+          5,
+          3,
+          1
+        ]
+      },
+      {
+        "km": 124.5,
+        "category": 3,
+        "name": "Bric Berton (7.5km/4.9%)",
+        "points": [
+          8,
+          5,
+          3,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      50,
+      35,
+      25,
+      18,
+      14,
+      12,
+      10,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "flat",
+    "intermediate_sprint": {
+      "km": 30.5,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 13,
+    "stage_type": "flat",
+    "finish_type": "sprint",
+    "kom_climbs": [
+      {
+        "km": 162.5,
+        "category": 4,
+        "name": "Bieno (2.4km/5.7%)",
+        "points": [
+          4,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 173.0,
+        "category": 3,
+        "name": "Ungiasca/Finestra (4.7km/7.0%)",
+        "points": [
+          8,
+          5,
+          3,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      25,
+      18,
+      12,
+      8,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "hilly",
+    "intermediate_sprint": {
+      "km": 28.5,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 14,
+    "stage_type": "mountain",
+    "finish_type": "summit",
+    "kom_climbs": [
+      {
+        "km": 20.0,
+        "category": 1,
+        "name": "Saint-Barthelemy (17.6km/5.5%)",
+        "points": [
+          25,
+          16,
+          10,
+          7,
+          5,
+          3,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 58.5,
+        "category": 3,
+        "name": "Doues (5.5km/6.5%)",
+        "points": [
+          8,
+          5,
+          3,
+          1
+        ]
+      },
+      {
+        "km": 82.0,
+        "category": 1,
+        "name": "Lin Noir (7.5km/7.8%)",
+        "points": [
+          25,
+          16,
+          10,
+          7,
+          5,
+          3,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 92.0,
+        "category": 2,
+        "name": "Verrogne (5.4km/7.2%)",
+        "points": [
+          15,
+          10,
+          6,
+          4,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 133.0,
+        "category": 1,
+        "name": "Pila summit (16.6km/7.0%)",
+        "points": [
+          25,
+          16,
+          10,
+          7,
+          5,
+          3,
+          2,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      15,
+      12,
+      9,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "mountain",
+    "intermediate_sprint": {
+      "km": 51.0,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 15,
+    "stage_type": "flat",
+    "finish_type": "sprint",
+    "kom_climbs": [],
+    "finish_points": [
+      50,
+      35,
+      25,
+      18,
+      14,
+      12,
+      10,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "flat",
+    "intermediate_sprint": {
+      "km": 109.0,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 16,
+    "stage_type": "mountain",
+    "finish_type": "summit",
+    "kom_climbs": [
+      {
+        "km": 32.5,
+        "category": 3,
+        "name": "Torre (4.1km/6.2%)",
+        "points": [
+          8,
+          5,
+          3,
+          1
+        ]
+      },
+      {
+        "km": 43.5,
+        "category": 2,
+        "name": "Leontica 1st pass (3km/8.2%)",
+        "points": [
+          15,
+          10,
+          6,
+          4,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 65.5,
+        "category": 2,
+        "name": "Leontica 2nd pass (3km/8.2%)",
+        "points": [
+          15,
+          10,
+          6,
+          4,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 113.0,
+        "category": 1,
+        "name": "Cari summit (11.6km/8.0%)",
+        "points": [
+          25,
+          16,
+          10,
+          7,
+          5,
+          3,
+          2,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      15,
+      12,
+      9,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "mountain",
+    "intermediate_sprint": {
+      "km": null,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ],
+      "note": "km location not parsed from image"
+    }
+  },
+  {
+    "stage": 17,
+    "stage_type": "hilly",
+    "finish_type": "uphill",
+    "kom_climbs": [
+      {
+        "km": 62.5,
+        "category": 3,
+        "name": "Passo dei Tre Termini (8.2km/5.9%)",
+        "points": [
+          8,
+          5,
+          3,
+          1
+        ]
+      },
+      {
+        "km": 78.5,
+        "category": 3,
+        "name": "Cocca di Lodrino (8.1km/4.1%)",
+        "points": [
+          8,
+          5,
+          3,
+          1
+        ]
+      },
+      {
+        "km": 201.0,
+        "category": 3,
+        "name": "Andalo finish (5.7km/3.1%)",
+        "points": [
+          8,
+          5,
+          3,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      25,
+      18,
+      12,
+      8,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "hilly",
+    "intermediate_sprint": {
+      "km": 35.0,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 18,
+    "stage_type": "flat",
+    "finish_type": "sprint",
+    "kom_climbs": [
+      {
+        "km": 81.5,
+        "category": 3,
+        "name": "Fastro (2.2km/5.4%)",
+        "points": [
+          8,
+          5,
+          3,
+          1
+        ]
+      },
+      {
+        "km": 157.0,
+        "category": 4,
+        "name": "Muro Ca Del Poggio (1.1km/11.5%)",
+        "points": [
+          4,
+          2,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      50,
+      35,
+      25,
+      18,
+      14,
+      12,
+      10,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "flat",
+    "intermediate_sprint": {
+      "km": 19.0,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 19,
+    "stage_type": "mountain",
+    "finish_type": "summit",
+    "kom_climbs": [
+      {
+        "km": 59.0,
+        "category": 1,
+        "name": "Passo Duran (12.3km/8.0%)",
+        "points": [
+          25,
+          16,
+          10,
+          7,
+          5,
+          3,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 67.5,
+        "category": 2,
+        "name": "Coi (5.9km/9.3%)",
+        "points": [
+          15,
+          10,
+          6,
+          4,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 73.5,
+        "category": 2,
+        "name": "Forcella Staulanza (6.9km/6.1%)",
+        "points": [
+          15,
+          10,
+          6,
+          4,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 102.0,
+        "category": "HC",
+        "name": "Passo Giau (9.7km/9.4%)",
+        "points": [
+          40,
+          20,
+          12,
+          8,
+          6,
+          4,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 122.5,
+        "category": 2,
+        "name": "Passo Falzarego (11km/5.3%)",
+        "points": [
+          15,
+          10,
+          6,
+          4,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 152.0,
+        "category": 2,
+        "name": "Piani di Pezze summit (4.9km/9.7%)",
+        "points": [
+          15,
+          10,
+          6,
+          4,
+          2,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      15,
+      12,
+      9,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "mountain",
+    "intermediate_sprint": {
+      "km": null,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ],
+      "note": "km location not parsed from image"
+    }
+  },
+  {
+    "stage": 20,
+    "stage_type": "mountain",
+    "finish_type": "summit",
+    "kom_climbs": [
+      {
+        "km": 80.5,
+        "category": 4,
+        "name": "Clauzetto (6.7km/5.6%)",
+        "points": [
+          4,
+          2,
+          1
+        ]
+      },
+      {
+        "km": 141.0,
+        "category": 1,
+        "name": "Piancavallo 1st pass (14.25km/7.8%)",
+        "points": [
+          25,
+          16,
+          10,
+          7,
+          5,
+          3,
+          2,
+          1
+        ]
+      }
+    ],
+    "finish_points": [
+      15,
+      12,
+      9,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "mountain",
+    "intermediate_sprint": {
+      "km": 48.0,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  },
+  {
+    "stage": 21,
+    "stage_type": "flat",
+    "finish_type": "sprint",
+    "kom_climbs": [],
+    "finish_points": [
+      50,
+      35,
+      25,
+      18,
+      14,
+      12,
+      10,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "stage_group": "flat",
+    "intermediate_sprint": {
+      "km": 41.5,
+      "points": [
+        12,
+        8,
+        5,
+        3,
+        1
+      ]
+    }
+  }
+]

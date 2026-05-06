@@ -1,0 +1,133 @@
+meta:
+  description: Phase 3f multi-stage optimizer — true per-stage optimization
+  stage: 1
+  lookahead_stages:
+  - 1
+  - 2
+  - 3
+  budget: 50000000
+  budget_spent: 50000000
+captain: Jonathan Milan
+captain_rationale: Highest E[max(ΔV,0)] on stage 1
+team:
+- name: Jonathan Milan
+  rider_id: milan_jonathan
+  holdet_id: 47373
+  team: Lidl-Trek
+  price: 11500000
+  captain: true
+  stage_1_ev: 82997
+  stage_2_ev: 12240
+  stage_3_ev: 82997
+  3stage_ev: 178234
+- name: Arnaud De Lie
+  rider_id: delie_arnaud
+  holdet_id: 48650
+  team: Lotto-Intermarché
+  price: 8000000
+  captain: false
+  stage_1_ev: 79925
+  stage_2_ev: 13963
+  stage_3_ev: 79925
+  3stage_ev: 173813
+- name: Kaden Groves
+  rider_id: groves_kaden
+  holdet_id: 47375
+  team: Alpecin-Premier Tech
+  price: 8500000
+  captain: false
+  stage_1_ev: 78218
+  stage_2_ev: 11309
+  stage_3_ev: 78218
+  3stage_ev: 167745
+- name: Dylan Groenewegen
+  rider_id: groenewegen_dylan
+  holdet_id: 47342
+  team: Unibet Rose Rockets
+  price: 10000000
+  captain: false
+  stage_1_ev: 49085
+  stage_2_ev: 6285
+  stage_3_ev: 49085
+  3stage_ev: 104455
+- name: Diego Ulissi
+  rider_id: ulissi_diego
+  holdet_id: 47340
+  team: XDS Astana
+  price: 4000000
+  captain: false
+  stage_1_ev: 12034
+  stage_2_ev: 12347
+  stage_3_ev: 12034
+  3stage_ev: 36415
+- name: Lorenzo Rota
+  rider_id: rota_lorenzo
+  holdet_id: 48654
+  team: Lotto-Intermarché
+  price: 3000000
+  captain: false
+  stage_1_ev: 12034
+  stage_2_ev: 12347
+  stage_3_ev: 12034
+  3stage_ev: 36415
+- name: Mattia Bais
+  rider_id: bais_mattia
+  holdet_id: 48591
+  team: Team Polti VisitMalta
+  price: 2500000
+  captain: false
+  stage_1_ev: 6331
+  stage_2_ev: 10655
+  stage_3_ev: 6331
+  3stage_ev: 23317
+- name: Diego Pablo Sevilla
+  rider_id: sevilla_diego
+  holdet_id: 48594
+  team: Team Polti VisitMalta
+  price: 2500000
+  captain: false
+  stage_1_ev: 2508
+  stage_2_ev: 4286
+  stage_3_ev: 2508
+  3stage_ev: 9302
+transfer_plan:
+  stage_2:
+    decision: HOLD
+    hold_rationale: Transfer cost exceeds EV gain for all candidate swaps
+    transfers_in: []
+    transfers_out: []
+    transfer_fee: 0
+    ev_gain_gross: 87101
+    ev_gain_net: 87101
+  stage_3:
+    decision: TRANSFER
+    hold_rationale: ''
+    transfers_in:
+    - name: Mathijs Paasschens
+      rider_id: paasschens_mathijs
+    - name: Manuele Tarozzi
+      rider_id: tarozzi_manuele
+    - name: Oliver Naesen
+      rider_id: naesen_oliver
+    - name: Callum Scotson
+      rider_id: scotson_callum
+    transfers_out:
+    - name: Diego Pablo Sevilla
+      rider_id: sevilla_diego
+    - name: Mattia Bais
+      rider_id: bais_mattia
+    - name: Diego Ulissi
+      rider_id: ulissi_diego
+    - name: Lorenzo Rota
+      rider_id: rota_lorenzo
+    transfer_fee: 105000
+    ev_gain_gross: 332704
+    ev_gain_net: 227704
+team_ev_summary:
+  stage_1_gross: 356885
+  stage_2_gross: 87101
+  stage_3_gross: 332704
+  total_gross: 776690
+  total_transfer_cost: 105000
+  total_net: 671690
+  depth_bonus_stage_1: 33753
