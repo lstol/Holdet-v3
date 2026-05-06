@@ -140,6 +140,20 @@ The commit message must start with `session N:` so the log is easy to scan.
 
 ---
 
+## Daily use
+
+```
+claude/tools/Open Dashboard.app    → opens the dashboard directly (add to Dock)
+claude/tools/Holdet Refresh.app    → fetches latest data, rebuilds dashboard, reopens
+```
+
+Both apps live in `claude/tools/` and are machine-specific (not committed).
+To rebuild them: `osacompile -o "claude/tools/Holdet Refresh.app" -e 'do shell script "bash /Users/lassestoltenberg/Claude/Holdet-v3/claude/engine/refresh.sh"'`
+
+Manual equivalent: `bash claude/engine/refresh.sh`
+
+---
+
 ## Key rules (never violate these)
 
 - Budget: 50,000,000 kr | Team: exactly 8 riders | Max 2 per real-world team

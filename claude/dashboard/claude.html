@@ -350,7 +350,7 @@ input[type=range]::-webkit-slider-thumb {
         <span class="value" id="h-data-status">Not loaded</span>
         <span id="h-data-note" style="font-size:10px;color:var(--color-text-3);"></span>
       </div>
-      <button class="btn btn-ghost" id="refresh-btn" onclick="doRefresh()">
+      <button class="btn btn-ghost" id="refresh-btn" onclick="refreshData()">
         <i class="ti ti-refresh"></i> Refresh
       </button>
       <div id="server-msg" style="display:none"></div>
@@ -1011,30 +1011,15 @@ function copyPrompt() {
 }
 
 /* ── Refresh ─────────────────────────────────────────────────────────── */
-async function doRefresh() {
+function refreshData() {
   const btn = $('refresh-btn');
+  const msg = $('server-msg');
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-refresh spinner"></i> Refreshing…';
-  try {
-    const res = await fetch(`${SERVER}/refresh`, { method: 'POST' });
-    const data = await res.json();
-    if (data.status === 'ok') {
-      S.dataTimestamp = data.timestamp;
-      S.mockMode = false;
-      await loadSnapshot();
-      updateHeader();
-    } else {
-      alert('Refresh failed: ' + (data.message || 'unknown error'));
-    }
-  } catch(e) {
-    const msg = $('server-msg');
-    msg.style.display = 'block';
-    msg.innerHTML = 'Server not running — in terminal: <code>python3 claude/engine/server.py</code>'
-      + ' <button onclick="navigator.clipboard.writeText(\'python3 claude/engine/server.py\').then(()=>{this.textContent=\'Copied!\';setTimeout(()=>this.textContent=\'Copy\',1500)})">Copy</button>';
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="ti ti-refresh"></i> Refresh';
-  }
+  msg.style.display = 'block';
+  msg.textContent = 'Fetching latest data… page reloads in 8s';
+  window.location.href = 'file:///Users/lassestoltenberg/Claude/Holdet-v3/claude/tools/Holdet%20Refresh.app';
+  setTimeout(() => location.reload(), 8000);
 }
 
 /* ── Data loading ────────────────────────────────────────────────────── */
