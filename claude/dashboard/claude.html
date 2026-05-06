@@ -1017,9 +1017,9 @@ function refreshData() {
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-refresh spinner"></i> Refreshing…';
   msg.style.display = 'block';
-  msg.textContent = 'Fetching latest data… page reloads in 8s';
-  window.location.href = 'file:///Users/lassestoltenberg/Claude/Holdet-v3/claude/tools/Holdet%20Refresh.app';
-  setTimeout(() => location.reload(), 8000);
+  msg.textContent = 'Fetching latest data… page reloads in 10s';
+  window.location.href = 'holdet://refresh';
+  setTimeout(() => { location.reload(); }, 10000);
 }
 
 /* ── Data loading ────────────────────────────────────────────────────── */
