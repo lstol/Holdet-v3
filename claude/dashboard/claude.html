@@ -1,12 +1,1004 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Holdet v3 — Claude Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Holdet v3 · Claude Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+/* ── Variables ─────────────────────────────────────────────────── */
+:root {
+  --color-bg:        #0d0f18;
+  --color-surface:   #151824;
+  --color-surface-2: #1c2035;
+  --color-surface-3: #232843;
+  --color-border:    #2b3058;
+  --color-text:      #dde1f0;
+  --color-text-2:    #7b82a8;
+  --color-text-3:    #4e5578;
+  --color-primary:   #5b72f0;
+  --color-primary-d: #3d52c8;
+  --color-success:   #3ecf8e;
+  --color-danger:    #f04d5e;
+  --color-warning:   #f0a832;
+  --color-accent:    #9b59f0;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --radius-sm: 4px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
+}
+
+/* ── Reset ──────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 13px; }
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  line-height: 1.45;
+  min-height: 100vh;
+}
+button {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  border: none;
+  background: none;
+}
+input, textarea, select {
+  font-family: inherit;
+  font-size: 12px;
+  background: var(--color-surface-3);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+input:focus, textarea:focus { border-color: var(--color-primary); }
+h2 { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--color-text-2); }
+a { color: var(--color-primary); }
+
+/* ── Layout ─────────────────────────────────────────────────────── */
+#app { max-width: 1600px; margin: 0 auto; padding: 0 16px 40px; }
+
+.section { margin-top: 12px; }
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 10px;
+}
+
+.panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+#header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 0 10px;
+  border-bottom: 1px solid var(--color-border);
+  gap: 20px;
+}
+#header-left .race-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--color-text-2);
+  font-variant: small-caps;
+}
+#header-left .stage-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 2px 0 3px;
+  color: var(--color-text);
+}
+#header-left .stage-meta {
+  font-size: 12px;
+  color: var(--color-text-2);
+}
+#header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.stat-pill {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.stat-pill .label { font-size: 10px; color: var(--color-text-2); letter-spacing: .06em; text-transform: uppercase; }
+.stat-pill .value { font-size: 14px; font-weight: 600; font-family: var(--font-mono); color: var(--color-text); }
+.stat-pill .value.mock { color: var(--color-warning); }
+.stat-pill .value.ok { color: var(--color-success); }
+#status-text { font-size: 11px; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  transition: background .15s, opacity .15s;
+}
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover { background: var(--color-primary-d); }
+.btn-ghost { background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-2); }
+.btn-ghost:hover { color: var(--color-text); border-color: var(--color-text-3); }
+.btn-sm { padding: 4px 8px; font-size: 11px; }
+.btn:disabled { opacity: .45; cursor: default; }
+
+/* ── Carousel ───────────────────────────────────────────────────── */
+#carousel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+#carousel-nav {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+#stage-pills { display: flex; gap: 5px; flex: 1; flex-wrap: wrap; }
+.stage-pill {
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-2);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.stage-pill:hover { border-color: var(--color-text-3); color: var(--color-text); }
+.stage-pill.active { border-color: var(--color-primary); color: var(--color-primary); background: rgba(91,114,240,.12); font-weight: 600; }
+.stage-pill.past { opacity: .55; }
+.nav-arrow { background: var(--color-surface-2); border: 1px solid var(--color-border); color: var(--color-text-2); border-radius: var(--radius-sm); padding: 4px 7px; font-size: 14px; }
+.nav-arrow:hover { color: var(--color-text); }
+
+#profile-container { position: relative; height: 140px; padding: 0; overflow: hidden; background: var(--color-surface-2); }
+#profile-img { width: 100%; height: 100%; object-fit: contain; display: block; }
+#profile-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--color-text-3); font-size: 12px; }
+#profile-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding: 6px 14px;
+  pointer-events: none;
+}
+#profile-overlay .route-info { font-size: 11px; color: rgba(221,225,240,.75); }
+#profile-overlay .stage-badge {
+  font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+  background: rgba(0,0,0,.45); border-radius: 3px; padding: 2px 6px;
+  color: var(--color-text);
+}
+
+/* ── Sliders ─────────────────────────────────────────────────────── */
+#sliders-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.slider-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 10px 12px; }
+.slider-panel-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-2); margin-bottom: 10px; }
+.slider-row { margin-bottom: 8px; }
+.slider-row label { display: flex; justify-content: space-between; font-size: 11px; color: var(--color-text-2); margin-bottom: 3px; }
+.slider-row label span { font-family: var(--font-mono); color: var(--color-text); }
+input[type=range] {
+  width: 100%; height: 4px; appearance: none; background: var(--color-surface-3);
+  border: none; border-radius: 2px; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  appearance: none; width: 14px; height: 14px;
+  border-radius: 50%; background: var(--color-primary); cursor: pointer;
+}
+.sum-display { font-size: 10px; margin-top: 6px; padding: 3px 6px; border-radius: 3px; text-align: right; }
+.sum-display.ok { color: var(--color-success); background: rgba(62,207,142,.08); }
+.sum-display.bad { color: var(--color-danger); background: rgba(240,77,94,.1); }
+
+.weight-row { margin-bottom: 8px; }
+.weight-row label { display: flex; justify-content: space-between; font-size: 11px; color: var(--color-text-2); margin-bottom: 3px; }
+.weight-row label span { font-family: var(--font-mono); color: var(--color-text); }
+
+/* ── Intelligence ───────────────────────────────────────────────── */
+#intel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.intel-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; }
+.intel-panel-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-2); margin-bottom: 10px; }
+
+/* Odds table */
+#odds-table-wrap { overflow-x: auto; }
+#odds-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+#odds-table th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-3); padding: 4px 6px; text-align: left; border-bottom: 1px solid var(--color-border); }
+#odds-table td { padding: 4px 6px; border-bottom: 1px solid rgba(43,48,88,.5); vertical-align: middle; }
+#odds-table input[type=text] { width: 130px; padding: 3px 6px; }
+#odds-table input[type=number] { width: 54px; padding: 3px 6px; text-align: right; }
+.del-row-btn { color: var(--color-text-3); font-size: 14px; padding: 2px 4px; border-radius: 3px; }
+.del-row-btn:hover { color: var(--color-danger); background: rgba(240,77,94,.1); }
+#add-odds-btn { margin-top: 8px; }
+
+#intel-notes {
+  width: 100%; min-height: 180px; padding: 8px; resize: vertical;
+  color: var(--color-text); font-size: 12px; line-height: 1.55;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Candidates ─────────────────────────────────────────────────── */
+#candidates-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; }
+#candidates-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+#optimizer-output {
+  min-height: 80px;
+  padding: 12px;
+  background: var(--color-surface-2);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 12px; color: var(--color-text-2);
+  white-space: pre-wrap;
+  font-family: var(--font-mono);
+  line-height: 1.6;
+}
+#optimizer-output.placeholder { text-align: center; padding-top: 24px; color: var(--color-text-3); font-family: var(--font-sans); }
+#prompt-copy-area { margin-top: 8px; display: none; }
+#prompt-copy-area textarea { width: 100%; height: 120px; font-size: 11px; padding: 6px; resize: vertical; }
+
+/* ── Rider table ─────────────────────────────────────────────────── */
+#rider-section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+#rider-controls {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+#rider-search { padding: 5px 8px 5px 28px; width: 200px; position: relative; }
+.search-wrap { position: relative; }
+.search-wrap .ti { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--color-text-3); font-size: 14px; pointer-events: none; }
+.type-pills { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+.type-pill { padding: 3px 8px; border-radius: 20px; border: 1px solid var(--color-border); background: none; color: var(--color-text-2); font-size: 11px; cursor: pointer; transition: all .12s; }
+.type-pill:hover { border-color: var(--color-text-3); color: var(--color-text); }
+.type-pill.active { border-color: var(--color-primary); color: var(--color-primary); background: rgba(91,114,240,.1); }
+#rider-count { font-size: 11px; color: var(--color-text-3); margin-left: auto; white-space: nowrap; }
+
+#rider-table-wrap { overflow-x: auto; }
+#rider-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+#rider-table th {
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--color-text-3); padding: 7px 10px; text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  position: sticky; top: 0; background: var(--color-surface); z-index: 1;
+  white-space: nowrap;
+}
+#rider-table th.num { text-align: right; }
+#rider-table td { padding: 6px 10px; border-bottom: 1px solid rgba(43,48,88,.4); vertical-align: middle; }
+#rider-table tr:hover td { background: rgba(255,255,255,.018); }
+#rider-table tr.force-in td { background: rgba(62,207,142,.06); }
+#rider-table tr.force-out td { background: rgba(240,77,94,.05); opacity: .7; }
+#rider-table td.num { text-align: right; font-family: var(--font-mono); }
+
+.rider-name { font-weight: 500; }
+.rider-team { font-size: 11px; color: var(--color-text-2); margin-top: 1px; }
+
+/* Type badges */
+.type-badge {
+  display: inline-block; font-size: 10px; font-weight: 600;
+  padding: 1px 6px; border-radius: 3px; white-space: nowrap;
+  letter-spacing: .04em;
+}
+.badge-Sprinter    { background: rgba(91,114,240,.18); color: #8da4f8; }
+.badge-GC-Climber  { background: rgba(62,207,142,.15); color: #3ecf8e; }
+.badge-Puncheur    { background: rgba(240,168,50,.15); color: #f0c850; }
+.badge-All-rounder { background: rgba(155,89,240,.15); color: #b97ef7; }
+.badge-TTT-Spec    { background: rgba(240,77,94,.12); color: #f07080; }
+.badge-Lead-out    { background: rgba(123,130,168,.12); color: #8b90a8; }
+
+/* Tier badges */
+.tier-a { font-size: 10px; font-weight: 700; color: var(--color-warning); font-family: var(--font-mono); }
+.tier-b { font-size: 10px; color: var(--color-text-3); font-family: var(--font-mono); }
+
+/* Status badges */
+.status-active { font-size: 10px; font-weight: 600; color: var(--color-success); }
+.status-out    { font-size: 10px; font-weight: 600; color: var(--color-danger); }
+
+/* Force toggle buttons */
+.force-btn {
+  padding: 2px 7px; border-radius: 3px; border: 1px solid var(--color-border);
+  font-size: 10px; font-weight: 600; color: var(--color-text-3);
+  transition: all .12s;
+}
+.force-btn:hover { border-color: var(--color-text-2); color: var(--color-text); }
+.force-btn.active-in  { border-color: var(--color-success); color: var(--color-success); background: rgba(62,207,142,.1); }
+.force-btn.active-out { border-color: var(--color-danger); color: var(--color-danger); background: rgba(240,77,94,.1); }
+
+/* ── Misc ────────────────────────────────────────────────────────── */
+.spinner { display: inline-block; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.mock-badge {
+  display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .06em;
+  background: rgba(240,168,50,.15); color: var(--color-warning);
+  padding: 2px 7px; border-radius: 3px; border: 1px solid rgba(240,168,50,.3);
+}
+</style>
 </head>
 <body>
-  <!-- Claude decision dashboard — to be wired to shared/data/snapshots/ in Session 3 -->
-  <h1>Claude Dashboard</h1>
-  <p>Not yet wired to live data.</p>
+<div id="app">
+
+  <!-- ── Header ──────────────────────────────────────────────── -->
+  <header id="header">
+    <div id="header-left">
+      <div class="race-label">Holdet v3 · Giro d'Italia 2026</div>
+      <div class="stage-title" id="h-stage-title">—</div>
+      <div class="stage-meta" id="h-stage-meta">—</div>
+    </div>
+    <div id="header-right">
+      <div class="stat-pill">
+        <span class="label">Bank</span>
+        <span class="value" id="h-bank">50.00M</span>
+      </div>
+      <div class="stat-pill">
+        <span class="label">Data</span>
+        <span class="value" id="h-data-status">Not loaded</span>
+        <span id="h-data-note" style="font-size:10px;color:var(--color-text-3);"></span>
+      </div>
+      <button class="btn btn-ghost" id="refresh-btn" onclick="doRefresh()">
+        <i class="ti ti-refresh"></i> Refresh
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Stage carousel ──────────────────────────────────────── -->
+  <div class="section" id="carousel">
+    <div id="carousel-nav">
+      <button class="nav-arrow" onclick="shiftCarousel(-1)"><i class="ti ti-chevron-left"></i></button>
+      <div id="stage-pills"></div>
+      <button class="nav-arrow" onclick="shiftCarousel(1)"><i class="ti ti-chevron-right"></i></button>
+    </div>
+    <div id="profile-container">
+      <img id="profile-img" src="" alt="" style="display:none;">
+      <div id="profile-placeholder">Stage image not available</div>
+      <div id="profile-overlay">
+        <div class="route-info" id="profile-route">—</div>
+        <div class="stage-badge" id="profile-type-badge">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Stage type sliders ──────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header"><h2>Stage type sliders</h2></div>
+    <div id="sliders-grid">
+      <!-- n+1, n+2, n+3 columns injected by JS -->
+      <!-- Expert weights column injected by JS -->
+    </div>
+  </div>
+
+  <!-- ── Intelligence ────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header"><h2>Intelligence</h2></div>
+    <div id="intel-grid">
+
+      <!-- Bookmaker odds -->
+      <div class="intel-panel">
+        <div class="intel-panel-title">Bookmaker odds</div>
+        <div id="odds-table-wrap">
+          <table id="odds-table">
+            <thead>
+              <tr>
+                <th>Rider</th>
+                <th class="num">Win%</th>
+                <th class="num">Top3%</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="odds-tbody"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="add-odds-btn" onclick="addOddsRow()">
+          <i class="ti ti-plus"></i> Add rider
+        </button>
+      </div>
+
+      <!-- Intel notes -->
+      <div class="intel-panel">
+        <div class="intel-panel-title">Intel notes</div>
+        <textarea id="intel-notes" placeholder="Paste expert analysis, team news, weather, race situation…"
+          oninput="S.intelNotes = this.value"></textarea>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Candidate teams ─────────────────────────────────────── -->
+  <div class="section">
+    <div id="candidates-panel">
+      <div id="candidates-header">
+        <h2>Candidate teams</h2>
+        <button class="btn btn-primary" onclick="runOptimizer()">
+          <i class="ti ti-player-play"></i> Run optimizer
+        </button>
+      </div>
+      <div id="optimizer-output" class="placeholder">
+        Load data and run optimizer to generate candidate teams
+      </div>
+      <div id="prompt-copy-area">
+        <p style="font-size:11px;color:var(--color-text-2);margin-bottom:4px;">Copy prompt → paste to Claude chat:</p>
+        <textarea id="prompt-text" readonly></textarea>
+        <button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="copyPrompt()">
+          <i class="ti ti-copy"></i> Copy to clipboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Rider table ─────────────────────────────────────────── -->
+  <div class="section">
+    <div id="rider-section">
+      <div id="rider-controls">
+        <div class="search-wrap">
+          <i class="ti ti-search"></i>
+          <input type="text" id="rider-search" placeholder="Search name or team…"
+            oninput="S.search=this.value;renderTable()">
+        </div>
+        <div class="type-pills" id="type-pills"></div>
+        <span id="rider-count"></span>
+      </div>
+      <div id="rider-table-wrap">
+        <table id="rider-table">
+          <thead>
+            <tr>
+              <th>Rider</th>
+              <th>Type</th>
+              <th class="num">Price</th>
+              <th>Tier</th>
+              <th class="num">P(win)</th>
+              <th>Force in</th>
+              <th>Force out</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="rider-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<script>
+'use strict';
+
+/* ── State ─────────────────────────────────────────────────────────── */
+const S = {
+  activeStageIndex: 0,   // index into S.stages
+  carouselOffset: 0,     // first pill index shown
+  stages: [],
+  riders: [],
+  expertSources: [
+    { name: 'Emil Axelgaard / TV2 Sport', weight: 1.5 },
+    { name: 'The Inner Ring',             weight: 1.2 },
+    { name: 'VeloNews',                   weight: 1.0 },
+    { name: 'CyclingNews',                weight: 1.0 },
+    { name: 'ProCyclingStats',            weight: 0.8 },
+    { name: 'FirstCycling',               weight: 0.8 },
+  ],
+  sliders: {
+    n1: { sprint: 70, hilly: 20, hardgc: 5,  mixed: 5  },
+    n2: { sprint: 50, hilly: 30, hardgc: 10, mixed: 10 },
+    n3: { sprint: 30, hilly: 30, hardgc: 30, mixed: 10 },
+  },
+  oddsRows: [],
+  intelNotes: '',
+  forceIn:  new Set(),
+  forceOut: new Set(),
+  search: '',
+  typeFilter: 'All',
+  bankBalance: 50000000,
+  mockMode: false,
+  dataTimestamp: null,
+};
+
+const SERVER = 'http://localhost:5050';
+const PILLS_VISIBLE = 6;
+const TYPES = ['All','Sprinter','GC-Climber','Puncheur','All-rounder','TTT Spec.','Lead-out'];
+const TODAY = new Date().toISOString().split('T')[0];
+
+/* ── Utilities ──────────────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function fmt_price(p) {
+  return (p / 1e6).toFixed(2) + 'M';
+}
+function fmt_pct(v) {
+  return v != null ? Number(v).toFixed(1) + '%' : '—';
+}
+
+/* ── Rider type derivation ──────────────────────────────────────────── */
+function deriveType(r) {
+  const ta = r.terrain_affinity || {};
+  const sp = ta.sprint   || 0;
+  const cl = ta.climbing || 0;
+  const tt = ta.time_trial || 0;
+  const mx = ta.mixed    || 0;
+  if (sp >= 0.72) return 'Sprinter';
+  if (cl >= 0.72) return 'GC-Climber';
+  if (cl >= 0.52 && sp >= 0.42) return 'Puncheur';
+  if (tt >= 0.65) return 'TTT Spec.';
+  if (cl >= 0.42 || mx >= 0.48) return 'All-rounder';
+  return 'Lead-out';
+}
+
+/* ── Tier computation ───────────────────────────────────────────────── */
+function computeTier(rider) {
+  const ta = rider.terrain_affinity || {};
+  const sl = S.sliders.n1;
+  const total = sl.sprint + sl.hilly + sl.hardgc + sl.mixed || 100;
+  const score =
+    (sl.sprint / total)  * (ta.sprint   || 0) +
+    (sl.hardgc / total)  * (ta.climbing || 0) +
+    (sl.hilly  / total)  * Math.max(ta.climbing || 0, ta.mixed || 0) * 0.7 +
+    (sl.mixed  / total)  * (ta.mixed    || 0);
+  return score >= 0.32 ? 'A' : 'B';
+}
+
+/* ── P(win) lookup from odds ────────────────────────────────────────── */
+function pwin(name) {
+  const n = name.toLowerCase();
+  const row = S.oddsRows.find(r => r.name && r.name.toLowerCase() === n);
+  return row ? row.win : null;
+}
+
+/* ── Stage profile image ─────────────────────────────────────────────── */
+// Images: shared/data/stage_images/stage-{N}.jpg  (served at /stage-images/stage-{N}.jpg)
+function stageImageSrc(stageNumber) {
+  return `${SERVER}/stage-images/stage-${stageNumber}.jpg`;
+}
+
+function renderProfile(stage) {
+  const img   = $('profile-img');
+  const ph    = $('profile-placeholder');
+  const route = $('profile-route');
+  const badge = $('profile-type-badge');
+
+  if (!stage) {
+    img.style.display = 'none';
+    ph.style.display  = 'flex';
+    ph.textContent    = 'Stage data not loaded';
+    route.textContent = '—';
+    badge.textContent = '—';
+    return;
+  }
+
+  const src = stageImageSrc(stage.stage_number);
+  img.onload = () => { img.style.display = 'block'; ph.style.display = 'none'; };
+  img.onerror = () => {
+    img.style.display = 'none';
+    ph.style.display  = 'flex';
+    ph.textContent    = `Stage ${stage.stage_number} — image not available`;
+  };
+  img.src = src;
+  img.alt = stage.stage_name || `Stage ${stage.stage_number}`;
+
+  const terrain = stage.is_ttt ? 'TTT' : stage.is_itt ? 'ITT' : (stage.terrain_classification || '—');
+  const routeTxt = `${stage.start_city || '?'} › ${stage.finish_city || '?'} · ${stage.distance_km || '?'}km`;
+  route.textContent = `${stage.date || ''} · ${routeTxt}`;
+  badge.textContent = terrain.toUpperCase();
+}
+
+/* ── Carousel ───────────────────────────────────────────────────────── */
+function renderCarousel() {
+  const pills = $('stage-pills');
+  pills.innerHTML = '';
+  const visible = S.stages.slice(S.carouselOffset, S.carouselOffset + PILLS_VISIBLE);
+
+  visible.forEach((st, i) => {
+    const realIdx = S.carouselOffset + i;
+    const isPast  = st.date < TODAY;
+    const isActive = realIdx === S.activeStageIndex;
+    const pill = document.createElement('button');
+    pill.className = 'stage-pill' + (isActive ? ' active' : '') + (isPast ? ' past' : '');
+    pill.textContent = `S${st.stage_number}`;
+    pill.title = `${st.stage_name} · ${st.date}`;
+    pill.onclick = () => { S.activeStageIndex = realIdx; renderCarousel(); renderProfile(S.stages[S.activeStageIndex]); updateHeader(); };
+    pills.appendChild(pill);
+  });
+
+  renderProfile(S.stages[S.activeStageIndex]);
+}
+
+function shiftCarousel(dir) {
+  S.carouselOffset = Math.max(0, Math.min(S.stages.length - PILLS_VISIBLE, S.carouselOffset + dir));
+  renderCarousel();
+}
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+function updateHeader() {
+  const st = S.stages[S.activeStageIndex];
+  if (!st) { $('h-stage-title').textContent = '—'; $('h-stage-meta').textContent = '—'; return; }
+  $('h-stage-title').textContent = st.stage_name || `Stage ${st.stage_number}`;
+  const terrain = st.is_ttt ? 'TTT' : st.is_itt ? 'ITT' : (st.terrain_classification || '—');
+  $('h-stage-meta').textContent = `${st.date || '—'} · ${st.start_city || '?'} › ${st.finish_city || '?'} · ${st.distance_km || '?'}km · ${terrain}`;
+  $('h-bank').textContent = fmt_price(S.bankBalance);
+
+  const statusEl = $('h-data-status');
+  if (S.mockMode) {
+    statusEl.className = 'value mock';
+    statusEl.textContent = 'MOCK';
+    $('h-data-note').innerHTML = '<span class="mock-badge">MOCK DATA</span>';
+  } else if (S.dataTimestamp) {
+    statusEl.className = 'value ok';
+    statusEl.textContent = S.dataTimestamp.slice(11,19) + 'Z';
+    $('h-data-note').textContent = S.dataTimestamp.slice(0,10);
+  } else {
+    statusEl.className = 'value';
+    statusEl.textContent = 'Not loaded';
+    $('h-data-note').textContent = '';
+  }
+}
+
+/* ── Sliders ─────────────────────────────────────────────────────────── */
+function renderSliders() {
+  const grid = $('sliders-grid');
+  grid.innerHTML = '';
+
+  ['n1','n2','n3'].forEach((key, ki) => {
+    const labels = ['n+1 — next stage','n+2 — forecast','n+3 — forecast'];
+    const div = document.createElement('div');
+    div.className = 'slider-panel';
+    div.innerHTML = `<div class="slider-panel-title">${labels[ki]}</div>` +
+      ['sprint','hilly','hardgc','mixed'].map(type => {
+        const names = { sprint:'Sprint', hilly:'Hilly', hardgc:'Hard GC', mixed:'Mixed' };
+        const v = S.sliders[key][type];
+        return `<div class="slider-row">
+          <label>${names[type]} <span id="lbl-${key}-${type}">${v}%</span></label>
+          <input type="range" min="0" max="100" value="${v}"
+            oninput="updateSlider('${key}','${type}',+this.value);document.getElementById('lbl-${key}-${type}').textContent=this.value+'%'">
+        </div>`;
+      }).join('') +
+      `<div class="sum-display" id="sum-${key}"></div>`;
+    grid.appendChild(div);
+    updateSumDisplay(key);
+  });
+
+  // Expert weights column
+  const wDiv = document.createElement('div');
+  wDiv.className = 'slider-panel';
+  wDiv.id = 'expert-weights-panel';
+  wDiv.innerHTML = `<div class="slider-panel-title">Expert weights</div>` +
+    S.expertSources.map((src, i) => {
+      const v = src.weight;
+      const short = src.name.split('/')[0].trim().split(' ').slice(-2).join(' ');
+      return `<div class="weight-row">
+        <label title="${esc(src.name)}">${esc(short)} <span id="wlbl-${i}">${v.toFixed(1)}</span></label>
+        <input type="range" min="0.5" max="2.0" step="0.1" value="${v}"
+          oninput="updateWeight(${i},+this.value);document.getElementById('wlbl-${i}').textContent=(+this.value).toFixed(1)">
+      </div>`;
+    }).join('');
+  grid.appendChild(wDiv);
+}
+
+function updateSlider(key, type, val) {
+  S.sliders[key][type] = val;
+  updateSumDisplay(key);
+  renderTable(); // tier recomputes
+}
+
+function updateSumDisplay(key) {
+  const sl = S.sliders[key];
+  const sum = sl.sprint + sl.hilly + sl.hardgc + sl.mixed;
+  const el = $(`sum-${key}`);
+  el.textContent = `Sum: ${sum}%`;
+  el.className = 'sum-display ' + (Math.abs(sum - 100) < 1 ? 'ok' : 'bad');
+}
+
+function updateWeight(i, val) {
+  S.expertSources[i].weight = val;
+  saveWeights();
+}
+
+async function saveWeights() {
+  try {
+    await fetch(`${SERVER}/save-weights`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ weights: S.expertSources })
+    });
+  } catch(_) { /* server not running — no-op */ }
+}
+
+/* ── Odds table ──────────────────────────────────────────────────────── */
+function addOddsRow(name='', win='', top3='') {
+  const id = Date.now();
+  S.oddsRows.push({ id, name, win, top3 });
+  renderOdds();
+}
+
+function deleteOddsRow(id) {
+  S.oddsRows = S.oddsRows.filter(r => r.id !== id);
+  renderOdds();
+  renderTable();
+}
+
+function renderOdds() {
+  const tbody = $('odds-tbody');
+  tbody.innerHTML = '';
+  S.oddsRows.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" value="${esc(row.name)}" placeholder="Rider name"
+        onchange="updateOdds(${row.id},'name',this.value)"></td>
+      <td><input type="number" value="${row.win}" min="0" max="100" step="0.1" placeholder="0.0"
+        onchange="updateOdds(${row.id},'win',+this.value);renderTable()"></td>
+      <td><input type="number" value="${row.top3}" min="0" max="100" step="0.1" placeholder="0.0"
+        onchange="updateOdds(${row.id},'top3',+this.value)"></td>
+      <td><button class="del-row-btn" onclick="deleteOddsRow(${row.id})" title="Remove"><i class="ti ti-trash"></i></button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateOdds(id, field, val) {
+  const row = S.oddsRows.find(r => r.id === id);
+  if (row) { row[field] = val; if (field === 'name') renderTable(); }
+}
+
+/* ── Force in / out ──────────────────────────────────────────────────── */
+function toggleForce(riderId, mode) {
+  if (mode === 'in') {
+    if (S.forceIn.has(riderId))  { S.forceIn.delete(riderId); }
+    else { S.forceIn.add(riderId); S.forceOut.delete(riderId); }
+  } else {
+    if (S.forceOut.has(riderId)) { S.forceOut.delete(riderId); }
+    else { S.forceOut.add(riderId); S.forceIn.delete(riderId); }
+  }
+  renderTable();
+}
+
+/* ── Rider table ─────────────────────────────────────────────────────── */
+function buildTypePills() {
+  const container = $('type-pills');
+  container.innerHTML = '';
+  TYPES.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'type-pill' + (S.typeFilter === t ? ' active' : '');
+    btn.textContent = t;
+    btn.onclick = () => { S.typeFilter = t; buildTypePills(); renderTable(); };
+    container.appendChild(btn);
+  });
+}
+
+function renderTable() {
+  const q = S.search.toLowerCase();
+  let riders = S.riders.filter(r => {
+    if (q && !r.name.toLowerCase().includes(q) && !(r.team||'').toLowerCase().includes(q)) return false;
+    if (S.typeFilter !== 'All' && r._type !== S.typeFilter) return false;
+    return true;
+  });
+
+  const tbody = $('rider-tbody');
+  tbody.innerHTML = '';
+
+  riders.forEach(r => {
+    const rid = r.rider_id || r.holdet_id;
+    const tier = computeTier(r);
+    const pw   = pwin(r.name);
+    const isIn  = S.forceIn.has(rid);
+    const isOut = S.forceOut.has(rid);
+    const isElim = r.isEliminated || r.isOut || false;
+    const badgeKey = r._type.replace(/[\s\.]/g, '-').replace(/\//g,'');
+
+    const tr = document.createElement('tr');
+    tr.className = (isIn ? 'force-in' : isOut ? 'force-out' : '');
+    tr.innerHTML = `
+      <td>
+        <div class="rider-name">${esc(r.name)}</div>
+        <div class="rider-team">${esc(r.team||'')}</div>
+      </td>
+      <td><span class="type-badge badge-${badgeKey}">${esc(r._type)}</span></td>
+      <td class="num">${fmt_price(r.price||r.startPrice||0)}</td>
+      <td><span class="${tier === 'A' ? 'tier-a' : 'tier-b'}">${tier}</span></td>
+      <td class="num">${fmt_pct(pw)}</td>
+      <td><button class="force-btn${isIn ? ' active-in' : ''}" onclick="toggleForce('${rid}','in')">IN</button></td>
+      <td><button class="force-btn${isOut ? ' active-out' : ''}" onclick="toggleForce('${rid}','out')">OUT</button></td>
+      <td><span class="${isElim ? 'status-out' : 'status-active'}">${isElim ? 'OUT' : 'Active'}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  $('rider-count').textContent = `${riders.length} riders`;
+}
+
+/* ── Optimizer prompt ────────────────────────────────────────────────── */
+function buildOptimizerPrompt() {
+  const st = S.stages[S.activeStageIndex] || {};
+  const stName = st.stage_name || 'Unknown stage';
+  const stType = st.terrain_classification || (st.is_ttt ? 'TTT' : '—');
+  const stDist = st.distance_km || '—';
+
+  const slStr = key => {
+    const sl = S.sliders[key];
+    return `Sprint ${sl.sprint}% / Hilly ${sl.hilly}% / Hard GC ${sl.hardgc}% / Mixed ${sl.mixed}%`;
+  };
+
+  const oddsStr = S.oddsRows.length
+    ? S.oddsRows.filter(r => r.name).map(r => `  ${r.name}: Win ${r.win}% / Top3 ${r.top3}%`).join('\n')
+    : '  (none entered)';
+
+  const forceInStr  = S.forceIn.size
+    ? [...S.forceIn].map(id => { const r = S.riders.find(x => (x.rider_id||x.holdet_id) == id); return r ? r.name : id; }).join(', ')
+    : 'none';
+  const forceOutStr = S.forceOut.size
+    ? [...S.forceOut].map(id => { const r = S.riders.find(x => (x.rider_id||x.holdet_id) == id); return r ? r.name : id; }).join(', ')
+    : 'none';
+
+  const sourcesStr = S.expertSources.map(s => `  ${s.name}: ×${s.weight.toFixed(1)}`).join('\n');
+
+  return `# Holdet v3 — Optimizer request
+
+## Stage
+${stName} · ${stType} · ${stDist}km
+
+## Stage type beliefs (n+1 / n+2 / n+3)
+n+1: ${slStr('n1')}
+n+2: ${slStr('n2')}
+n+3: ${slStr('n3')}
+
+## Bookmaker odds
+${oddsStr}
+
+## Force constraints
+Force in:  ${forceInStr}
+Force out: ${forceOutStr}
+
+## Expert source weights
+${sourcesStr}
+
+## Intel notes
+${S.intelNotes || '(none)'}
+
+## Budget
+50,000,000 kr · 8 riders · max 2 per real-world team · 1% buy fee
+
+## Instructions
+1. Gather current bookmaker odds and expert intel (per source weights above).
+2. Build Tier-A probability distributions for win and top-3 per rider.
+3. Generate 3–5 structurally distinct candidate teams with descriptive labels (e.g. "All-in sprint", "GC hedge + sprinter", "Depth play").
+4. For each team: show CDF of total points, forward transfer pressure for n+2 and n+3, captain recommendation with right-tail EV rationale (framing doc Section 4.3).
+5. Apply force-in / force-out constraints strictly.
+6. Apply stage depth bonus table: 0/4k/8k/15k/35k/65k/120k/220k/400k for 0–8 riders in top-15.
+`;
+}
+
+function runOptimizer() {
+  const prompt = buildOptimizerPrompt();
+  const outEl = $('optimizer-output');
+  outEl.className = '';
+
+  if (typeof window.sendPrompt === 'function') {
+    outEl.textContent = 'Prompt sent to Claude…';
+    window.sendPrompt(prompt);
+  } else {
+    outEl.textContent = 'Copy the prompt below and paste it to Claude chat.';
+    const area = $('prompt-copy-area');
+    area.style.display = 'block';
+    $('prompt-text').value = prompt;
+  }
+}
+
+function copyPrompt() {
+  const txt = $('prompt-text').value;
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = event.currentTarget;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.innerHTML = '<i class="ti ti-copy"></i> Copy to clipboard'; }, 1500);
+  });
+}
+
+/* ── Refresh ─────────────────────────────────────────────────────────── */
+async function doRefresh() {
+  const btn = $('refresh-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-refresh spinner"></i> Refreshing…';
+  try {
+    const res = await fetch(`${SERVER}/refresh`, { method: 'POST' });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      S.dataTimestamp = data.timestamp;
+      S.mockMode = false;
+      await loadSnapshot();
+      updateHeader();
+    } else {
+      alert('Refresh failed: ' + (data.message || 'unknown error'));
+    }
+  } catch(e) {
+    alert('Server not running. Start with: python3 claude/engine/server.py\n\n' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-refresh"></i> Refresh';
+  }
+}
+
+/* ── Data loading ────────────────────────────────────────────────────── */
+async function loadSnapshot() {
+  try {
+    const res = await fetch(`${SERVER}/snapshot`);
+    if (!res.ok) throw new Error('no snapshot');
+    const data = await res.json();
+    S.riders = (data.riders || []).map(r => ({ ...r, _type: deriveType(r) }));
+    S.dataTimestamp = data.timestamp || null;
+    S.mockMode = false;
+  } catch(_) {
+    await loadFallbackRiders();
+  }
+  renderTable();
+}
+
+async function loadFallbackRiders() {
+  // Try to load riders from relative path (when served by server.py)
+  const paths = [
+    `${SERVER}/files/shared/data/riders/riders_giro2026_v1.json`,
+    '../../shared/data/riders/riders_giro2026_v1.json',
+  ];
+  for (const p of paths) {
+    try {
+      const res = await fetch(p);
+      if (!res.ok) continue;
+      const data = await res.json();
+      S.riders = (data.riders || []).map(r => ({ ...r, _type: deriveType(r) }));
+      S.mockMode = true;
+      return;
+    } catch(_) {}
+  }
+  // Final fallback: mock data
+  S.riders = [
+    { rider_id:'mock_1', name:'Mads Pedersen', team:'Lidl-Trek', price:10500000, startPrice:10500000, terrain_affinity:{sprint:.88,climbing:.2,time_trial:.5,mixed:.4}, status:'active', isEliminated:false },
+    { rider_id:'mock_2', name:'Tadej Pogačar', team:'UAE Team Emirates - XRG', price:14000000, startPrice:14000000, terrain_affinity:{sprint:.5,climbing:.95,time_trial:.85,mixed:.7}, status:'active', isEliminated:false },
+    { rider_id:'mock_3', name:'Primož Roglič', team:'Red Bull - Bora - Hansgrohe', price:12000000, startPrice:12000000, terrain_affinity:{sprint:.35,climbing:.88,time_trial:.9,mixed:.65}, status:'active', isEliminated:false },
+  ].map(r => ({ ...r, _type: deriveType(r) }));
+  S.mockMode = true;
+}
+
+async function loadStages() {
+  const paths = [
+    `${SERVER}/files/shared/data/stages/stages_giro2026.json`,
+    '../../shared/data/stages/stages_giro2026.json',
+  ];
+  for (const p of paths) {
+    try {
+      const res = await fetch(p);
+      if (!res.ok) continue;
+      const data = await res.json();
+      S.stages = data.stages || [];
+      return;
+    } catch(_) {}
+  }
+  // Fallback: minimal stage list
+  S.stages = [{ stage_number:1, stage_name:'Stage 1 — Nessebar › Burgas', date:'2026-05-08', distance_km:147, terrain_classification:'flat', start_city:'Nessebar', finish_city:'Burgas', elevation_gain_m:800 }];
+}
+
+/* ── Init ────────────────────────────────────────────────────────────── */
+async function init() {
+  await loadStages();
+
+  // Set active stage to first upcoming (or last)
+  const upcomingIdx = S.stages.findIndex(st => st.date >= TODAY);
+  S.activeStageIndex = upcomingIdx >= 0 ? upcomingIdx : Math.max(0, S.stages.length - 1);
+  S.carouselOffset   = Math.max(0, S.activeStageIndex - 1);
+
+  buildTypePills();
+  renderSliders();
+  renderOdds();
+  renderCarousel();
+  updateHeader();
+
+  await loadSnapshot();
+  updateHeader();
+}
+
+init();
+</script>
 </body>
 </html>

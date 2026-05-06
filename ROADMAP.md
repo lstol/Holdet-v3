@@ -2,7 +2,7 @@
 
 **Race:** Giro d'Italia 2026
 **Stage 1:** May 9 (TTT, Durazzo → Tirana, 13.7 km)
-**Last updated:** Session 2d (2026-05-06)
+**Last updated:** Session 2e (2026-05-06)
 
 ---
 
@@ -19,7 +19,10 @@
 | Repo structure | ✅ Clean — claude/ chatgpt/ shared/ layout, no duplicates |
 | expert_sources.yaml | ✅ Created — `claude/engine/expert_sources.yaml` (Claude-internal only) |
 | chatgpt/ stub | ✅ Created — README only, ChatGPT scaffolds its own structure |
-| Dashboard stub | ✅ `claude/dashboard/claude.html` created — needs wiring to live data |
+| Dashboard | ✅ `claude/dashboard/claude.html` — full expert dashboard built (Session 3) |
+| server.py | ✅ `claude/engine/server.py` — local server stub with /refresh, /save-weights, /snapshot |
+| claude/output/ | ✅ Created — per-stage Claude optimization output (never written to shared/) |
+| Stage images | ✅ 21 images at `shared/data/stage_images/stage-{N}.jpg`, wired to dashboard |
 | sessions/notes/decisions | ✅ Under `claude/` — Claude-specific, not shared |
 | decisions_log.md | ✅ `claude/decisions/decisions_log.md` — decisions from Sessions 1–2 |
 | Optimizer | ❌ Not started — stub at `claude/engine/optimizer.py` |
@@ -64,6 +67,8 @@
 - [ ] Build `claude/engine/optimizer.py` — probability construction + team generation
 - [ ] CDF output rendering in dashboard Output tab
 - [ ] Forward transfer pressure display (n+2, n+3) in dashboard
+- [ ] Wire /refresh endpoint to live fetch_riders.py run (test end-to-end)
+- [ ] chatgpt/dashboard/chatgpt.html — post-ChatGPT onboarding
 - [ ] compare.html dashboard — Claude vs ChatGPT comparison view (post-ChatGPT onboarding)
 - [ ] Post-stage data refresh (results, jerseys, GC standings)
 - [ ] Captain EV display alongside candidate teams
@@ -80,4 +85,6 @@
 | Session 2b | 2026-05-06 | Fix: expert_sources.yaml moved to claude/engine/ — intelligence is never shared between systems |
 | Session 2c | 2026-05-06 | Clean repo: remove duplicates, create chatgpt/ stub, claude/dashboard/claude.html stub |
 | Session 2d | 2026-05-06 | Move sessions/notes/decisions under claude/; create decisions_log.md |
+| Session 3  | 2026-05-06 | Build claude/dashboard/claude.html (full expert dashboard) + server.py stub |
+| Session 2e | 2026-05-06 | claude/output/ created; stage images wired to dashboard; framing doc updated |
 

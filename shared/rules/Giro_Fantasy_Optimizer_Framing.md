@@ -335,14 +335,17 @@ holdet-v3/
 ├── claude/
 │   ├── engine/
 │   ├── dashboard/
+│   ├── output/          ← Claude's per-stage optimization output
 │   ├── sessions/
 │   ├── notes/
 │   └── decisions/
 ├── chatgpt/
+│   └── output/          ← ChatGPT's per-stage optimization output
 └── shared/
     ├── data/
     │   ├── riders/
     │   ├── stages/
+    │   ├── stage_images/
     │   └── snapshots/
     └── rules/
 ```
@@ -355,7 +358,8 @@ Each system:
 - Reads rider universe and prices from `shared/data/riders/`
 - Reads stage metadata from `shared/data/stages/`
 - Reads the frozen stage snapshot from `shared/data/snapshots/stage_N_holdet.json`
-- Writes its own output to `shared/data/snapshots/stage_N_claude.json` or `stage_N_chatgpt.json`
+
+Each system writes its optimization output to its own directory (`claude/output/` and `chatgpt/output/`). Neither output goes into `shared/`. The user compares outputs directly from each system's own directory.
 
 The snapshot schema is defined in Section 12.
 

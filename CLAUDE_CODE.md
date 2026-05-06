@@ -30,6 +30,8 @@ holdet-v3/
 │   │   └── API_NOTES.md               ← Holdet.dk API reference (Claude-internal)
 │   ├── dashboard/
 │   │   └── claude.html                ← Claude's decision dashboard
+│   ├── output/                        ← per-stage optimization output (Claude only)
+│   │   └── stage_N_claude.json
 │   ├── sessions/                      ← session logs, one file per Claude Code session
 │   ├── notes/                         ← Claude working notes, intel summaries, stage analysis
 │   └── decisions/
@@ -141,6 +143,7 @@ The commit message must start with `session N:` so the log is easy to scan.
 - The optimizer never uses historical rider attributes — odds + expert intel only
 - Captain is proposed by the optimizer but always user-overrideable
 - Claude never creates or modifies files under `chatgpt/` — that directory belongs to ChatGPT/Codex
+- Claude output is always written to `claude/output/` — never to `shared/`
 
 ---
 
