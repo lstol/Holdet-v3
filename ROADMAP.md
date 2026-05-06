@@ -2,7 +2,7 @@
 
 **Race:** Giro d'Italia 2026
 **Stage 1:** May 9 (TTT, Durazzo → Tirana, 13.7 km)
-**Last updated:** Session 2f (2026-05-06)
+**Last updated:** ChatGPT dashboard preservation (2026-05-06)
 
 ---
 
@@ -18,7 +18,8 @@
 | Rider universe | ✅ 199 riders with holdet_ids — `shared/data/riders/` |
 | Repo structure | ✅ Clean — claude/ chatgpt/ shared/ layout, no duplicates |
 | expert_sources.yaml | ✅ Created — `claude/engine/expert_sources.yaml` (Claude-internal only) |
-| chatgpt/ stub | ✅ Created — README only, ChatGPT scaffolds its own structure |
+| chatgpt/ scaffold | ✅ Created — explicit ChatGPT optimizer workspace under `chatgpt/src/` |
+| chatgpt/dashboard | ✅ Created — static runnable dashboard + preserved React component source |
 | Dashboard | ✅ `claude/dashboard/claude.html` — full expert dashboard built (Session 3) |
 | server.py | ✅ `claude/engine/server.py` — local server stub with /refresh, /save-weights, /snapshot |
 | claude/output/ | ✅ Created — per-stage Claude optimization output (never written to shared/) |
@@ -43,8 +44,9 @@
 - [ ] Run pre-Stage 1 data fetch and commit `shared/data/snapshots/stage_1_holdet.json`
 - [ ] Claude gathers odds + expert intel for Stage 1
 - [ ] Produce `stage_1_snapshot.json` for ChatGPT handoff
-- [ ] ChatGPT onboarding: draft CODEX.md standing instructions
-- [ ] Define stage_N_chatgpt.json output schema
+- [x] ChatGPT onboarding: scaffold independent optimizer workspace and session log
+- [x] Define initial `stage_N_chatgpt.json` output writer scaffold
+- [ ] Replace ChatGPT dashboard sample data with `chatgpt/output/stage_N_chatgpt.json`
 
 ---
 
@@ -74,6 +76,7 @@
 - [ ] Post-stage data refresh (results, jerseys, GC standings)
 - [ ] Captain EV display alongside candidate teams
 - [ ] Depth bonus table display in Stage controls tab
+- [ ] Decide whether to introduce a React/shadcn/Tailwind/Recharts frontend stack for `chatgpt/dashboard/react/`
 
 ---
 
@@ -89,4 +92,5 @@
 | Session 3  | 2026-05-06 | Build claude/dashboard/claude.html (full expert dashboard) + server.py stub |
 | Session 2e | 2026-05-06 | claude/output/ created; stage images wired to dashboard; framing doc updated |
 | Session 2f | 2026-05-06 | giro_2026/ subfolder structure established; image display fixed; docs updated |
-
+| ChatGPT scaffold | 2026-05-06 | ChatGPT optimizer scaffold, tests, output writer, and static dashboard created |
+| ChatGPT dashboard preservation | 2026-05-06 | Proposed React expert dashboard preserved under `chatgpt/dashboard/react/` |
