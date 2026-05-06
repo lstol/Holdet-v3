@@ -9,9 +9,9 @@
 
 Holdet v3 is a decision-support engine for elite-level play in Holdet.dk's Giro d'Italia 2026 fantasy competition. It is a fantasy optimization engine, not a cycling performance predictor.
 
-Design authority: `rules/Giro_Fantasy_Optimizer_Framing.md` — read this before making any architecture decisions.
+Design authority: `shared/rules/Giro_Fantasy_Optimizer_Framing.md` — read this before making any architecture decisions.
 
-Scoring rules and game mechanics: `rules/02_rules_payoff.md`
+Scoring rules and game mechanics: `shared/rules/02_rules_payoff.md`
 
 ---
 
@@ -21,65 +21,63 @@ Scoring rules and game mechanics: `rules/02_rules_payoff.md`
 holdet-v3/
 ├── ROADMAP.md                         ← living project roadmap, updated every session
 ├── CLAUDE_CODE.md                     ← this file
-├── rules/
-│   ├── 02_rules_payoff.md
-│   ├── game_strategy.md
-│   └── Giro_Fantasy_Optimizer_Framing.md
-├── engine/
-│   ├── fetch_riders.py                ← working Holdet.dk scraper
-│   ├── capture_cookie.py              ← Playwright cookie capture
-│   └── optimizer.py                   ← to be built
-├── data/
-│   ├── API_NOTES.md
-│   ├── riders/                        ← 199 riders with holdet_ids
-│   ├── stages/                        ← stage roadbook, sprint/KOM positions
-│   ├── intelligence/
-│   │   └── expert_sources.yaml        ← expert source weights (user-adjustable)
-│   └── snapshots/                     ← stage_N_holdet.json, stage_N_snapshot.json
-├── dashboard/
-│   └── index.html                     ← decision dashboard
+├── claude/                            ← Claude's engine and dashboard (Claude only)
+│   ├── engine/
+│   │   ├── fetch_riders.py            ← working Holdet.dk scraper
+│   │   ├── capture_cookie.py          ← Playwright cookie capture
+│   │   └── optimizer.py               ← to be built
+│   └── dashboard/
+│       └── claude.html                ← Claude's decision dashboard
+├── chatgpt/                           ← ChatGPT/Codex engine and dashboard (ChatGPT only)
+│   └── (ChatGPT scaffolds this independently — Claude never touches chatgpt/)
+├── shared/                            ← shared data contract (both systems read and write)
+│   ├── data/
+│   │   ├── API_NOTES.md
+│   │   ├── riders/                    ← 199 riders with holdet_ids
+│   │   ├── stages/                    ← stage roadbook, sprint/KOM positions
+│   │   ├── intelligence/
+│   │   │   └── expert_sources.yaml    ← expert source weights (user-adjustable)
+│   │   └── snapshots/                 ← stage_N_holdet.json, stage_N_claude.json, stage_N_chatgpt.json
+│   └── rules/
+│       ├── 02_rules_payoff.md
+│       ├── game_strategy.md
+│       └── Giro_Fantasy_Optimizer_Framing.md
 └── sessions/
     └── YYYY-MM-DD_N.md                ← one file per session
 ```
+
+**Architecture notes:**
+- `chatgpt/` is ChatGPT/Codex's directory — Claude never creates or modifies files there
+- `shared/` is the data contract between both systems — schema defined in framing doc Section 12
+- Expert source weights are always read from `shared/data/intelligence/expert_sources.yaml` — never hardcoded
 
 If any of these directories or files are missing, create them before doing anything else.
 
 ---
 
-## Session 2 — immediate tasks
+## Session 2 — completed (2026-05-06)
 
-These are the first things to do in the next Claude Code session:
+- ✅ Restructured repo into `claude/` / `chatgpt/` / `shared/` layout
+- ✅ Created `shared/data/intelligence/expert_sources.yaml`
+- ✅ Created `claude/engine/optimizer.py` stub
+- ✅ Updated framing doc with Section 13 (System Architecture)
+- ✅ Updated ROADMAP.md and CLAUDE_CODE.md to reflect new paths
 
-1. **Scaffold missing directories**
-   Create `sessions/`, `data/snapshots/`, `dashboard/` if not present.
+## Session 3 — immediate tasks
 
-2. **Create `data/intelligence/expert_sources.yaml`**
-   ```yaml
-   sources:
-     - name: "Emil Axelgaard / TV2 Sport"
-       weight: 1.5
-     - name: "The Inner Ring"
-       weight: 1.2
-     - name: "VeloNews"
-       weight: 1.0
-     - name: "CyclingNews"
-       weight: 1.0
-     - name: "ProCyclingStats"
-       weight: 0.8
-     - name: "FirstCycling"
-       weight: 0.8
-   ```
-
-3. **Wire dashboard to live data**
-   - Replace mock rider array in `dashboard/index.html` with a fetch from `data/snapshots/stage_N_holdet.json`
-   - Add a minimal local server (`engine/server.py`) with one endpoint:
+1. **Wire dashboard to live data**
+   - Replace mock rider array in `claude/dashboard/claude.html` with a fetch from `shared/data/snapshots/stage_N_holdet.json`
+   - Add a minimal local server (`claude/engine/server.py`) with one endpoint:
      - `POST /refresh` → runs `fetch_riders.py`, returns JSON
    - Refresh button in dashboard calls this endpoint
 
-4. **Verify `fetch_riders.py` runs clean**
-   Run it, confirm output shape matches the snapshot schema in framing doc Section 12.
+2. **Verify `fetch_riders.py` runs clean**
+   Run `python3 claude/engine/fetch_riders.py`, confirm output shape matches the snapshot schema in framing doc Section 12.
 
-5. **Follow session protocol** (see below)
+3. **ChatGPT onboarding**
+   Draft CODEX.md standing instructions for ChatGPT. Define stage_N_chatgpt.json output schema.
+
+4. **Follow session protocol** (see below)
 
 ---
 
@@ -130,11 +128,12 @@ The commit message must start with `session N:` so the log is easy to scan.
 ## Key rules (never violate these)
 
 - Budget: 50,000,000 kr | Team: exactly 8 riders | Max 2 per real-world team
-- Expert source weights are always read from `expert_sources.yaml` — never hardcoded
+- Expert source weights are always read from `shared/data/intelligence/expert_sources.yaml` — never hardcoded
 - Stage-type sliders are user-controlled — AI suggests, user overrides
 - `stage_N_snapshot.json` contains only the fields specified in framing doc Section 12
 - The optimizer never uses historical rider attributes — odds + expert intel only
 - Captain is proposed by the optimizer but always user-overrideable
+- Claude never creates or modifies files under `chatgpt/` — that directory belongs to ChatGPT/Codex
 
 ---
 
