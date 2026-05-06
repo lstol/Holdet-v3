@@ -26,18 +26,17 @@ holdet-v3/
 │   │   ├── fetch_riders.py            ← working Holdet.dk scraper
 │   │   ├── capture_cookie.py          ← Playwright cookie capture
 │   │   ├── optimizer.py               ← to be built
-│   │   └── expert_sources.yaml        ← Claude's expert source weights (Claude-internal only)
+│   │   ├── expert_sources.yaml        ← Claude's expert source weights (Claude-internal only)
+│   │   └── API_NOTES.md               ← Holdet.dk API reference (Claude-internal)
 │   └── dashboard/
 │       └── claude.html                ← Claude's decision dashboard
-├── chatgpt/                           ← ChatGPT/Codex engine and dashboard (ChatGPT only)
-│   └── (ChatGPT scaffolds this independently — Claude never touches chatgpt/)
+├── chatgpt/                           ← ChatGPT/Codex domain — Claude never touches this
 ├── shared/                            ← Holdet.dk data and snapshots only (both systems read)
 │   ├── data/
-│   │   ├── API_NOTES.md
 │   │   ├── riders/                    ← 199 riders with holdet_ids
 │   │   ├── stages/                    ← stage roadbook, sprint/KOM positions
 │   │   └── snapshots/                 ← stage_N_holdet.json, stage_N_claude.json, stage_N_chatgpt.json
-│   └── rules/
+│   └── rules/                         ← single source of truth for all rules and framing docs
 │       ├── 02_rules_payoff.md
 │       ├── game_strategy.md
 │       └── Giro_Fantasy_Optimizer_Framing.md
@@ -47,20 +46,24 @@ holdet-v3/
 
 **Architecture notes:**
 - `chatgpt/` is ChatGPT/Codex's directory — Claude never creates or modifies files there
-- `shared/` contains Holdet.dk data and snapshots only — no intelligence configuration, no source weights, no odds data. Schema defined in framing doc Section 12
+- `shared/rules/` is the single source of truth for all rules and framing docs — no copies elsewhere
+- `shared/` contains Holdet.dk data and snapshots only — no intelligence config, no source weights, no odds data. Schema defined in framing doc Section 12
 - Expert source weights are at `claude/engine/expert_sources.yaml` — Claude-internal, never placed in shared/
 
 If any of these directories or files are missing, create them before doing anything else.
 
 ---
 
-## Session 2 — completed (2026-05-06)
+## Sessions 2 / 2b / 2c — completed (2026-05-06)
 
 - ✅ Restructured repo into `claude/` / `chatgpt/` / `shared/` layout
 - ✅ Created `claude/engine/expert_sources.yaml` (intelligence is Claude-internal, not shared)
 - ✅ Created `claude/engine/optimizer.py` stub
+- ✅ Created `claude/dashboard/claude.html` stub
+- ✅ Created `chatgpt/` directory with README (ChatGPT scaffolds its own structure)
+- ✅ Removed duplicates and extra directories from `shared/`
 - ✅ Updated framing doc with Section 13 (System Architecture)
-- ✅ Updated ROADMAP.md and CLAUDE_CODE.md to reflect new paths
+- ✅ Updated ROADMAP.md and CLAUDE_CODE.md to reflect clean structure
 
 ## Session 3 — immediate tasks
 
