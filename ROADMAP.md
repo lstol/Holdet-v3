@@ -2,7 +2,7 @@
 
 **Race:** Giro d'Italia 2026
 **Stage 1:** May 9 (TTT, Durazzo → Tirana, 13.7 km)
-**Last updated:** ChatGPT dashboard preservation (2026-05-06)
+**Last updated:** ChatGPT static cockpit (2026-05-06)
 
 ---
 
@@ -19,7 +19,7 @@
 | Repo structure | ✅ Clean — claude/ chatgpt/ shared/ layout, no duplicates |
 | expert_sources.yaml | ✅ Created — `claude/engine/expert_sources.yaml` (Claude-internal only) |
 | chatgpt/ scaffold | ✅ Created — explicit ChatGPT optimizer workspace under `chatgpt/src/` |
-| chatgpt/dashboard | ✅ Created — static runnable dashboard + preserved React component source |
+| chatgpt/dashboard | ✅ Created — dark static cockpit + preserved React component source |
 | Dashboard | ✅ `claude/dashboard/claude.html` — full expert dashboard built (Session 3) |
 | server.py | ✅ `claude/engine/server.py` — local server stub with /refresh, /save-weights, /snapshot |
 | claude/output/ | ✅ Created — per-stage Claude optimization output (never written to shared/) |
@@ -46,7 +46,8 @@
 - [ ] Produce `stage_1_snapshot.json` for ChatGPT handoff
 - [x] ChatGPT onboarding: scaffold independent optimizer workspace and session log
 - [x] Define initial `stage_N_chatgpt.json` output writer scaffold
-- [ ] Replace ChatGPT dashboard sample data with `chatgpt/output/stage_N_chatgpt.json`
+- [x] Create local static ChatGPT expert cockpit with all core sections visible
+- [ ] Replace ChatGPT dashboard mock data with `chatgpt/output/stage_N_chatgpt.json`
 
 ---
 
@@ -94,3 +95,4 @@
 | Session 2f | 2026-05-06 | giro_2026/ subfolder structure established; image display fixed; docs updated |
 | ChatGPT scaffold | 2026-05-06 | ChatGPT optimizer scaffold, tests, output writer, and static dashboard created |
 | ChatGPT dashboard preservation | 2026-05-06 | Proposed React expert dashboard preserved under `chatgpt/dashboard/react/` |
+| ChatGPT static cockpit | 2026-05-06 | Rebuilt `chatgpt/dashboard/index.html` as a no-build dark cockpit with all required sections visible |

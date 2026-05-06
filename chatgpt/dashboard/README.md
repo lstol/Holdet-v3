@@ -1,9 +1,19 @@
 # ChatGPT Dashboard
 
-Static expert-audit dashboard for the ChatGPT-side Holdet v3 optimizer.
+Static expert cockpit dashboard for the ChatGPT-side Holdet v3 optimizer.
 
-Open `chatgpt/dashboard/index.html` in a browser. It is intentionally dependency-free
-for fast iteration before the project commits to a frontend stack.
+Open `chatgpt/dashboard/index.html` in a browser. It is intentionally dependency-free:
+single HTML file, no React, no build step, no npm dependencies, no backend.
+
+Current runnable dashboard:
+
+- Dark Bloomberg/terminal-style one-screen cockpit.
+- Laptop/desktop-first layout optimized for 1440p+.
+- Stage image carousel for stages 1-21.
+- Audit/rules validation, candidate teams, payoff distribution, captain EV,
+  selected-team table, forward pressure, decision notes, and lock readiness all
+  visible at once.
+- Uses local image assets from `../../shared/data/stage_images/giro_2026/stage-N.jpg`.
 
 The pasted React source is also preserved at:
 
@@ -17,6 +27,5 @@ now.
 Current status:
 
 - Pre-snapshot scaffold using sample data.
-- Mirrors the audit, riders, teams, captain, forward-pressure, and output-contract
-  surface from the proposed React component.
+- Mirrors the approved expert cockpit design without requiring a frontend stack.
 - Keeps all dashboard work under `chatgpt/`.
