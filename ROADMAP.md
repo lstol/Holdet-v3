@@ -2,7 +2,7 @@
 
 **Race:** Giro d'Italia 2026
 **Stage 1:** May 9 (TTT, Durazzo → Tirana, 13.7 km)
-**Last updated:** Session 2 (2026-05-06)
+**Last updated:** Session 2b (2026-05-06)
 
 ---
 
@@ -17,7 +17,7 @@
 | capture_cookie.py | ✅ Carried from v2 — `claude/engine/capture_cookie.py` |
 | Rider universe | ✅ 199 riders with holdet_ids — `shared/data/riders/` |
 | Repo structure | ✅ Restructured — claude/ chatgpt/ shared/ layout |
-| expert_sources.yaml | ✅ Created — `shared/data/intelligence/expert_sources.yaml` |
+| expert_sources.yaml | ✅ Created — `claude/engine/expert_sources.yaml` (Claude-internal only) |
 | Dashboard | ⏳ Shell designed, needs wiring |
 | Optimizer | ❌ Not started — stub at `claude/engine/optimizer.py` |
 | Snapshot schema | ✅ Specified in framing doc Section 12 |
@@ -28,7 +28,7 @@
 ## Immediate — before Stage 1 (May 9)
 
 - [x] Scaffold repo structure into claude/ chatgpt/ shared/ layout (Session 2)
-- [x] Create `shared/data/intelligence/expert_sources.yaml` with default weights (Session 2)
+- [x] Create `claude/engine/expert_sources.yaml` with default weights (Session 2b — intelligence is Claude-internal, never in shared/)
 - [ ] Wire dashboard to read `stage_N_holdet.json` (replace mock data)
 - [ ] Add local dev server endpoint so Refresh button calls `fetch_riders.py`
 - [ ] Verify `claude/engine/fetch_riders.py` runs clean against live Holdet.dk
@@ -73,4 +73,5 @@
 |---------|------|---------|
 | Session 1 | Pre-May 9 | Project setup, framing doc locked, dashboard shell designed |
 | Session 2 | 2026-05-06 | Repo restructured into claude/ chatgpt/ shared/ layout; framing doc Section 13 added |
+| Session 2b | 2026-05-06 | Fix: expert_sources.yaml moved to claude/engine/ — intelligence is never shared between systems |
 

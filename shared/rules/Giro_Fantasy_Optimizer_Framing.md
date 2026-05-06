@@ -332,19 +332,17 @@ Both AI systems operate within a single shared repository. Each system owns its 
 holdet-v3/
 ├── claude/          ← Claude's engine and dashboard (Claude only)
 ├── chatgpt/         ← ChatGPT/Codex engine and dashboard (ChatGPT only)
-└── shared/          ← shared data contract (both systems read and write)
+└── shared/          ← Holdet.dk data and snapshots only (both systems read)
     ├── data/
     │   ├── riders/
     │   ├── stages/
-    │   ├── intelligence/
-    │   │   └── expert_sources.yaml
     │   └── snapshots/
     └── rules/
 ```
 
 ### Shared data contract
 
-The `shared/` directory is the only point of contact between the two systems.
+`shared/` contains only the fields specified in Section 12: rider universe, prices, isOut status, post-stage results, jersey holders, GC standings, team composition, bank balance, and stage metadata. Intelligence configuration — source weights, odds inputs, expert notes — is each system's own internal concern and is never placed in shared/.
 
 Each system:
 - Reads rider universe and prices from `shared/data/riders/`

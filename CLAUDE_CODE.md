@@ -25,18 +25,17 @@ holdet-v3/
 │   ├── engine/
 │   │   ├── fetch_riders.py            ← working Holdet.dk scraper
 │   │   ├── capture_cookie.py          ← Playwright cookie capture
-│   │   └── optimizer.py               ← to be built
+│   │   ├── optimizer.py               ← to be built
+│   │   └── expert_sources.yaml        ← Claude's expert source weights (Claude-internal only)
 │   └── dashboard/
 │       └── claude.html                ← Claude's decision dashboard
 ├── chatgpt/                           ← ChatGPT/Codex engine and dashboard (ChatGPT only)
 │   └── (ChatGPT scaffolds this independently — Claude never touches chatgpt/)
-├── shared/                            ← shared data contract (both systems read and write)
+├── shared/                            ← Holdet.dk data and snapshots only (both systems read)
 │   ├── data/
 │   │   ├── API_NOTES.md
 │   │   ├── riders/                    ← 199 riders with holdet_ids
 │   │   ├── stages/                    ← stage roadbook, sprint/KOM positions
-│   │   ├── intelligence/
-│   │   │   └── expert_sources.yaml    ← expert source weights (user-adjustable)
 │   │   └── snapshots/                 ← stage_N_holdet.json, stage_N_claude.json, stage_N_chatgpt.json
 │   └── rules/
 │       ├── 02_rules_payoff.md
@@ -48,8 +47,8 @@ holdet-v3/
 
 **Architecture notes:**
 - `chatgpt/` is ChatGPT/Codex's directory — Claude never creates or modifies files there
-- `shared/` is the data contract between both systems — schema defined in framing doc Section 12
-- Expert source weights are always read from `shared/data/intelligence/expert_sources.yaml` — never hardcoded
+- `shared/` contains Holdet.dk data and snapshots only — no intelligence configuration, no source weights, no odds data. Schema defined in framing doc Section 12
+- Expert source weights are at `claude/engine/expert_sources.yaml` — Claude-internal, never placed in shared/
 
 If any of these directories or files are missing, create them before doing anything else.
 
@@ -58,7 +57,7 @@ If any of these directories or files are missing, create them before doing anyth
 ## Session 2 — completed (2026-05-06)
 
 - ✅ Restructured repo into `claude/` / `chatgpt/` / `shared/` layout
-- ✅ Created `shared/data/intelligence/expert_sources.yaml`
+- ✅ Created `claude/engine/expert_sources.yaml` (intelligence is Claude-internal, not shared)
 - ✅ Created `claude/engine/optimizer.py` stub
 - ✅ Updated framing doc with Section 13 (System Architecture)
 - ✅ Updated ROADMAP.md and CLAUDE_CODE.md to reflect new paths
@@ -128,7 +127,7 @@ The commit message must start with `session N:` so the log is easy to scan.
 ## Key rules (never violate these)
 
 - Budget: 50,000,000 kr | Team: exactly 8 riders | Max 2 per real-world team
-- Expert source weights are always read from `shared/data/intelligence/expert_sources.yaml` — never hardcoded
+- Expert source weights are always read from `claude/engine/expert_sources.yaml` — never hardcoded, never placed in shared/
 - Stage-type sliders are user-controlled — AI suggests, user overrides
 - `stage_N_snapshot.json` contains only the fields specified in framing doc Section 12
 - The optimizer never uses historical rider attributes — odds + expert intel only
