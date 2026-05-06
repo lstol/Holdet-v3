@@ -552,9 +552,9 @@ function pwin(name) {
 }
 
 /* ── Stage profile image ─────────────────────────────────────────────── */
-// Images: shared/data/stage_images/stage-{N}.jpg  (served at /stage-images/stage-{N}.jpg)
+// Images: shared/data/stage_images/stage-{N}.jpg
 function stageImageSrc(stageNumber) {
-  return `${SERVER}/stage-images/stage-${stageNumber}.jpg`;
+  return `../../shared/data/stage_images/stage-${stageNumber}.jpg`;
 }
 
 function renderProfile(stage) {
@@ -939,8 +939,8 @@ async function loadSnapshot() {
 async function loadFallbackRiders() {
   // Try to load riders from relative path (when served by server.py)
   const paths = [
-    `${SERVER}/files/shared/data/riders/riders_giro2026_v1.json`,
     '../../shared/data/riders/riders_giro2026_v1.json',
+    `${SERVER}/files/shared/data/riders/riders_giro2026_v1.json`,
   ];
   for (const p of paths) {
     try {
@@ -963,8 +963,8 @@ async function loadFallbackRiders() {
 
 async function loadStages() {
   const paths = [
-    `${SERVER}/files/shared/data/stages/stages_giro2026.json`,
     '../../shared/data/stages/stages_giro2026.json',
+    `${SERVER}/files/shared/data/stages/stages_giro2026.json`,
   ];
   for (const p of paths) {
     try {
