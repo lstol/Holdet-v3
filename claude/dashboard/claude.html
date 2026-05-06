@@ -213,7 +213,7 @@ input[type=range]::-webkit-slider-thumb {
 .intel-panel-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-2); margin-bottom: 10px; }
 
 /* Odds table */
-#odds-table-wrap { overflow-x: auto; }
+#odds-table-wrap { overflow-x: auto; max-height: 380px; overflow-y: auto; }
 #odds-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 #odds-table th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-3); padding: 4px 6px; text-align: left; border-bottom: 1px solid var(--color-border); }
 #odds-table td { padding: 4px 6px; border-bottom: 1px solid rgba(43,48,88,.5); vertical-align: middle; }
@@ -390,15 +390,11 @@ input[type=range]::-webkit-slider-thumb {
                 <th>Rider</th>
                 <th class="num">Win%</th>
                 <th class="num">Top3%</th>
-                <th></th>
               </tr>
             </thead>
             <tbody id="odds-tbody"></tbody>
           </table>
         </div>
-        <button class="btn btn-ghost btn-sm" id="add-odds-btn" onclick="addOddsRow()">
-          <i class="ti ti-plus"></i> Add rider
-        </button>
       </div>
 
       <!-- Intel notes -->
@@ -532,16 +528,20 @@ function deriveType(r) {
 }
 
 /* ── Tier computation ───────────────────────────────────────────────── */
-function computeTier(rider) {
+function riderStageScore(rider) {
   const ta = rider.terrain_affinity || {};
   const sl = S.sliders.n1;
   const total = sl.sprint + sl.hilly + sl.hardgc + sl.mixed || 100;
-  const score =
+  return (
     (sl.sprint / total)  * (ta.sprint   || 0) +
     (sl.hardgc / total)  * (ta.climbing || 0) +
     (sl.hilly  / total)  * Math.max(ta.climbing || 0, ta.mixed || 0) * 0.7 +
-    (sl.mixed  / total)  * (ta.mixed    || 0);
-  return score >= 0.32 ? 'A' : 'B';
+    (sl.mixed  / total)  * (ta.mixed    || 0)
+  );
+}
+
+function computeTier(rider) {
+  return riderStageScore(rider) >= 0.32 ? 'A' : 'B';
 }
 
 /* ── P(win) lookup from odds ────────────────────────────────────────── */
@@ -552,40 +552,34 @@ function pwin(name) {
 }
 
 /* ── Stage profile image ─────────────────────────────────────────────── */
-// Images: shared/data/stage_images/stage-{N}.jpg
-function stageImageSrc(stageNumber) {
-  return `../../shared/data/stage_images/stage-${stageNumber}.jpg`;
+function loadProfileImage(stageNumber) {
+  const img = $('profile-img');
+  const ph  = $('profile-placeholder');
+
+  img.onload = () => { img.style.display = 'block'; ph.style.display = 'none'; };
+  img.onerror = () => {
+    img.onerror = null; // prevent infinite loop
+    ph.style.display = 'block';
+    ph.textContent = `Stage ${stageNumber} — image not available`;
+  };
+
+  img.src = `https://raw.githubusercontent.com/lstol/holdet-v3/main/shared/data/stage_images/giro_2026/stage-${stageNumber}.jpg`;
 }
 
 function renderProfile(stage) {
-  const img   = $('profile-img');
-  const ph    = $('profile-placeholder');
-  const route = $('profile-route');
-  const badge = $('profile-type-badge');
-
   if (!stage) {
-    img.style.display = 'none';
-    ph.style.display  = 'flex';
-    ph.textContent    = 'Stage data not loaded';
-    route.textContent = '—';
-    badge.textContent = '—';
+    $('profile-img').style.display = 'none';
+    $('profile-placeholder').style.display = 'flex';
+    $('profile-placeholder').textContent   = 'Stage data not loaded';
+    $('profile-route').textContent = '—';
+    $('profile-type-badge').textContent = '—';
     return;
   }
-
-  const src = stageImageSrc(stage.stage_number);
-  img.onload = () => { img.style.display = 'block'; ph.style.display = 'none'; };
-  img.onerror = () => {
-    img.style.display = 'none';
-    ph.style.display  = 'flex';
-    ph.textContent    = `Stage ${stage.stage_number} — image not available`;
-  };
-  img.src = src;
-  img.alt = stage.stage_name || `Stage ${stage.stage_number}`;
-
-  const terrain = stage.is_ttt ? 'TTT' : stage.is_itt ? 'ITT' : (stage.terrain_classification || '—');
+  loadProfileImage(stage.stage_number); // async — image updates when ready
+  const terrain  = stage.is_ttt ? 'TTT' : stage.is_itt ? 'ITT' : (stage.terrain_classification || '—');
   const routeTxt = `${stage.start_city || '?'} › ${stage.finish_city || '?'} · ${stage.distance_km || '?'}km`;
-  route.textContent = `${stage.date || ''} · ${routeTxt}`;
-  badge.textContent = terrain.toUpperCase();
+  $('profile-route').textContent      = `${stage.date || ''} · ${routeTxt}`;
+  $('profile-type-badge').textContent = terrain.toUpperCase();
 }
 
 /* ── Carousel ───────────────────────────────────────────────────────── */
@@ -654,8 +648,8 @@ function renderSliders() {
         const v = S.sliders[key][type];
         return `<div class="slider-row">
           <label>${names[type]} <span id="lbl-${key}-${type}">${v}%</span></label>
-          <input type="range" min="0" max="100" value="${v}"
-            oninput="updateSlider('${key}','${type}',+this.value);document.getElementById('lbl-${key}-${type}').textContent=this.value+'%'">
+          <input type="range" min="0" max="100" value="${v}" id="sl-${key}-${type}"
+            oninput="updateSlider('${key}','${type}',+this.value)">
         </div>`;
       }).join('') +
       `<div class="sum-display" id="sum-${key}"></div>`;
@@ -681,9 +675,42 @@ function renderSliders() {
 }
 
 function updateSlider(key, type, val) {
+  const types = ['sprint','hilly','hardgc','mixed'];
+  val = Math.round(val);
   S.sliders[key][type] = val;
+
+  // Distribute remainder proportionally among the other 3 sliders
+  const others = types.filter(t => t !== type);
+  const otherSum = others.reduce((s, t) => s + S.sliders[key][t], 0);
+  const remainder = 100 - val;
+
+  if (otherSum === 0) {
+    const each = Math.floor(remainder / 3);
+    others.forEach((t, i) => { S.sliders[key][t] = i < remainder % 3 ? each + 1 : each; });
+  } else {
+    let distributed = 0;
+    others.forEach((t, i) => {
+      if (i === others.length - 1) {
+        S.sliders[key][t] = Math.max(0, remainder - distributed);
+      } else {
+        const share = Math.round((S.sliders[key][t] / otherSum) * remainder);
+        S.sliders[key][t] = Math.max(0, share);
+        distributed += S.sliders[key][t];
+      }
+    });
+  }
+
+  // Sync all 4 inputs and labels
+  types.forEach(t => {
+    const inp = document.getElementById(`sl-${key}-${t}`);
+    const lbl = document.getElementById(`lbl-${key}-${t}`);
+    if (inp) inp.value = S.sliders[key][t];
+    if (lbl) lbl.textContent = S.sliders[key][t] + '%';
+  });
+
   updateSumDisplay(key);
-  renderTable(); // tier recomputes
+  if (key === 'n1') initOddsFromRiders();
+  renderTable();
 }
 
 function updateSumDisplay(key) {
@@ -710,16 +737,19 @@ async function saveWeights() {
 }
 
 /* ── Odds table ──────────────────────────────────────────────────────── */
-function addOddsRow(name='', win='', top3='') {
-  const id = Date.now();
-  S.oddsRows.push({ id, name, win, top3 });
+function initOddsFromRiders() {
+  if (!S.riders.length) return;
+  const top30 = [...S.riders]
+    .sort((a, b) => riderStageScore(b) - riderStageScore(a))
+    .slice(0, 30);
+  // Preserve any odds already entered
+  const existing = {};
+  S.oddsRows.forEach(r => { if (r.name) existing[r.name.toLowerCase()] = r; });
+  S.oddsRows = top30.map((r, i) => {
+    const prev = existing[r.name.toLowerCase()];
+    return { id: i, name: r.name, win: prev ? prev.win : '', top3: prev ? prev.top3 : '' };
+  });
   renderOdds();
-}
-
-function deleteOddsRow(id) {
-  S.oddsRows = S.oddsRows.filter(r => r.id !== id);
-  renderOdds();
-  renderTable();
 }
 
 function renderOdds() {
@@ -728,13 +758,11 @@ function renderOdds() {
   S.oddsRows.forEach(row => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><input type="text" value="${esc(row.name)}" placeholder="Rider name"
-        onchange="updateOdds(${row.id},'name',this.value)"></td>
-      <td><input type="number" value="${row.win}" min="0" max="100" step="0.1" placeholder="0.0"
+      <td><span class="rider-name">${esc(row.name)}</span></td>
+      <td><input type="number" value="${row.win}" min="0" max="100" step="0.1" placeholder="—"
         onchange="updateOdds(${row.id},'win',+this.value);renderTable()"></td>
-      <td><input type="number" value="${row.top3}" min="0" max="100" step="0.1" placeholder="0.0"
+      <td><input type="number" value="${row.top3}" min="0" max="100" step="0.1" placeholder="—"
         onchange="updateOdds(${row.id},'top3',+this.value)"></td>
-      <td><button class="del-row-btn" onclick="deleteOddsRow(${row.id})" title="Remove"><i class="ti ti-trash"></i></button></td>
     `;
     tbody.appendChild(tr);
   });
@@ -742,7 +770,7 @@ function renderOdds() {
 
 function updateOdds(id, field, val) {
   const row = S.oddsRows.find(r => r.id === id);
-  if (row) { row[field] = val; if (field === 'name') renderTable(); }
+  if (row) row[field] = val;
 }
 
 /* ── Force in / out ──────────────────────────────────────────────────── */
@@ -933,14 +961,15 @@ async function loadSnapshot() {
   } catch(_) {
     await loadFallbackRiders();
   }
+  initOddsFromRiders();
   renderTable();
 }
 
 async function loadFallbackRiders() {
   // Try to load riders from relative path (when served by server.py)
   const paths = [
-    '../../shared/data/riders/riders_giro2026_v1.json',
-    `${SERVER}/files/shared/data/riders/riders_giro2026_v1.json`,
+    '../../shared/data/riders/giro_2026/riders_giro2026_v1.json',
+    `${SERVER}/files/shared/data/riders/giro_2026/riders_giro2026_v1.json`,
   ];
   for (const p of paths) {
     try {
@@ -949,6 +978,7 @@ async function loadFallbackRiders() {
       const data = await res.json();
       S.riders = (data.riders || []).map(r => ({ ...r, _type: deriveType(r) }));
       S.mockMode = true;
+      initOddsFromRiders();
       return;
     } catch(_) {}
   }
@@ -959,12 +989,13 @@ async function loadFallbackRiders() {
     { rider_id:'mock_3', name:'Primož Roglič', team:'Red Bull - Bora - Hansgrohe', price:12000000, startPrice:12000000, terrain_affinity:{sprint:.35,climbing:.88,time_trial:.9,mixed:.65}, status:'active', isEliminated:false },
   ].map(r => ({ ...r, _type: deriveType(r) }));
   S.mockMode = true;
+  initOddsFromRiders();
 }
 
 async function loadStages() {
   const paths = [
-    '../../shared/data/stages/stages_giro2026.json',
-    `${SERVER}/files/shared/data/stages/stages_giro2026.json`,
+    '../../shared/data/stages/giro_2026/stages_giro2026.json',
+    `${SERVER}/files/shared/data/stages/giro_2026/stages_giro2026.json`,
   ];
   for (const p of paths) {
     try {
