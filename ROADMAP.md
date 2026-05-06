@@ -2,7 +2,7 @@
 
 **Race:** Giro d'Italia 2026
 **Stage 1:** May 9 (TTT, Durazzo → Tirana, 13.7 km)
-**Last updated:** Session 2e (2026-05-06)
+**Last updated:** Session 2f (2026-05-06)
 
 ---
 
@@ -22,7 +22,8 @@
 | Dashboard | ✅ `claude/dashboard/claude.html` — full expert dashboard built (Session 3) |
 | server.py | ✅ `claude/engine/server.py` — local server stub with /refresh, /save-weights, /snapshot |
 | claude/output/ | ✅ Created — per-stage Claude optimization output (never written to shared/) |
-| Stage images | ✅ 21 images at `shared/data/stage_images/stage-{N}.jpg`, wired to dashboard |
+| Stage images | ✅ 21 images at `shared/data/stage_images/giro_2026/stage-{N}.jpg`, served via GitHub raw URL |
+| giro_2026/ subfolder pattern | ✅ Canonical — riders/, stages/, stage_images/ all use race subfolders |
 | sessions/notes/decisions | ✅ Under `claude/` — Claude-specific, not shared |
 | decisions_log.md | ✅ `claude/decisions/decisions_log.md` — decisions from Sessions 1–2 |
 | Optimizer | ❌ Not started — stub at `claude/engine/optimizer.py` |
@@ -87,4 +88,5 @@
 | Session 2d | 2026-05-06 | Move sessions/notes/decisions under claude/; create decisions_log.md |
 | Session 3  | 2026-05-06 | Build claude/dashboard/claude.html (full expert dashboard) + server.py stub |
 | Session 2e | 2026-05-06 | claude/output/ created; stage images wired to dashboard; framing doc updated |
+| Session 2f | 2026-05-06 | giro_2026/ subfolder structure established; image display fixed; docs updated |
 

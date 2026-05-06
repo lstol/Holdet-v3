@@ -40,9 +40,14 @@ holdet-v3/
 │   └── README.md                      ← ChatGPT/Codex domain — Claude never touches this
 ├── shared/                            ← Holdet.dk data and snapshots only (both systems read)
 │   ├── data/
-│   │   ├── riders/                    ← 199 riders with holdet_ids
-│   │   ├── stages/                    ← stage roadbook, sprint/KOM positions
-│   │   └── snapshots/                 ← stage_N_holdet.json, stage_N_claude.json, stage_N_chatgpt.json
+│   │   ├── riders/
+│   │   │   └── giro_2026/             ← 199 riders with holdet_ids
+│   │   ├── stages/
+│   │   │   └── giro_2026/             ← stage roadbook, sprint/KOM positions
+│   │   ├── stage_images/
+│   │   │   └── giro_2026/
+│   │   │       └── stage-N.jpg        ← 21 stage profile images
+│   │   └── snapshots/                 ← stage_N_holdet.json
 │   └── rules/                         ← single source of truth for all rules and framing docs
 │       ├── 02_rules_payoff.md
 │       ├── game_strategy.md
@@ -54,6 +59,7 @@ holdet-v3/
 - `shared/rules/` is the single source of truth for all rules and framing docs — no copies elsewhere
 - `shared/` contains Holdet.dk data and snapshots only — no intelligence config, no source weights, no odds data. Schema defined in framing doc Section 12
 - Expert source weights are at `claude/engine/expert_sources.yaml` — Claude-internal, never placed in shared/
+- Each race gets its own subfolder under `riders/`, `stages/`, and `stage_images/` (e.g. `giro_2026/`, `tdf_2026/`). This is the canonical pattern for multi-race support.
 
 If any of these directories or files are missing, create them before doing anything else.
 

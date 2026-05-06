@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Holdet v3 ChatGPT Optimizer Dashboard</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f7fb;
+        --panel: #ffffff;
+        --panel-soft: #f9fafc;
+        --text: #111827;
+        --muted: #64748b;
+        --line: #d8dee8;
+        --ink: #1f2937;
+        --accent: #2563eb;
+        --accent-soft: #e8f0ff;
+        --pass: #047857;
+        --pass-bg: #dcfce7;
+        --pending: #a16207;
+        --pending-bg: #fef3c7;
+        --fail: #b91c1c;
+        --fail-bg: #fee2e2;
+        --shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      button,
+      select {
+        font: inherit;
+      }
+
+      .shell {
+        width: min(1280px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 24px 0;
+      }
+
+      .header,
+      .panel,
+      .footer {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+      }
+
+      .header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 24px;
+        align-items: start;
+        padding: 20px;
+      }
+
+      .badge-row,
+      .toolbar,
+      .metric-grid,
+      .team-metrics,
+      .status-line,
+      .footer {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        padding: 2px 9px;
+        color: var(--ink);
+        background: var(--panel-soft);
+        font-size: 12px;
+        font-weight: 650;
+        white-space: nowrap;
+      }
+
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        margin-top: 10px;
+        font-size: 28px;
+        line-height: 1.15;
+        letter-spacing: 0;
+      }
+
+      .lede {
+        max-width: 820px;
+        margin-top: 10px;
+        color: var(--muted);
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .metric {
+        min-height: 82px;
+        padding: 14px;
+        background: var(--panel-soft);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .metric-label {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .metric-value {
+        margin-top: 4px;
+        font-size: 26px;
+        font-weight: 750;
+      }
+
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 4px;
+        margin: 16px 0;
+        padding: 4px;
+        background: #e9eef6;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .tab {
+        min-height: 38px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: #475569;
+        cursor: pointer;
+        font-weight: 650;
+      }
+
+      .tab[aria-selected="true"] {
+        background: var(--panel);
+        color: var(--text);
+        box-shadow: var(--shadow);
+      }
+
+      .view {
+        display: none;
+      }
+
+      .view.active {
+        display: block;
+      }
+
+      .grid-3 {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 16px;
+      }
+
+      .grid-5 {
+        display: grid;
+        grid-template-columns: 2fr 3fr;
+        gap: 16px;
+      }
+
+      .three-up {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .section-head {
+        display: flex;
+        gap: 10px;
+        align-items: start;
+        margin-bottom: 14px;
+      }
+
+      .icon-box {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 800;
+      }
+
+      h2 {
+        font-size: 18px;
+        line-height: 1.2;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .check-list,
+      .team-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .check,
+      .team-button,
+      .mini-panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      .check {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        padding: 12px;
+      }
+
+      .check-title,
+      .team-title {
+        font-weight: 700;
+      }
+
+      .detail,
+      .mini-panel p {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 68px;
+        min-height: 24px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 750;
+      }
+
+      .status.pass {
+        color: var(--pass);
+        background: var(--pass-bg);
+      }
+
+      .status.pending {
+        color: var(--pending);
+        background: var(--pending-bg);
+      }
+
+      .status.fail {
+        color: var(--fail);
+        background: var(--fail-bg);
+      }
+
+      .assumptions {
+        margin: 0;
+        padding-left: 18px;
+        color: #334155;
+      }
+
+      .assumptions li + li {
+        margin-top: 9px;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 820px;
+      }
+
+      th,
+      td {
+        padding: 10px 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--line);
+      }
+
+      th {
+        background: #eef2f7;
+        color: #475569;
+        font-size: 12px;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .team-button {
+        width: 100%;
+        padding: 12px;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .team-button.active {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+      }
+
+      .team-button:hover {
+        border-color: #94a3b8;
+      }
+
+      .team-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .team-metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .chart {
+        width: 100%;
+        height: 320px;
+      }
+
+      .bar-chart {
+        width: 100%;
+        height: 112px;
+      }
+
+      .mini-panel {
+        padding: 14px;
+      }
+
+      .mini-panel .value {
+        margin-top: 8px;
+        font-size: 22px;
+        font-weight: 750;
+      }
+
+      .json-preview {
+        margin: 0;
+        max-height: 520px;
+        overflow: auto;
+        border-radius: 8px;
+        background: #111827;
+        color: #f8fafc;
+        padding: 16px;
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .footer {
+        justify-content: space-between;
+        margin-top: 16px;
+        padding: 14px 18px;
+        color: var(--muted);
+      }
+
+      .control-button {
+        min-height: 36px;
+        border: 0;
+        border-radius: 6px;
+        padding: 0 12px;
+        background: var(--accent);
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      @media (max-width: 900px) {
+        .header,
+        .grid-3,
+        .grid-5,
+        .three-up {
+          grid-template-columns: 1fr;
+        }
+
+        .tabs {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        h1 {
+          font-size: 24px;
+        }
+
+        .footer {
+          align-items: stretch;
+          flex-direction: column;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .shell {
+          width: min(100vw - 20px, 1280px);
+          padding: 10px 0;
+        }
+
+        .header,
+        .panel {
+          padding: 14px;
+        }
+
+        .tabs {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .metric-grid,
+        .team-metrics {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="header">
+        <section>
+          <div class="badge-row">
+            <span class="badge">Holdet v3</span>
+            <span class="badge">ChatGPT independent engine</span>
+          </div>
+          <h1>Giro 2026 Fantasy Optimizer Dashboard</h1>
+          <p class="lede">
+            Expert audit surface first: verify rules, data integrity, candidate-team logic,
+            captain convexity, and forward transfer pressure before using it for top-1%
+            optimization decisions.
+          </p>
+        </section>
+        <section class="metric-grid" aria-label="Stage summary">
+          <div class="metric">
+            <div class="metric-label">Stage</div>
+            <div class="metric-value" data-field="stage">1</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Audit</div>
+            <div class="metric-value" data-field="audit">67%</div>
+          </div>
+        </section>
+      </header>
+
+      <nav class="tabs" aria-label="Dashboard tabs">
+        <button class="tab" type="button" data-tab="audit" aria-selected="true">Audit</button>
+        <button class="tab" type="button" data-tab="riders" aria-selected="false">Riders</button>
+        <button class="tab" type="button" data-tab="teams" aria-selected="false">Teams</button>
+        <button class="tab" type="button" data-tab="captain" aria-selected="false">Captain</button>
+        <button class="tab" type="button" data-tab="pressure" aria-selected="false">Forward</button>
+        <button class="tab" type="button" data-tab="output" aria-selected="false">Output</button>
+      </nav>
+
+      <section id="audit" class="view active">
+        <div class="grid-3">
+          <section class="panel">
+            <div class="section-head">
+              <div class="icon-box">V</div>
+              <div>
+                <h2>Logic Verification</h2>
+                <p class="subtitle">Checks that must pass before trusting any recommendation.</p>
+              </div>
+            </div>
+            <div id="checks" class="check-list"></div>
+          </section>
+          <section class="panel">
+            <div class="section-head">
+              <div class="icon-box">!</div>
+              <div>
+                <h2>Critical Assumptions</h2>
+                <p class="subtitle">Explicit assumptions to challenge before lock.</p>
+              </div>
+            </div>
+            <ul class="assumptions">
+              <li>Stage snapshot is the frozen T0 input.</li>
+              <li>No historical performance priors.</li>
+              <li>Odds and expert intel remain ChatGPT-local.</li>
+              <li>Risk is shown as distribution shape, not hidden penalty.</li>
+              <li>DNS avoidance overrides all optimization.</li>
+            </ul>
+          </section>
+        </div>
+      </section>
+
+      <section id="riders" class="view">
+        <section class="panel">
+          <div class="section-head">
+            <div class="icon-box">R</div>
+            <div>
+              <h2>Tier-A / Tier-B Rider Review</h2>
+              <p class="subtitle">Stage-specific rider classification from odds and expert intel.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rider</th>
+                  <th>Team</th>
+                  <th>Price</th>
+                  <th>Tier</th>
+                  <th>Win%</th>
+                  <th>Podium%</th>
+                  <th>Top15%</th>
+                  <th>Role</th>
+                </tr>
+              </thead>
+              <tbody id="riderRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section id="teams" class="view">
+        <div class="grid-5">
+          <section class="panel">
+            <div class="section-head">
+              <div class="icon-box">T</div>
+              <div>
+                <h2>Candidate Teams</h2>
+                <p class="subtitle">Structurally distinct alternatives, not one prescription.</p>
+              </div>
+            </div>
+            <div id="teamList" class="team-list"></div>
+          </section>
+          <section class="panel">
+            <div class="section-head">
+              <div class="icon-box">Q</div>
+              <div>
+                <h2><span data-field="selectedTeamLabel">Stage-win maximal</span> Distribution</h2>
+                <p class="subtitle">CDF/quantile view for expert risk preference.</p>
+              </div>
+            </div>
+            <svg class="chart" id="cdfChart" role="img" aria-label="Candidate team CDF chart"></svg>
+          </section>
+        </div>
+      </section>
+
+      <section id="captain" class="view">
+        <section class="panel">
+          <div class="section-head">
+            <div class="icon-box">C</div>
+            <div>
+              <h2>Captain Convexity</h2>
+              <p class="subtitle">Rank by E[max(delta value, 0)], not average stage points alone.</p>
+            </div>
+          </div>
+          <div id="captainCards" class="three-up"></div>
+        </section>
+      </section>
+
+      <section id="pressure" class="view">
+        <section class="panel">
+          <div class="section-head">
+            <div class="icon-box">F</div>
+            <div>
+              <h2>Forward Transfer Pressure</h2>
+              <p class="subtitle">Deterministic n+2 / n+3 scoring consequences, not simulated yet.</p>
+            </div>
+          </div>
+          <div class="three-up">
+            <article class="mini-panel">
+              <div class="team-title">Stage n+2</div>
+              <p>Flag riders likely to become dead weight due to terrain mismatch, DNS risk, or low depth-bonus relevance.</p>
+            </article>
+            <article class="mini-panel">
+              <div class="team-title">Stage n+3</div>
+              <p>Estimate forced-transfer pressure and opportunity cost from holding specialists too long.</p>
+            </article>
+            <article class="mini-panel">
+              <div class="team-title">Transfer friction</div>
+              <p>Show buy-cost transfer fee and budget lock-in effects explicitly.</p>
+            </article>
+          </div>
+        </section>
+      </section>
+
+      <section id="output" class="view">
+        <section class="panel">
+          <div class="section-head">
+            <div class="icon-box">O</div>
+            <div>
+              <h2>Output Contract Preview</h2>
+              <p class="subtitle">What should be written to chatgpt/output/stage_N_chatgpt.json.</p>
+            </div>
+          </div>
+          <pre id="outputJson" class="json-preview"></pre>
+        </section>
+      </section>
+
+      <footer class="footer">
+        <div>Design intent: audit first, optimize second. Every recommendation should explain the payoff path and failure mode.</div>
+        <button class="control-button" type="button">Expert Controls Placeholder</button>
+      </footer>
+    </main>
+
+    <script>
+      const sampleStage = {
+        stage: 1,
+        type: "TTT",
+        distance_km: 13.7,
+        snapshot_time: "awaiting snapshot",
+        budget: 50000000,
+        status: "pre-snapshot scaffold",
+      };
+
+      const sampleChecks = [
+        { label: "Snapshot schema valid", status: "pending", detail: "Waiting for shared/data/snapshots/stage_1_snapshot.json" },
+        { label: "Exactly 8 riders", status: "pass", detail: "Candidate-team validator scaffolded" },
+        { label: "Max 2 per real-world team", status: "pass", detail: "Constraint encoded in optimizer stub" },
+        { label: "Budget <= 50,000,000 kr", status: "pass", detail: "Payoff/rules module loaded" },
+        { label: "No DNS selected", status: "pending", detail: "Requires stage snapshot is_out field" },
+        { label: "Captain uses E[max(delta value, 0)]", status: "pass", detail: "Captain EV direction encoded" },
+      ];
+
+      const sampleRiders = [
+        { name: "Rider A", team: "UAE", price: 10500000, tier: "A", win: 18, podium: 42, top15: 79, role: "stage-win equity" },
+        { name: "Rider B", team: "IGD", price: 8200000, tier: "A", win: 11, podium: 31, top15: 70, role: "podium/depth" },
+        { name: "Rider C", team: "TVL", price: 7600000, tier: "B", win: 3, podium: 13, top15: 58, role: "team bonus / value" },
+        { name: "Rider D", team: "SOQ", price: 6100000, tier: "B", win: 1, podium: 7, top15: 41, role: "budget structure" },
+      ];
+
+      const sampleTeams = [
+        { label: "Stage-win maximal", ev: 742000, p90: 1160000, p50: 690000, p10: 310000, pressure: "medium", captain: "Rider A" },
+        { label: "Depth-bonus exploitation", ev: 703000, p90: 990000, p50: 720000, p10: 410000, pressure: "low", captain: "Rider B" },
+        { label: "GC insurance", ev: 681000, p90: 910000, p50: 700000, p10: 455000, pressure: "low", captain: "Rider A" },
+        { label: "Transfer preservation", ev: 646000, p90: 850000, p50: 665000, p10: 470000, pressure: "very low", captain: "Rider C" },
+      ];
+
+      const sampleCdf = [
+        { percentile: "p05", value: 220000 },
+        { percentile: "p10", value: 310000 },
+        { percentile: "p25", value: 510000 },
+        { percentile: "p50", value: 690000 },
+        { percentile: "p75", value: 880000 },
+        { percentile: "p90", value: 1160000 },
+        { percentile: "p95", value: 1420000 },
+      ];
+
+      let selectedTeam = sampleTeams[0];
+
+      const kroner = (value) => `${Number(value).toLocaleString()} kr`;
+      const shortKroner = (value) => `${Math.round(value / 1000)}k`;
+
+      function renderChecks() {
+        const root = document.querySelector("#checks");
+        root.innerHTML = sampleChecks.map((check) => `
+          <div class="check">
+            <div>
+              <div class="check-title">${check.label}</div>
+              <div class="detail">${check.detail}</div>
+            </div>
+            <span class="status ${check.status}">${check.status === "pass" ? "Pass" : check.status === "fail" ? "Fail" : "Pending"}</span>
+          </div>
+        `).join("");
+
+        const pass = sampleChecks.filter((check) => check.status === "pass").length;
+        document.querySelector('[data-field="audit"]').textContent = `${Math.round((pass / sampleChecks.length) * 100)}%`;
+      }
+
+      function renderRiders() {
+        document.querySelector("#riderRows").innerHTML = sampleRiders.map((rider) => `
+          <tr>
+            <td><strong>${rider.name}</strong></td>
+            <td>${rider.team}</td>
+            <td>${kroner(rider.price)}</td>
+            <td><span class="badge">${rider.tier}</span></td>
+            <td>${rider.win}</td>
+            <td>${rider.podium}</td>
+            <td>${rider.top15}</td>
+            <td>${rider.role}</td>
+          </tr>
+        `).join("");
+      }
+
+      function renderTeams() {
+        document.querySelector("#teamList").innerHTML = sampleTeams.map((team) => `
+          <button class="team-button ${team.label === selectedTeam.label ? "active" : ""}" type="button" data-team="${team.label}">
+            <div class="team-top">
+              <div class="team-title">${team.label}</div>
+              <span class="badge">${team.pressure}</span>
+            </div>
+            <div class="team-metrics">
+              <span>EV ${shortKroner(team.ev)}</span>
+              <span>P90 ${shortKroner(team.p90)}</span>
+              <span>P50 ${shortKroner(team.p50)}</span>
+              <span>P10 ${shortKroner(team.p10)}</span>
+            </div>
+          </button>
+        `).join("");
+
+        document.querySelectorAll("[data-team]").forEach((button) => {
+          button.addEventListener("click", () => {
+            selectedTeam = sampleTeams.find((team) => team.label === button.dataset.team);
+            renderTeams();
+            renderCdfChart();
+            renderOutput();
+            document.querySelector('[data-field="selectedTeamLabel"]').textContent = selectedTeam.label;
+          });
+        });
+      }
+
+      function renderCdfChart() {
+        const svg = document.querySelector("#cdfChart");
+        const width = svg.clientWidth || 700;
+        const height = svg.clientHeight || 320;
+        const padding = { top: 20, right: 28, bottom: 42, left: 58 };
+        const plotWidth = width - padding.left - padding.right;
+        const plotHeight = height - padding.top - padding.bottom;
+        const maxValue = Math.max(...sampleCdf.map((point) => point.value), selectedTeam.ev) * 1.08;
+        const x = (index) => padding.left + (plotWidth * index) / (sampleCdf.length - 1);
+        const y = (value) => padding.top + plotHeight - (plotHeight * value) / maxValue;
+        const points = sampleCdf.map((point, index) => `${x(index)},${y(point.value)}`).join(" ");
+        const evY = y(selectedTeam.ev);
+        const yTicks = [0, 350000, 700000, 1050000, 1400000].filter((tick) => tick <= maxValue);
+
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        svg.innerHTML = `
+          <rect x="0" y="0" width="${width}" height="${height}" fill="#ffffff"></rect>
+          ${yTicks.map((tick) => `
+            <line x1="${padding.left}" x2="${width - padding.right}" y1="${y(tick)}" y2="${y(tick)}" stroke="#e2e8f0"></line>
+            <text x="8" y="${y(tick) + 4}" font-size="12" fill="#64748b">${shortKroner(tick)}</text>
+          `).join("")}
+          <line x1="${padding.left}" x2="${padding.left}" y1="${padding.top}" y2="${height - padding.bottom}" stroke="#cbd5e1"></line>
+          <line x1="${padding.left}" x2="${width - padding.right}" y1="${height - padding.bottom}" y2="${height - padding.bottom}" stroke="#cbd5e1"></line>
+          <line x1="${padding.left}" x2="${width - padding.right}" y1="${evY}" y2="${evY}" stroke="#475569" stroke-dasharray="4 5"></line>
+          <text x="${width - padding.right - 42}" y="${evY - 8}" font-size="12" fill="#475569">EV</text>
+          <polyline points="${points}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"></polyline>
+          ${sampleCdf.map((point, index) => `
+            <circle cx="${x(index)}" cy="${y(point.value)}" r="4" fill="#2563eb"></circle>
+            <text x="${x(index) - 12}" y="${height - 15}" font-size="12" fill="#64748b">${point.percentile}</text>
+          `).join("")}
+        `;
+      }
+
+      function renderCaptainCards() {
+        document.querySelector("#captainCards").innerHTML = sampleRiders.slice(0, 3).map((rider, index) => {
+          const bars = [
+            { label: "win", value: rider.win },
+            { label: "podium", value: rider.podium },
+            { label: "top15", value: rider.top15 },
+          ];
+          return `
+            <article class="mini-panel">
+              <div class="team-top">
+                <div class="team-title">${rider.name}</div>
+                <span class="badge">${index === 0 ? "Recommended" : "Alternative"}</span>
+              </div>
+              <p>Right-tail profile: ${rider.role}</p>
+              <svg class="bar-chart" viewBox="0 0 280 112" role="img" aria-label="${rider.name} captain profile">
+                ${bars.map((bar, barIndex) => {
+                  const barHeight = bar.value;
+                  const x = 30 + barIndex * 82;
+                  const y = 84 - barHeight;
+                  return `
+                    <rect x="${x}" y="${y}" width="44" height="${barHeight}" rx="4" fill="#2563eb"></rect>
+                    <text x="${x + 22}" y="103" text-anchor="middle" font-size="11" fill="#64748b">${bar.label}</text>
+                    <text x="${x + 22}" y="${y - 6}" text-anchor="middle" font-size="11" fill="#334155">${bar.value}</text>
+                  `;
+                }).join("")}
+              </svg>
+            </article>
+          `;
+        }).join("");
+      }
+
+      function renderOutput() {
+        const payload = {
+          stage: sampleStage.stage,
+          generated_by: "chatgpt",
+          tier_a_riders: sampleRiders.filter((rider) => rider.tier === "A"),
+          candidate_teams: sampleTeams,
+          captain_recommendation: selectedTeam.captain,
+          forward_transfer_pressure: { n_plus_2: "pending", n_plus_3: "pending" },
+          assumptions: ["No historical priors", "Snapshot is authoritative", "Odds/intel not yet loaded"],
+        };
+        document.querySelector("#outputJson").textContent = JSON.stringify(payload, null, 2);
+      }
+
+      function wireTabs() {
+        document.querySelectorAll(".tab").forEach((tab) => {
+          tab.addEventListener("click", () => {
+            document.querySelectorAll(".tab").forEach((item) => item.setAttribute("aria-selected", "false"));
+            document.querySelectorAll(".view").forEach((view) => view.classList.remove("active"));
+            tab.setAttribute("aria-selected", "true");
+            document.querySelector(`#${tab.dataset.tab}`).classList.add("active");
+            if (tab.dataset.tab === "teams") {
+              requestAnimationFrame(renderCdfChart);
+            }
+          });
+        });
+      }
+
+      renderChecks();
+      renderRiders();
+      renderTeams();
+      renderCdfChart();
+      renderCaptainCards();
+      renderOutput();
+      wireTabs();
+      window.addEventListener("resize", renderCdfChart);
+    </script>
+  </body>
+</html>

@@ -344,8 +344,12 @@ holdet-v3/
 └── shared/
     ├── data/
     │   ├── riders/
+    │   │   └── giro_2026/
     │   ├── stages/
+    │   │   └── giro_2026/
     │   ├── stage_images/
+    │   │   └── giro_2026/
+    │   │       └── stage-N.jpg
     │   └── snapshots/
     └── rules/
 ```
@@ -354,9 +358,11 @@ holdet-v3/
 
 `shared/` contains only the fields specified in Section 12: rider universe, prices, isOut status, post-stage results, jersey holders, GC standings, team composition, bank balance, and stage metadata. Intelligence configuration — source weights, odds inputs, expert notes — is each system's own internal concern and is never placed in shared/.
 
+Race data is organized by race subfolder (e.g. `giro_2026/`) within each data directory. New races add a new subfolder alongside existing ones.
+
 Each system:
-- Reads rider universe and prices from `shared/data/riders/`
-- Reads stage metadata from `shared/data/stages/`
+- Reads rider universe and prices from `shared/data/riders/giro_2026/`
+- Reads stage metadata from `shared/data/stages/giro_2026/`
 - Reads the frozen stage snapshot from `shared/data/snapshots/stage_N_holdet.json`
 
 Each system writes its optimization output to its own directory (`claude/output/` and `chatgpt/output/`). Neither output goes into `shared/`. The user compares outputs directly from each system's own directory.
