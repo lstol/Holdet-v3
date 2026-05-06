@@ -1,0 +1,9 @@
+{
+  "odds_input_path": null,
+  "expert_intel_path": null,
+  "notes": [
+    "Keep odds and expert intel local to chatgpt/.",
+    "Do not write derived probabilities or recommendations to shared/."
+  ]
+}
+
