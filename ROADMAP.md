@@ -2,7 +2,7 @@
 
 **Race:** Giro d'Italia 2026
 **Stage 1:** May 9 (TTT, Durazzo → Tirana, 13.7 km)
-**Last updated:** Session 2c (2026-05-06)
+**Last updated:** Session 2d (2026-05-06)
 
 ---
 
@@ -20,6 +20,8 @@
 | expert_sources.yaml | ✅ Created — `claude/engine/expert_sources.yaml` (Claude-internal only) |
 | chatgpt/ stub | ✅ Created — README only, ChatGPT scaffolds its own structure |
 | Dashboard stub | ✅ `claude/dashboard/claude.html` created — needs wiring to live data |
+| sessions/notes/decisions | ✅ Under `claude/` — Claude-specific, not shared |
+| decisions_log.md | ✅ `claude/decisions/decisions_log.md` — decisions from Sessions 1–2 |
 | Optimizer | ❌ Not started — stub at `claude/engine/optimizer.py` |
 | Snapshot schema | ✅ Specified in framing doc Section 12 |
 | Session log | ✅ `sessions/` directory created |
@@ -77,4 +79,5 @@
 | Session 2 | 2026-05-06 | Repo restructured into claude/ chatgpt/ shared/ layout; framing doc Section 13 added |
 | Session 2b | 2026-05-06 | Fix: expert_sources.yaml moved to claude/engine/ — intelligence is never shared between systems |
 | Session 2c | 2026-05-06 | Clean repo: remove duplicates, create chatgpt/ stub, claude/dashboard/claude.html stub |
+| Session 2d | 2026-05-06 | Move sessions/notes/decisions under claude/; create decisions_log.md |
 

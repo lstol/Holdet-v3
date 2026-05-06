@@ -28,9 +28,14 @@ holdet-v3/
 │   │   ├── optimizer.py               ← to be built
 │   │   ├── expert_sources.yaml        ← Claude's expert source weights (Claude-internal only)
 │   │   └── API_NOTES.md               ← Holdet.dk API reference (Claude-internal)
-│   └── dashboard/
-│       └── claude.html                ← Claude's decision dashboard
-├── chatgpt/                           ← ChatGPT/Codex domain — Claude never touches this
+│   ├── dashboard/
+│   │   └── claude.html                ← Claude's decision dashboard
+│   ├── sessions/                      ← session logs, one file per Claude Code session
+│   ├── notes/                         ← Claude working notes, intel summaries, stage analysis
+│   └── decisions/
+│       └── decisions_log.md           ← key decisions log with rationale and date
+├── chatgpt/
+│   └── README.md                      ← ChatGPT/Codex domain — Claude never touches this
 ├── shared/                            ← Holdet.dk data and snapshots only (both systems read)
 │   ├── data/
 │   │   ├── riders/                    ← 199 riders with holdet_ids
@@ -40,8 +45,6 @@ holdet-v3/
 │       ├── 02_rules_payoff.md
 │       ├── game_strategy.md
 │       └── Giro_Fantasy_Optimizer_Framing.md
-└── sessions/
-    └── YYYY-MM-DD_N.md                ← one file per session
 ```
 
 **Architecture notes:**
@@ -62,6 +65,8 @@ If any of these directories or files are missing, create them before doing anyth
 - ✅ Created `claude/dashboard/claude.html` stub
 - ✅ Created `chatgpt/` directory with README (ChatGPT scaffolds its own structure)
 - ✅ Removed duplicates and extra directories from `shared/`
+- ✅ Moved sessions/, notes/, decisions/ under claude/
+- ✅ Created `claude/decisions/decisions_log.md` with decisions from Sessions 1–2
 - ✅ Updated framing doc with Section 13 (System Architecture)
 - ✅ Updated ROADMAP.md and CLAUDE_CODE.md to reflect clean structure
 
@@ -96,7 +101,7 @@ Every Claude Code session must end with these three steps, in order. No exceptio
 
 ### Step 2 — Write session log
 
-Create `sessions/YYYY-MM-DD_N.md` (date + session number within that date).
+Create `claude/sessions/YYYY-MM-DD_N.md` (date + session number within that date).
 
 Template:
 ```markdown

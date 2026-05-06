@@ -332,11 +332,14 @@ Both AI systems operate within a single shared repository. Each system owns its 
 holdet-v3/
 ├── ROADMAP.md
 ├── CLAUDE_CODE.md
-├── claude/          ← Claude's engine and dashboard (Claude only)
+├── claude/
 │   ├── engine/
-│   └── dashboard/
-├── chatgpt/         ← ChatGPT/Codex domain (ChatGPT scaffolds independently)
-└── shared/          ← Holdet.dk data and snapshots only (both systems read)
+│   ├── dashboard/
+│   ├── sessions/
+│   ├── notes/
+│   └── decisions/
+├── chatgpt/
+└── shared/
     ├── data/
     │   ├── riders/
     │   ├── stages/
