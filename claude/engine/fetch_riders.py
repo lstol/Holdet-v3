@@ -27,9 +27,10 @@ import requests
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parents[2]
-RIDERS_FILE = ROOT / "data" / "riders" / "riders_giro2026_v1.json"
-PRICES_SNAPSHOT_FILE = ROOT / "data" / "riders" / "prices_giro2026_stage0_pre.json"
-TEAM_STATE_FILE = ROOT / "data" / "snapshots" / "team_state_pre_race.json"
+RIDERS_FILE          = ROOT / "shared" / "data" / "riders"    / "giro_2026" / "riders.json"
+PRICES_SNAPSHOT_FILE = ROOT / "shared" / "data" / "riders"    / "giro_2026" / "prices_stage0_pre.json"
+TEAM_STATE_FILE      = ROOT / "shared" / "data" / "snapshots" / "team_state_pre_race.json"
+SNAPSHOT_FILE        = ROOT / "shared" / "data" / "snapshots" / "stage_1_holdet.json"
 
 BASE_URL = "https://nexus-app-fantasy-fargate.holdet.dk"
 
@@ -131,7 +132,6 @@ def enrich_riders(api_riders: list[dict], dry_run: bool = False) -> dict:
     matched = []
     uncertain = []
     unmatched_api = []
-    new_from_api = []
 
     for api_r in api_riders:
         api_name = api_r["name"]
@@ -155,18 +155,20 @@ def enrich_riders(api_riders: list[dict], dry_run: bool = False) -> dict:
             else:
                 matched.append(api_name)
         else:
-            # API rider not in our local file at all
             unmatched_api.append(api_r)
-            new_from_api.append(_make_stub(api_r))
 
-    # Append new stubs
-    local_riders.extend(new_from_api)
-    local_data["meta"]["rider_count"] = len(local_riders)
+    # Initial build: filter to active riders only (establishes the locked set)
+    # Update runs: refresh market data for the locked set — never add, never remove
+    already_populated = any(r.get("holdet_id") for r in local_riders)
+    if already_populated:
+        offered = [r for r in local_riders if r.get("holdet_id")]
+    else:
+        offered = [r for r in local_riders if r.get("holdet_id") and not r.get("isEliminated") and r.get("status") != "dns"]
+    local_data["riders"] = offered
+    local_data["meta"]["rider_count"] = len(offered)
     local_data["meta"]["enriched_at"] = datetime.now(timezone.utc).isoformat()
 
-    no_id = [r["name"] for r in local_riders if not r.get("holdet_id")]
-
-    _print_summary(matched, uncertain, unmatched_api, no_id, len(local_riders))
+    _print_summary(matched, uncertain, unmatched_api, [], len(offered))
 
     if not dry_run:
         RIDERS_FILE.write_text(json.dumps(local_data, ensure_ascii=False, indent=2))
@@ -263,7 +265,38 @@ def write_price_snapshot(api_riders: list[dict], dry_run: bool = False) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Step 4 — Fetch team state (HTML scraping)
+# Step 4 — Write stage snapshot (shared/data/snapshots/stage_1_holdet.json)
+# ---------------------------------------------------------------------------
+
+def write_stage_snapshot(enriched_data: dict, dry_run: bool = False) -> None:
+    snapshot = {
+        "stage_number": 1,
+        "snapshot_type": "pre_race",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "riders": [
+            {
+                "holdet_id": r.get("holdet_id"),
+                "name": r["name"],
+                "team": r.get("team", ""),
+                "price": r.get("price", 0),
+                "startPrice": r.get("startPrice", 0),
+                "isOut": r.get("isEliminated", False) or r.get("status") == "dns",
+                "isInjured": r.get("isInjured", False),
+                "terrain_affinity": r.get("terrain_affinity", {}),
+            }
+            for r in enriched_data.get("riders", [])
+        ],
+    }
+    if not dry_run:
+        SNAPSHOT_FILE.parent.mkdir(parents=True, exist_ok=True)
+        SNAPSHOT_FILE.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2))
+        print(f"✓ Written: {SNAPSHOT_FILE}")
+    else:
+        print(f"  [dry-run] Would write stage snapshot with {len(snapshot['riders'])} riders")
+
+
+# ---------------------------------------------------------------------------
+# Step 5 — Fetch team state (HTML scraping)
 # ---------------------------------------------------------------------------
 
 def fetch_team_state(cartridge: str, fantasy_team_id: str, cookie: str, dry_run: bool = False) -> None:
@@ -358,11 +391,17 @@ def main():
     api_riders = fetch_riders_api(game_id, cookie)
     print(f"  → {len(api_riders)} riders returned by API")
 
-    enrich_riders(api_riders, dry_run=args.dry_run)
+    enriched = enrich_riders(api_riders, dry_run=args.dry_run)
     write_price_snapshot(api_riders, dry_run=args.dry_run)
+    write_stage_snapshot(enriched, dry_run=args.dry_run)
 
     if args.team:
         fetch_team_state(cartridge, fantasy_team_id, cookie, dry_run=args.dry_run)
+
+    if not args.dry_run:
+        import subprocess
+        build = ROOT / "claude" / "engine" / "build_dashboard.py"
+        subprocess.run([sys.executable, str(build)], check=True)
 
 
 if __name__ == "__main__":

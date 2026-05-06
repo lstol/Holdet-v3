@@ -92,6 +92,20 @@ def save_weights():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+@app.route('/embed-riders', methods=['GET'])
+def embed_riders():
+    try:
+        riders_file = os.path.join(BASE_DIR, 'shared', 'data', 'riders', 'giro_2026', 'riders.json')
+        with open(riders_file) as f:
+            data = json.load(f)
+        riders = data.get('riders', [])
+        script = f'<script>window.RIDERS_DATA = {json.dumps(riders, ensure_ascii=False)};</script>'
+        from flask import Response
+        return Response(script, mimetype='text/html')
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 @app.route('/snapshot', methods=['GET'])
 def snapshot():
     try:
