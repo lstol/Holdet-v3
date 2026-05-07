@@ -222,14 +222,29 @@ input[type=range]::-webkit-slider-thumb {
 #odds-table td { padding: 4px 6px; border-bottom: 1px solid rgba(43,48,88,.5); vertical-align: middle; }
 #odds-table input[type=number] { width: 54px; padding: 3px 6px; text-align: right; }
 
-#intel-notes {
-  width: 100%; height: 3.6em; padding: 8px; resize: none; overflow: hidden;
-  color: var(--color-text); font-size: 12px; line-height: 1.55;
-  border-radius: var(--radius-sm); transition: height .2s ease;
-}
-#intel-notes.expanded { height: 300px; overflow-y: auto; }
-#intel-toggle { width: 100%; margin-top: 5px; font-size: 10px; color: var(--color-text-3); border: 1px solid var(--color-border); border-radius: 3px; padding: 2px 0; text-align: center; }
-#intel-toggle:hover { color: var(--color-text-2); }
+/* Intel structured display */
+#intel-display { font-size: 12px; }
+.intel-meta { padding: 8px; background: var(--color-surface-2); border-radius: var(--radius-sm); margin-bottom: 8px; }
+.intel-meta-row { display: flex; gap: 6px; margin-bottom: 4px; font-size: 11px; color: var(--color-text-2); line-height: 1.4; }
+.intel-meta-row:last-child { margin-bottom: 0; }
+.intel-meta-label { color: var(--color-text-3); min-width: 64px; flex-shrink: 0; font-weight: 600; }
+.intel-signals-title { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--color-text-3); margin-bottom: 5px; }
+.intel-signal-row { display: flex; align-items: baseline; gap: 7px; padding: 4px 0; border-bottom: 1px solid rgba(43,48,88,.35); font-size: 11px; }
+.intel-signal-row:last-child { border-bottom: none; }
+.intel-arrow { font-size: 13px; font-weight: 700; min-width: 14px; text-align: center; }
+.intel-arrow.up   { color: var(--color-success); }
+.intel-arrow.down { color: var(--color-danger); }
+.intel-arrow.neutral { color: var(--color-text-3); }
+.intel-strength { font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 3px; white-space: nowrap; min-width: 60px; text-align: center; }
+.strength-strong   { background: rgba(62,207,142,.15);  color: var(--color-success); }
+.strength-moderate { background: rgba(240,168,50,.15);   color: var(--color-warning); }
+.strength-weak     { background: rgba(123,130,168,.12);  color: var(--color-text-2); }
+.intel-rider { font-weight: 600; color: var(--color-text); min-width: 110px; }
+.intel-signal-text { color: var(--color-text-2); flex: 1; }
+.intel-empty { padding: 24px; text-align: center; color: var(--color-text-3); font-size: 12px; }
+
+/* Odds table intel cell */
+.odds-intel { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 
 /* ── Candidates ─────────────────────────────────────────────────── */
 #candidates-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; }
@@ -404,6 +419,7 @@ input[type=range]::-webkit-slider-thumb {
                 <th class="num">Win%</th>
                 <th class="num">Top3%</th>
                 <th>Tier</th>
+                <th>Intel</th>
               </tr>
             </thead>
             <tbody id="odds-tbody"></tbody>
@@ -411,15 +427,15 @@ input[type=range]::-webkit-slider-thumb {
         </div>
       </div>
 
-      <!-- Intel notes -->
+      <!-- Intel display -->
       <div class="intel-panel">
         <div class="intel-panel-title">
-          <span>Intel notes</span>
+          <span>Intelligence</span>
           <button id="gather-intel-btn" class="btn btn-sm btn-ghost" onclick="gatherIntel()"><i class="ti ti-antenna"></i> Gather Intel</button>
         </div>
-        <textarea id="intel-notes" placeholder="Paste expert analysis, team news, weather, race situation…"
-          oninput="S.intelNotes = this.value"></textarea>
-        <button id="intel-toggle" onclick="toggleIntel()">▾ Expand</button>
+        <div id="intel-display">
+          <div class="intel-empty">No intel gathered yet — click Gather Intel</div>
+        </div>
       </div>
 
     </div>
@@ -510,7 +526,7 @@ const S = {
     n3: { sprint: 30, hilly: 30, hardgc: 30, mixed: 10 },
   },
   oddsRows: [],
-  intelNotes: '',
+  intelData: null,
   forceIn:  new Set(),
   forceOut: new Set(),
   search: '',
@@ -839,6 +855,48 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
+function renderIntel() {
+  const el = $('intel-display');
+  if (!el) return;
+  const data = S.intelData;
+  if (!data || !data.key_signals) {
+    el.innerHTML = '<div class="intel-empty">No intel gathered yet — click Gather Intel</div>';
+    return;
+  }
+  const sources  = (data.sources_consulted || []).join(' · ') || '—';
+  const signals  = data.key_signals || [];
+  const arrowMap = { up: '↑', down: '↓', neutral: '→' };
+  const acMap    = { up: 'up', down: 'down', neutral: 'neutral' };
+  const metaRows = [
+    ['Sources', sources],
+    data.stage_notes ? ['Stage',   data.stage_notes] : null,
+    data.weather     ? ['Weather', data.weather]     : null,
+    data.summary     ? ['Summary', data.summary]     : null,
+  ].filter(Boolean);
+
+  el.innerHTML = `
+    <div class="intel-meta">
+      ${metaRows.map(([lbl, val]) =>
+        `<div class="intel-meta-row"><span class="intel-meta-label">${lbl}</span><span>${esc(val)}</span></div>`
+      ).join('')}
+    </div>
+    ${signals.length ? `
+    <div class="intel-signals-title">Rider signals</div>
+    <div>
+      ${signals.map(s => {
+        const dir = s.direction || 'neutral';
+        const str = s.strength  || 'weak';
+        return `<div class="intel-signal-row">
+          <span class="intel-arrow ${acMap[dir] || 'neutral'}">${arrowMap[dir] || '→'}</span>
+          <span class="intel-strength strength-${str}">${str}</span>
+          <span class="intel-rider">${esc(s.rider || '')}</span>
+          <span class="intel-signal-text">${esc(s.signal || '')}</span>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+  `;
+}
+
 async function gatherIntel() {
   const st = S.stages[S.activeStageIndex] || {};
   const n = st.stage_number || 1;
@@ -853,17 +911,14 @@ async function gatherIntel() {
     });
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
-    S.intelNotes = data.intel || '';
-    const ta = $('intel-notes');
-    ta.value = S.intelNotes;
-    if (!ta.classList.contains('expanded')) {
-      ta.classList.add('expanded');
-      $('intel-toggle').textContent = '▴ Collapse';
-    }
+    if (data.status === 'error') throw new Error(data.message);
+    S.intelData = data;
+    renderIntel();
+    renderOdds();
     fetch(`${SERVER}/save-intel`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({stage: n, intel: S.intelNotes}),
+      body: JSON.stringify({stage: n, intel: data}),
     }).catch(() => {});
   } catch(e) {
     alert(`Gather Intel error: ${e.message}`);
@@ -873,13 +928,32 @@ async function gatherIntel() {
   }
 }
 
+async function loadSavedIntel() {
+  const stage = (S.stages[S.activeStageIndex] || {}).stage_number || 1;
+  try {
+    const res = await fetch(`${SERVER}/load-intel?stage=${stage}`);
+    const data = await res.json();
+    if (data && data.key_signals) {
+      S.intelData = data;
+      renderIntel();
+      renderOdds();
+    }
+  } catch(_) {}
+}
 
+async function loadSavedOutput() {
+  const stage = (S.stages[S.activeStageIndex] || {}).stage_number || 1;
+  try {
+    const res = await fetch(`${SERVER}/load-output?stage=${stage}`);
+    const data = await res.json();
+    if (data && data.teams) renderOptimizerOutput(data);
+  } catch(_) {}
+}
 
-function toggleIntel() {
-  const ta  = $('intel-notes');
-  const btn = $('intel-toggle');
-  const expanded = ta.classList.toggle('expanded');
-  btn.textContent = expanded ? '▴ Collapse' : '▾ Expand';
+function getIntelSignal(name) {
+  if (!S.intelData || !S.intelData.key_signals) return null;
+  const n = name.toLowerCase();
+  return S.intelData.key_signals.find(s => s.rider && s.rider.toLowerCase() === n) || null;
 }
 
 function renderOdds() {
@@ -889,6 +963,14 @@ function renderOdds() {
   rows.forEach(row => {
     const winVal = parseFloat(row.win) || 0;
     const tierCls = winVal >= 1 ? 'tier-a' : 'tier-b';
+    const sig = getIntelSignal(row.name);
+    let intelCell = '<span style="color:var(--color-text-3)">—</span>';
+    if (sig) {
+      const arrow = sig.direction === 'up' ? '↑' : sig.direction === 'down' ? '↓' : '→';
+      const ac    = sig.direction === 'up' ? 'up' : sig.direction === 'down' ? 'down' : 'neutral';
+      const str   = sig.strength || 'weak';
+      intelCell = `<span class="odds-intel"><span class="intel-arrow ${ac}">${arrow}</span><span class="intel-strength strength-${str}">${str}</span></span>`;
+    }
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><span class="rider-name">${esc(row.name)}</span></td>
@@ -897,6 +979,7 @@ function renderOdds() {
       <td><input type="number" value="${row.top3}" min="0" max="100" step="0.1" placeholder="—"
         onchange="updateOdds(${row.id},'top3',+this.value)"></td>
       <td><span class="${tierCls}">${winVal >= 1 ? 'A' : 'B'}</span></td>
+      <td>${intelCell}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -1031,6 +1114,23 @@ function renderTable() {
 }
 
 /* ── Optimizer prompt ────────────────────────────────────────────────── */
+function formatIntelForPrompt() {
+  if (!S.intelData) return '(none)';
+  const d = S.intelData;
+  const lines = [
+    d.summary     ? `Summary: ${d.summary}`          : '',
+    d.weather     ? `Weather: ${d.weather}`           : '',
+    d.stage_notes ? `Stage notes: ${d.stage_notes}`  : '',
+  ].filter(Boolean);
+  if (d.key_signals && d.key_signals.length) {
+    lines.push('Signals:');
+    d.key_signals.forEach(s => {
+      lines.push(`  ${s.rider}: ${(s.direction||'neutral').toUpperCase()} (${s.strength||'weak'}) — ${s.signal||''}`);
+    });
+  }
+  return lines.join('\n') || '(none)';
+}
+
 function buildOptimizerPrompt() {
   const st = S.stages[S.activeStageIndex] || {};
   const stName = st.stage_name || 'Unknown stage';
@@ -1076,7 +1176,7 @@ Force out: ${forceOutStr}
 ${sourcesStr}
 
 ## Intel notes
-${S.intelNotes || '(none)'}
+${formatIntelForPrompt()}
 
 ## Budget
 50,000,000 kr · 8 riders · max 2 per real-world team · 1% buy fee
@@ -1227,6 +1327,8 @@ async function init() {
 
   await loadRiders();
   await loadSavedOdds();
+  await loadSavedIntel();
+  await loadSavedOutput();
   updateHeader();
 }
 

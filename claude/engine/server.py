@@ -150,7 +150,7 @@ def run_optimizer():
     active_riders = [r for r in rider_data['riders'] if not r.get('isOut') and r.get('status') != 'dns']
 
     intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
-    intel = json.load(open(intel_path)).get('intel', '') if os.path.exists(intel_path) else ''
+    intel_data = json.load(open(intel_path)).get('intel', {}) if os.path.exists(intel_path) else {}
 
     def sl(key):
         s = sliders.get(key, {})
@@ -165,7 +165,20 @@ def run_optimizer():
     odds_json = json.dumps(odds, indent=2)
     force_in_str  = str(force_in)  if force_in  else 'none'
     force_out_str = str(force_out) if force_out else 'none'
-    intel_str = intel if intel else 'Not yet gathered — use odds only.'
+    if intel_data and isinstance(intel_data, dict) and intel_data.get('key_signals'):
+        signals = intel_data.get('key_signals', [])
+        intel_str = (
+            f"Summary: {intel_data.get('summary', '')}\n"
+            f"Weather: {intel_data.get('weather', '')}\n"
+            f"Stage notes: {intel_data.get('stage_notes', '')}\n\n"
+            "Key signals (adjust win probability accordingly):\n" +
+            '\n'.join(
+                f"  {s['rider']}: {s['direction'].upper()} ({s['strength']}) — {s['signal']}"
+                for s in signals
+            )
+        )
+    else:
+        intel_str = 'Not yet gathered — use odds only.'
 
     prompt = f"""You are a Giro d'Italia fantasy optimizer. Rules and scoring are fixed — optimize for them exactly.
 
@@ -252,11 +265,34 @@ def save_intel():
     if request.method == 'OPTIONS':
         return '', 204
     stage = request.json.get('stage')
-    intel = request.json.get('intel', '')
+    intel = request.json.get('intel', {})
     path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
     with open(path, 'w') as f:
         json.dump({'stage': stage, 'intel': intel}, f, indent=2, ensure_ascii=False)
     return jsonify({'status': 'ok'})
+
+
+@app.route('/load-intel', methods=['GET'])
+def load_intel():
+    stage = request.args.get('stage')
+    path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
+    if os.path.exists(path):
+        with open(path) as f:
+            data = json.load(f)
+        return jsonify(data.get('intel', {}))
+    return jsonify({})
+
+
+# ── Load optimizer output ────────────────────────────────────────────────────
+
+@app.route('/load-output', methods=['GET'])
+def load_output():
+    stage = request.args.get('stage')
+    path = os.path.join(BASE_DIR, 'claude', 'output', f'stage_{stage}_claude.json')
+    if os.path.exists(path):
+        with open(path) as f:
+            return jsonify(json.load(f))
+    return jsonify({})
 
 
 # ── Save / load odds ─────────────────────────────────────────────────────────
@@ -349,38 +385,68 @@ def gather_intel():
     if not HAS_ANTHROPIC:
         return jsonify({'status': 'error', 'message': 'anthropic package not installed'}), 500
     stage = request.json.get('stage', '?')
-    source_list = 'TV2/Axelgaard (1.5), Inner Ring (1.2), VeloNews (1.0), CyclingNews (1.0), ProCyclingStats (0.8), FirstCycling (0.8)'
-    if HAS_YAML:
-        try:
-            with open(EXPERT_SOURCES) as f:
-                sources = yaml.safe_load(f)
-            source_list = ', '.join(
-                f"{s['name']} (weight {s['weight']})" for s in sources.get('sources', [])
-            )
-        except Exception:
-            pass
+    raw = ''
     try:
         client = anthropic.Anthropic()
-        message = client.messages.create(
+
+        # Step 1 — gather raw intel via web search
+        search_message = client.messages.create(
+            model='claude-haiku-4-5-20251001',
+            max_tokens=3000,
+            tools=[{'type': 'web_search_20250305', 'name': 'web_search'}],
+            messages=[{'role': 'user', 'content': f"""Search for Stage {stage} Giro d'Italia 2026 expert analysis.
+
+Search these in order:
+1. "axelgaards optakt til {stage} etape giro ditalia 2026 site:sport.tv2.dk" (Danish, read it)
+2. "giro 2026 stage {stage} preview site:inrng.com"
+3. "giro 2026 stage {stage} preview site:velonews.com"
+4. "giro 2026 stage {stage} preview site:cyclingnews.com"
+5. "giro d'italia 2026 stage {stage} favourites"
+
+Collect everything you find about: rider favourites, team tactics, weather, road conditions, finish profile. Return all raw findings as detailed prose."""}],
+        )
+        raw_intel = ' '.join(b.text for b in search_message.content if b.type == 'text')
+        _log(f"gather-intel stage={stage} raw_intel={raw_intel[:300]}")
+
+        # Step 2 — structure into JSON
+        structure_message = client.messages.create(
             model='claude-haiku-4-5-20251001',
             max_tokens=2000,
-            tools=[{'type': 'web_search_20250305', 'name': 'web_search'}],
-            messages=[{
-                'role': 'user',
-                'content': (
-                    f"Search and summarize expert analysis for Stage {stage} Giro d'Italia 2026 "
-                    f'from these sources weighted by importance: {source_list}. '
-                    'Summarize as concise bullet points covering: who is favoured, team tactics, '
-                    'weather, road conditions, any late changes. Decision-relevant only, no fluff.'
-                ),
-            }],
+            messages=[{'role': 'user', 'content': f"""Convert this cycling analysis into a JSON object.
+
+Raw analysis:
+{raw_intel}
+
+Return ONLY this JSON, no other text, no markdown:
+{{
+  "sources_consulted": ["list of sources found"],
+  "key_signals": [
+    {{"rider": "Name", "signal": "what was said", "direction": "up/down/neutral", "strength": "strong/moderate/weak"}}
+  ],
+  "weather": "weather summary",
+  "stage_notes": "key tactical notes",
+  "summary": "two sentence summary"
+}}
+
+Include every rider mentioned. direction=up means favoured beyond raw odds, down means risks not in odds."""}],
         )
-        raw = ''
-        for block in message.content:
-            if block.type == 'text':
-                raw += block.text
-        return jsonify({'intel': raw.strip()})
+        raw = structure_message.content[0].text.strip()
+        _log(f"gather-intel stage={stage} structured={raw[:200]}")
+        if raw.startswith('```'):
+            raw = re.sub(r'^```[a-z]*\n?', '', raw)
+            raw = re.sub(r'\n?```$', '', raw)
+            raw = raw.strip()
+        result = json.loads(raw)
+        intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
+        with open(intel_path, 'w') as f:
+            json.dump({'stage': stage, 'intel': result}, f, indent=2, ensure_ascii=False)
+        _log(f"gather-intel saved to {intel_path}")
+        return jsonify(result)
+    except json.JSONDecodeError as e:
+        _log(f"gather-intel JSON error: {e}")
+        return jsonify({'status': 'error', 'message': str(e), 'raw': raw}), 500
     except Exception as e:
+        _log(f"gather-intel error: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
