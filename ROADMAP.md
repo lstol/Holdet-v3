@@ -1,7 +1,7 @@
 # Holdet v3 — Project Roadmap
 
 **Race:** Giro d'Italia 2026
-**Stage 1:** May 9 (TTT, Durazzo → Tirana, 13.7 km)
+**Stage 1:** May 8 (Nessebar → Burgas, 147 km, flat sprint)
 **Last updated:** Session 4 (2026-05-07) — dashboard fully wired, one-click refresh, 184-rider lock
 
 ---
@@ -40,7 +40,7 @@
 
 ---
 
-## Immediate — before Stage 1 (May 9)
+## Immediate — before Stage 1 (May 8)
 
 - [x] Scaffold repo structure into claude/ chatgpt/ shared/ layout (Session 2)
 - [x] Create `claude/engine/expert_sources.yaml` with default weights (Session 2b)
@@ -91,7 +91,7 @@
 
 | Session | Date | Summary |
 |---------|------|---------|
-| Session 1 | Pre-May 9 | Project setup, framing doc locked, dashboard shell designed |
+| Session 1 | Pre-May 8 | Project setup, framing doc locked, dashboard shell designed |
 | Session 2 | 2026-05-06 | Repo restructured into claude/ chatgpt/ shared/ layout; framing doc Section 13 added |
 | Session 2b | 2026-05-06 | Fix: expert_sources.yaml moved to claude/engine/ — intelligence is never shared between systems |
 | Session 2c | 2026-05-06 | Clean repo: remove duplicates, create chatgpt/ stub, claude/dashboard/claude.html stub |
