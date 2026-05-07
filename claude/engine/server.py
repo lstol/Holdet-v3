@@ -142,7 +142,7 @@ def gather_odds():
     try:
         client = anthropic.Anthropic()
         message = client.messages.create(
-            model='claude-sonnet-4-5',
+            model='claude-haiku-4-5-20251001',
             max_tokens=2000,
             tools=[{'type': 'web_search_20250305', 'name': 'web_search'}],
             messages=[{
@@ -207,7 +207,7 @@ def gather_intel():
     try:
         client = anthropic.Anthropic()
         message = client.messages.create(
-            model='claude-sonnet-4-5',
+            model='claude-haiku-4-5-20251001',
             max_tokens=2000,
             tools=[{'type': 'web_search_20250305', 'name': 'web_search'}],
             messages=[{
