@@ -417,9 +417,31 @@ Collect everything you find about: rider favourites, team tactics, weather, road
 Raw analysis:
 {raw_intel}
 
+For each source consulted, extract an explicit star rating (1-5) per rider mentioned.
+If a source uses different rating language, convert to stars:
+  favourite=5, strong contender=4, contender=3, outside chance=2, mention only=1.
+If a source gives no explicit rating, infer from language used.
+
 Return ONLY this JSON, no other text, no markdown:
 {{
   "sources_consulted": ["list of sources found"],
+  "source_ratings": [
+    {{
+      "source": "TV2/Axelgaard",
+      "weight": 1.5,
+      "ratings": [
+        {{"rider": "Jonathan Milan", "stars": 5}},
+        {{"rider": "Paul Magnier", "stars": 4}}
+      ]
+    }},
+    {{
+      "source": "Inner Ring",
+      "weight": 1.2,
+      "ratings": [
+        {{"rider": "Jonathan Milan", "stars": 5}}
+      ]
+    }}
+  ],
   "key_signals": [
     {{"rider": "Name", "signal": "what was said", "direction": "up/down/neutral", "strength": "strong/moderate/weak"}}
   ],
@@ -428,7 +450,8 @@ Return ONLY this JSON, no other text, no markdown:
   "summary": "two sentence summary"
 }}
 
-Include every rider mentioned. direction=up means favoured beyond raw odds, down means risks not in odds."""}],
+Include every rider mentioned. direction=up means favoured beyond raw odds, down means risks not in odds.
+source weight values: TV2/Axelgaard=1.5, Inner Ring=1.2, VeloNews=1.0, CyclingNews=1.0, other=0.8."""}],
         )
         raw = structure_message.content[0].text.strip()
         _log(f"gather-intel stage={stage} structured={raw[:200]}")

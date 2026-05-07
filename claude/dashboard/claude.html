@@ -243,6 +243,16 @@ input[type=range]::-webkit-slider-thumb {
 .intel-signal-text { color: var(--color-text-2); flex: 1; }
 .intel-empty { padding: 24px; text-align: center; color: var(--color-text-3); font-size: 12px; }
 
+/* Source rating tables */
+.intel-source-block { border: 1px solid var(--color-border); border-radius: var(--radius-sm); margin-bottom: 7px; overflow: hidden; }
+.intel-source-header { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; background: var(--color-surface-2); border-bottom: 1px solid var(--color-border); }
+.intel-source-name { font-size: 11px; font-weight: 600; color: var(--color-text); }
+.intel-source-weight { font-size: 10px; color: var(--color-text-3); font-family: var(--font-mono); }
+.intel-rating-row { display: flex; align-items: center; gap: 8px; padding: 3px 8px; border-bottom: 1px solid rgba(43,48,88,.25); font-size: 11px; }
+.intel-rating-row:last-child { border-bottom: none; }
+.intel-stars { color: var(--color-warning); letter-spacing: 1px; font-size: 12px; min-width: 74px; }
+.intel-rating-rider { color: var(--color-text); }
+
 /* Odds table intel cell */
 .odds-intel { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 
@@ -855,6 +865,11 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
+function renderStars(n) {
+  const filled = Math.min(5, Math.max(0, Math.round(n)));
+  return '★'.repeat(filled) + '☆'.repeat(5 - filled);
+}
+
 function renderIntel() {
   const el = $('intel-display');
   if (!el) return;
@@ -863,25 +878,45 @@ function renderIntel() {
     el.innerHTML = '<div class="intel-empty">No intel gathered yet — click Gather Intel</div>';
     return;
   }
-  const sources  = (data.sources_consulted || []).join(' · ') || '—';
-  const signals  = data.key_signals || [];
+
   const arrowMap = { up: '↑', down: '↓', neutral: '→' };
   const acMap    = { up: 'up', down: 'down', neutral: 'neutral' };
+  const signals  = data.key_signals || [];
+  const srcRatings = data.source_ratings || [];
+
+  // Per-source star tables
+  const sourceTables = srcRatings.map(src => `
+    <div class="intel-source-block">
+      <div class="intel-source-header">
+        <span class="intel-source-name">${esc(src.source || '')}</span>
+        <span class="intel-source-weight">×${Number(src.weight || 1).toFixed(1)}</span>
+      </div>
+      ${(src.ratings || []).map(r =>
+        `<div class="intel-rating-row">
+          <span class="intel-stars">${renderStars(r.stars)}</span>
+          <span class="intel-rating-rider">${esc(r.rider || '')}</span>
+        </div>`
+      ).join('')}
+    </div>
+  `).join('');
+
+  // Meta row (weather / stage_notes / summary)
   const metaRows = [
-    ['Sources', sources],
     data.stage_notes ? ['Stage',   data.stage_notes] : null,
     data.weather     ? ['Weather', data.weather]     : null,
     data.summary     ? ['Summary', data.summary]     : null,
   ].filter(Boolean);
 
-  el.innerHTML = `
-    <div class="intel-meta">
+  const metaBlock = metaRows.length ? `
+    <div class="intel-meta" style="margin-top:8px;">
       ${metaRows.map(([lbl, val]) =>
         `<div class="intel-meta-row"><span class="intel-meta-label">${lbl}</span><span>${esc(val)}</span></div>`
       ).join('')}
-    </div>
-    ${signals.length ? `
-    <div class="intel-signals-title">Rider signals</div>
+    </div>` : '';
+
+  // Consolidated signals
+  const signalsBlock = signals.length ? `
+    <div class="intel-signals-title" style="margin-top:10px;">Signals</div>
     <div>
       ${signals.map(s => {
         const dir = s.direction || 'neutral';
@@ -893,8 +928,9 @@ function renderIntel() {
           <span class="intel-signal-text">${esc(s.signal || '')}</span>
         </div>`;
       }).join('')}
-    </div>` : ''}
-  `;
+    </div>` : '';
+
+  el.innerHTML = sourceTables + metaBlock + signalsBlock;
 }
 
 async function gatherIntel() {
