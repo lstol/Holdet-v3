@@ -941,6 +941,15 @@ async function loadSavedIntel() {
   } catch(_) {}
 }
 
+async function loadSavedOutput() {
+  const stage = (S.stages[S.activeStageIndex] || {}).stage_number || 1;
+  try {
+    const res = await fetch(`${SERVER}/load-output?stage=${stage}`);
+    const data = await res.json();
+    if (data && data.teams) renderOptimizerOutput(data);
+  } catch(_) {}
+}
+
 function getIntelSignal(name) {
   if (!S.intelData || !S.intelData.key_signals) return null;
   const n = name.toLowerCase();
@@ -1319,6 +1328,7 @@ async function init() {
   await loadRiders();
   await loadSavedOdds();
   await loadSavedIntel();
+  await loadSavedOutput();
   updateHeader();
 }
 

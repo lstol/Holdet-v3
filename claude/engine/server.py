@@ -283,6 +283,18 @@ def load_intel():
     return jsonify({})
 
 
+# ── Load optimizer output ────────────────────────────────────────────────────
+
+@app.route('/load-output', methods=['GET'])
+def load_output():
+    stage = request.args.get('stage')
+    path = os.path.join(BASE_DIR, 'claude', 'output', f'stage_{stage}_claude.json')
+    if os.path.exists(path):
+        with open(path) as f:
+            return jsonify(json.load(f))
+    return jsonify({})
+
+
 # ── Save / load odds ─────────────────────────────────────────────────────────
 
 @app.route('/save-odds', methods=['POST', 'OPTIONS'])
@@ -425,6 +437,10 @@ Include every rider mentioned. direction=up means favoured beyond raw odds, down
             raw = re.sub(r'\n?```$', '', raw)
             raw = raw.strip()
         result = json.loads(raw)
+        intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
+        with open(intel_path, 'w') as f:
+            json.dump({'stage': stage, 'intel': result}, f, indent=2, ensure_ascii=False)
+        _log(f"gather-intel saved to {intel_path}")
         return jsonify(result)
     except json.JSONDecodeError as e:
         _log(f"gather-intel JSON error: {e}")
