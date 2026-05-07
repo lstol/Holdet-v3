@@ -771,21 +771,21 @@ async function saveWeights() {
 /* ── Odds table ──────────────────────────────────────────────────────── */
 function gatherOdds() {
   const st = S.stages[S.activeStageIndex] || {};
-  const n = st.stage_number || '?';
-  firePrompt(`Search current bookmaker odds for Stage ${n} of Giro d'Italia 2026. Return implied win probability and top-3 probability for every rider with win% ≥ 1%. Format as a JSON array: [{name, win_pct, top3_pct}] sorted by win_pct descending.`);
+  const n = st.stage_number || '1';
+  if (typeof window.sendPrompt === 'function') {
+    window.sendPrompt(`Search current bookmaker odds for Stage ${n} of Giro d'Italia 2026. Return implied win probability and top-3 probability for every rider with win% ≥ 1%. Format as a JSON array: [{name, win_pct, top3_pct}] sorted by win_pct descending.`);
+  } else {
+    window.location.href = `holdet-odds://${n}`;
+  }
 }
 
 function gatherIntel() {
   const st = S.stages[S.activeStageIndex] || {};
-  const n = st.stage_number || '?';
-  firePrompt(`Scan the following sources for Stage ${n} Giro d'Italia 2026 expert analysis, weighted by expert_sources.yaml defaults: TV2/Axelgaard (1.5), Inner Ring (1.2), VeloNews (1.0), CyclingNews (1.0), ProCyclingStats (0.8), FirstCycling (0.8). Summarize key signals as bullet points: who is favoured, team tactics, weather, road conditions, any late changes. Keep it concise — decision-relevant only.`);
-}
-
-function firePrompt(prompt) {
+  const n = st.stage_number || '1';
   if (typeof window.sendPrompt === 'function') {
-    window.sendPrompt(prompt);
+    window.sendPrompt(`Scan the following sources for Stage ${n} Giro d'Italia 2026 expert analysis, weighted by expert_sources.yaml defaults: TV2/Axelgaard (1.5), Inner Ring (1.2), VeloNews (1.0), CyclingNews (1.0), ProCyclingStats (0.8), FirstCycling (0.8). Summarize key signals as bullet points: who is favoured, team tactics, weather, road conditions, any late changes. Keep it concise — decision-relevant only.`);
   } else {
-    navigator.clipboard.writeText(prompt).catch(() => {});
+    window.location.href = `holdet-intel://${n}`;
   }
 }
 
