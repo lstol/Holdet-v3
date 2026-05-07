@@ -209,6 +209,14 @@ Force exclude: {force_out_str}
 EXPERT INTEL:
 {intel_str}
 
+For each team, break down the EV estimate into components:
+- stage_finish: expected points from stage finish positions weighted by probability
+- captain_bonus: additional EV from doubling captain's positive outcomes
+- team_bonus: expected +60k/+30k/+20k from teammates finishing top 3
+- depth_bonus: expected non-linear bonus from riders in top 15
+- gc_bonus: expected GC position bonus (100k-10k) for GC riders in team
+All values in fantasy points (kr). Components must sum to ev_estimate.
+
 OUTPUT — Return ONLY a JSON object, no preamble, no markdown, no code fences:
 {{
   "teams": [
@@ -217,6 +225,13 @@ OUTPUT — Return ONLY a JSON object, no preamble, no markdown, no code fences:
       "riders": ["Name 1", "Name 2", "Name 3", "Name 4", "Name 5", "Name 6", "Name 7", "Name 8"],
       "total_price": 49500000,
       "ev_estimate": 850000,
+      "ev_breakdown": {{
+        "stage_finish": 580000,
+        "captain_bonus": 160000,
+        "team_bonus": 50000,
+        "depth_bonus": 40000,
+        "gc_bonus": 20000
+      }},
       "cdf": {{"p25": 400000, "p50": 750000, "p75": 1100000, "p90": 1600000}},
       "forward_pressure": {{"n2": "low", "n3": "medium"}},
       "rationale": "One sentence."
