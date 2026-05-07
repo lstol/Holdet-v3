@@ -4,4 +4,5 @@ __pycache__/
 .DS_Store
 data/snapshots/*.json
 claude/tools/*.app
-claude/logs/*.log
+claude/logs/
+.claude/
