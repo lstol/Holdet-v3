@@ -15,6 +15,13 @@ import subprocess
 from flask import Flask, jsonify, request, send_from_directory
 from dotenv import load_dotenv
 
+# Python optimizer (imported lazily so server starts even if numpy missing)
+try:
+    from optimizer import build_probabilities, simulate_stage, generate_candidate_teams, select_captain
+    HAS_OPTIMIZER = True
+except ImportError:
+    HAS_OPTIMIZER = False
+
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), '.env'))
 
 try:
@@ -270,6 +277,86 @@ Generate 3-5 structurally distinct teams. Each exactly 8 riders, budget ≤50,00
         return jsonify({'status': 'error', 'message': str(e), 'raw': raw}), 500
     except Exception as e:
         _log(f"run-optimizer error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+# ── Run Python optimizer ─────────────────────────────────────────────────────
+
+@app.route('/run-optimizer-py', methods=['POST', 'OPTIONS'])
+def run_optimizer_py():
+    if request.method == 'OPTIONS':
+        return '', 204
+    if not HAS_OPTIMIZER:
+        return jsonify({'status': 'error', 'message': 'optimizer.py not importable (numpy missing?)'}), 500
+
+    data       = request.json or {}
+    stage      = data.get('stage', 1)
+    sliders    = data.get('sliders', {})
+    force_in   = data.get('force_in', [])
+    force_out  = data.get('force_out', [])
+
+    # Load data files
+    odds_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
+    odds = json.load(open(odds_path)) if os.path.exists(odds_path) else []
+
+    rider_data    = json.load(open(RIDERS_FILE))
+    active_riders = [r for r in rider_data['riders'] if not r.get('isOut') and r.get('status') != 'dns']
+
+    intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
+    intel_data = json.load(open(intel_path)) if os.path.exists(intel_path) else {}
+
+    try:
+        # Build probability distributions
+        probs = build_probabilities(active_riders, odds, intel_data, sliders)
+
+        # Generate candidate teams (hard constraints enforced inside)
+        candidates = generate_candidate_teams(active_riders, probs, force_in, force_out)
+
+        if not candidates:
+            return jsonify({'status': 'error', 'message': 'No valid teams found — check budget/constraints'}), 500
+
+        # Simulate each team and build output
+        teams_out = []
+        for cand in candidates:
+            team_riders = cand['riders']
+            cap         = select_captain(team_riders, probs)
+            sim         = simulate_stage(team_riders, probs, cap['name'], all_riders=active_riders)
+
+            total_price = sum(r['price'] for r in team_riders)
+            teams_out.append({
+                'label':            cand['label'],
+                'riders':           [r['name'] for r in team_riders],
+                'total_price':      total_price,
+                'ev_estimate':      int(sim['mean']),
+                'ev_breakdown':     sim['breakdown'],
+                'cdf':              sim['cdf'],
+                'forward_pressure': cand['forward_pressure'],
+                'rationale':        cand['rationale'],
+            })
+
+        # Sort by EV descending
+        teams_out.sort(key=lambda t: t['ev_estimate'], reverse=True)
+
+        # Overall best captain (from highest-EV team)
+        best_team_riders = candidates[0]['riders']
+        overall_captain  = select_captain(best_team_riders, probs)
+
+        result = {
+            'teams':   teams_out,
+            'captain': overall_captain,
+            'tier_a':  [t['riders'][0] for t in teams_out[:2]],
+        }
+
+        out_path = os.path.join(BASE_DIR, 'claude', 'output', f'stage_{stage}_claude_py.json')
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        with open(out_path, 'w') as f:
+            json.dump(result, f, indent=2, ensure_ascii=False)
+
+        _log(f"run-optimizer-py stage={stage} teams={len(teams_out)}")
+        return jsonify(result)
+
+    except Exception as e:
+        _log(f"run-optimizer-py error: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 

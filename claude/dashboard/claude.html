@@ -474,9 +474,14 @@ input[type=range]::-webkit-slider-thumb {
     <div id="candidates-panel">
       <div id="candidates-header">
         <h2>Candidate teams</h2>
-        <button id="run-optimizer-btn" class="btn btn-primary" onclick="runOptimizer()">
-          <i class="ti ti-player-play"></i> Run optimizer
-        </button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="run-optimizer-btn" class="btn btn-primary" onclick="runOptimizer()">
+            <i class="ti ti-player-play"></i> Run optimizer
+          </button>
+          <button id="run-optimizer-py-btn" class="btn btn-secondary" onclick="runPyOptimizer()">
+            <i class="ti ti-cpu"></i> Run Python optimizer ↗
+          </button>
+        </div>
       </div>
       <div id="optimizer-output" class="placeholder">
         Load data and run optimizer to generate candidate teams
@@ -1272,6 +1277,37 @@ async function runOptimizer() {
     outEl.innerHTML = `<div style="color:var(--color-danger,#e05)">Error: ${e.message}</div>`;
   } finally {
     btn.innerHTML = '<i class="ti ti-player-play"></i> Run optimizer';
+    btn.disabled = false;
+  }
+}
+
+async function runPyOptimizer() {
+  const btn = $('run-optimizer-py-btn');
+  const outEl = $('optimizer-output');
+  btn.textContent = 'Running…';
+  btn.disabled = true;
+  outEl.className = '';
+  outEl.textContent = 'Running Python Monte Carlo optimizer…';
+  const st = S.stages[S.activeStageIndex] || {};
+  const stage = st.stage_number || 1;
+  try {
+    const res = await fetch(`${SERVER}/run-optimizer-py`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        stage,
+        sliders: S.sliders,
+        force_in:  [...S.forceIn].map(id => { const r = S.riders.find(x => (x.rider_id || x.holdet_id) == id); return r ? r.name : id; }),
+        force_out: [...S.forceOut].map(id => { const r = S.riders.find(x => (x.rider_id || x.holdet_id) == id); return r ? r.name : id; }),
+      }),
+    });
+    const data = await res.json();
+    if (data.status === 'error') throw new Error(data.message);
+    renderOptimizerOutput(data);
+  } catch(e) {
+    outEl.innerHTML = `<div style="color:var(--color-danger,#e05)">Error: ${e.message}</div>`;
+  } finally {
+    btn.innerHTML = '<i class="ti ti-cpu"></i> Run Python optimizer ↗';
     btn.disabled = false;
   }
 }
