@@ -11,6 +11,7 @@ Hard-enforces:
 Simulation uses Plackett-Luce sampling (vectorised with numpy).
 """
 
+import re
 import random
 from collections import defaultdict
 
@@ -64,14 +65,20 @@ def build_probabilities(all_riders, odds, intel, sliders=None):
     4. Derive top-3/10/15 from win probability.
        Riders absent from odds get P(win)≈0, P(top15)=0.05.
     """
-    EPS = 1e-5
-
     # Odds lookup: name → fraction (e.g. 5.2% → 0.052)
     odds_map = {
         o['name']: o.get('win_pct', 0) / 100.0
         for o in odds if o.get('name')
     }
     in_odds = set(n for n, p in odds_map.items() if p > 0)
+
+    # Dynamic EPS: give non-odds riders collectively ~20% of probability mass.
+    # This ensures the simulation has realistic variance — in real races, peloton
+    # riders do occasionally infiltrate the top 15, bumping favorites out.
+    # Formula: EPS = 0.25 * raw_odds_total / n_non_odds  →  after renorm ≈ 20%.
+    raw_odds_total = sum(odds_map.values())
+    n_non_odds = max(len(all_riders) - len(in_odds), 1)
+    EPS = max(1e-5, 0.25 * raw_odds_total / n_non_odds)
 
     # Intel adjustment lookup
     adj = {}
@@ -91,7 +98,7 @@ def build_probabilities(all_riders, odds, intel, sliders=None):
         base = odds_map.get(name, 0.0)
         raw[name] = base * adj.get(name, 1.0)
 
-    # Assign epsilon to riders with zero probability (Plackett-Luce stability)
+    # Assign EPS to riders with zero probability (Plackett-Luce stability)
     for name in raw:
         if raw[name] == 0:
             raw[name] = EPS
@@ -227,6 +234,27 @@ def simulate_stage(team_riders, all_probs, captain_name, all_riders=None, n_sims
 
 # ── Step 3: Team generation ───────────────────────────────────────────────────
 
+def _norm_team(name):
+    """
+    Normalise a real-world team name for constraint counting.
+
+    The riders.json has several name-variant pairs for the same team, e.g.:
+      'Tudor Pro Cycling'  vs 'Tudor Pro Cycling Team'
+      'Lidl-Trek'          vs 'Lidl - Trek'
+      'XDS Astana'         vs 'XDS Astana Team'
+      'Netcompany INEOS'   vs 'Netcompany INEOS Cycling Team'
+      'Red Bull BORA hansgrohe' vs 'Red Bull - BORA - hansgrohe'
+      'EF Education EasyPost'   vs 'EF Education - EasyPost'
+
+    Strategy: lowercase, replace all punctuation separators with space,
+    remove the words 'team' and 'cycling', collapse whitespace.
+    """
+    n = re.sub(r'[^\w\s]', ' ', (name or '').lower())  # punct/hyphens → space
+    n = re.sub(r'\bcycling\b', '', n)                   # drop word 'cycling'
+    n = re.sub(r'\bteam\b', '', n)                      # drop word 'team'
+    return re.sub(r'\s+', ' ', n).strip()               # collapse spaces
+
+
 def _ev_single(name, probs):
     """Simple single-rider EV estimate (no team interaction)."""
     p    = probs.get(name, {})
@@ -243,31 +271,41 @@ def _ev_single(name, probs):
     return max(0.0, ev)
 
 
-def _greedy_fill(seed, pool, budget, key_fn, n=8):
+def _greedy_fill(seed, pool, budget, key_fn, n=8, budget_reserve=False):
     """
     Greedily fill a team from pool, sorted descending by key_fn.
     Returns a list of n rider dicts, or None if the target size cannot be reached.
-    Hard constraints: budget, max 2 per real-world team.
+    Hard constraints: budget, max 2 per real-world team (normalised names).
+
+    budget_reserve=True: before picking a rider, ensure the remaining budget after
+    the pick is still enough to fill the remaining slots at minimum pool price.
+    This prevents early expensive picks from leaving no room for later slots.
     """
     team        = list(seed)
     team_names  = {r['name'] for r in team}
     team_counts = defaultdict(int)
     for r in team:
-        team_counts[r['team']] += 1
+        team_counts[_norm_team(r.get('team', ''))] += 1
     rem = budget - sum(r['price'] for r in team)
 
-    for r in sorted(pool, key=key_fn, reverse=True):
+    min_price = min((r['price'] for r in pool), default=0) if budget_reserve else 0
+    sorted_pool = sorted(pool, key=key_fn, reverse=True)
+
+    for r in sorted_pool:
         if len(team) >= n:
             break
         if r['name'] in team_names:
             continue
-        if r['price'] > rem:
+        if team_counts[_norm_team(r.get('team', ''))] >= 2:
             continue
-        if team_counts.get(r['team'], 0) >= 2:
+        # Budget check: must leave enough for the remaining slots after this pick
+        slots_after = n - len(team) - 1
+        reserve = slots_after * min_price
+        if r['price'] > rem - reserve:
             continue
         team.append(r)
         team_names.add(r['name'])
-        team_counts[r['team']] += 1
+        team_counts[_norm_team(r.get('team', ''))] += 1
         rem -= r['price']
 
     return team if len(team) == n else None
@@ -315,13 +353,22 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
         raise ValueError(f'Force-in riders cost {forced_price:,} which exceeds budget {budget:,}')
     ftc = defaultdict(int)
     for r in forced:
-        ftc[r['team']] += 1
-        if ftc[r['team']] > 2:
-            raise ValueError(f'Force-in has >2 riders from {r["team"]}')
+        ftc[_norm_team(r.get('team', ''))] += 1
+        if ftc[_norm_team(r.get('team', ''))] > 2:
+            raise ValueError(f'Force-in has >2 riders from {r.get("team","?")}')
 
     # ── Strategy 1: EV-greedy ────────────────────────────────────────────────
-    t1 = _greedy_fill(forced, pool, budget,
-                      lambda r: _ev_single(r['name'], probs))
+    # Filter: P(top15) > 0.07 keeps all in-odds riders (min ~8%) while
+    # excluding non-odds riders (hardcoded 5%). Sort by EV/price (value
+    # efficiency) so expensive picks don't crowd out cheaper good-value slots.
+    # budget_reserve=True prevents early expensive picks from starving later slots.
+    TOP15_MIN = 0.07
+    pool_ev = [r for r in pool if probs.get(r['name'], {}).get('top15', 0) > TOP15_MIN]
+    if len(pool_ev) + len(forced) < 8:
+        pool_ev = pool  # fallback: insufficient in-odds candidates
+    t1 = _greedy_fill(forced, pool_ev, budget,
+                      lambda r: _ev_single(r['name'], probs) / max(r.get('price', 1), 1),
+                      budget_reserve=True)
 
     # ── Strategy 2: Depth (P(top15)) ────────────────────────────────────────
     t2 = _greedy_fill(forced, pool, budget,
@@ -331,13 +378,13 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
     favs = sorted(pool, key=lambda r: probs.get(r['name'], {}).get('win', 0), reverse=True)
     anchor, tmp_tc = list(forced), defaultdict(int)
     for r in forced:
-        tmp_tc[r['team']] += 1
+        tmp_tc[_norm_team(r.get('team', ''))] += 1
     for r in favs:
         if len(anchor) >= len(forced) + 3:
             break
-        if tmp_tc.get(r['team'], 0) < 2 and r not in anchor:
+        if tmp_tc[_norm_team(r.get('team', ''))] < 2 and r not in anchor:
             anchor.append(r)
-            tmp_tc[r['team']] += 1
+            tmp_tc[_norm_team(r.get('team', ''))] += 1
     anchor_names = {r['name'] for r in anchor}
     rest = [r for r in pool if r['name'] not in anchor_names]
     t3 = _greedy_fill(anchor, rest, budget, lambda r: -r['price'])
@@ -378,14 +425,14 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
         if raw_team is None or len(raw_team) != 8:
             continue
 
-        # Hard constraint re-verification
+        # Hard constraint re-verification (uses normalised team names)
         total_price = sum(r['price'] for r in raw_team)
         if total_price > budget:
             continue
         tc, ok = defaultdict(int), True
         for r in raw_team:
-            tc[r['team']] += 1
-            if tc[r['team']] > 2:
+            tc[_norm_team(r.get('team', ''))] += 1
+            if tc[_norm_team(r.get('team', ''))] > 2:
                 ok = False
                 break
         if not ok:
