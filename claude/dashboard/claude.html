@@ -210,24 +210,27 @@ input[type=range]::-webkit-slider-thumb {
 /* ── Intelligence ───────────────────────────────────────────────── */
 #intel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .intel-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; }
-.intel-panel-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-2); margin-bottom: 10px; }
+.intel-panel-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-2); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
 
 /* Odds table */
-#odds-table-wrap { overflow-x: auto; max-height: 380px; overflow-y: auto; }
+#odds-paste { width: 100%; height: 2.4em; padding: 5px 8px; font-size: 11px; font-family: var(--font-mono); border-radius: var(--radius-sm); color: var(--color-text-2); border: 1px dashed var(--color-border); margin-bottom: 6px; resize: none; background: var(--color-surface-2); }
+#odds-parse-status { font-size: 10px; margin-bottom: 6px; min-height: 14px; }
+.parse-ok  { color: var(--color-success); }
+.parse-err { color: var(--color-warning); }
+#odds-table-wrap { overflow-x: auto; max-height: 320px; overflow-y: auto; }
 #odds-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 #odds-table th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-3); padding: 4px 6px; text-align: left; border-bottom: 1px solid var(--color-border); }
 #odds-table td { padding: 4px 6px; border-bottom: 1px solid rgba(43,48,88,.5); vertical-align: middle; }
-#odds-table input[type=text] { width: 130px; padding: 3px 6px; }
 #odds-table input[type=number] { width: 54px; padding: 3px 6px; text-align: right; }
-.del-row-btn { color: var(--color-text-3); font-size: 14px; padding: 2px 4px; border-radius: 3px; }
-.del-row-btn:hover { color: var(--color-danger); background: rgba(240,77,94,.1); }
-#add-odds-btn { margin-top: 8px; }
 
 #intel-notes {
-  width: 100%; min-height: 180px; padding: 8px; resize: vertical;
+  width: 100%; height: 3.6em; padding: 8px; resize: none; overflow: hidden;
   color: var(--color-text); font-size: 12px; line-height: 1.55;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-sm); transition: height .2s ease;
 }
+#intel-notes.expanded { height: 300px; overflow-y: auto; }
+#intel-toggle { width: 100%; margin-top: 5px; font-size: 10px; color: var(--color-text-3); border: 1px solid var(--color-border); border-radius: 3px; padding: 2px 0; text-align: center; }
+#intel-toggle:hover { color: var(--color-text-2); }
 
 /* ── Candidates ─────────────────────────────────────────────────── */
 #candidates-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; }
@@ -390,7 +393,12 @@ input[type=range]::-webkit-slider-thumb {
 
       <!-- Bookmaker odds -->
       <div class="intel-panel">
-        <div class="intel-panel-title">Bookmaker odds</div>
+        <div class="intel-panel-title">
+          <span>Bookmaker odds</span>
+          <button class="btn btn-sm" onclick="gatherOdds()"><i class="ti ti-search"></i> Gather Odds</button>
+        </div>
+        <textarea id="odds-paste" placeholder="Paste JSON odds response here…" oninput="tryParseOdds(this.value)"></textarea>
+        <div id="odds-parse-status"></div>
         <div id="odds-table-wrap">
           <table id="odds-table">
             <thead>
@@ -398,6 +406,7 @@ input[type=range]::-webkit-slider-thumb {
                 <th>Rider</th>
                 <th class="num">Win%</th>
                 <th class="num">Top3%</th>
+                <th>Tier</th>
               </tr>
             </thead>
             <tbody id="odds-tbody"></tbody>
@@ -407,9 +416,13 @@ input[type=range]::-webkit-slider-thumb {
 
       <!-- Intel notes -->
       <div class="intel-panel">
-        <div class="intel-panel-title">Intel notes</div>
+        <div class="intel-panel-title">
+          <span>Intel notes</span>
+          <button class="btn btn-sm" onclick="gatherIntel()"><i class="ti ti-antenna"></i> Gather Intel</button>
+        </div>
         <textarea id="intel-notes" placeholder="Paste expert analysis, team news, weather, race situation…"
           oninput="S.intelNotes = this.value"></textarea>
+        <button id="intel-toggle" onclick="toggleIntel()">▾ Expand</button>
       </div>
 
     </div>
@@ -545,31 +558,9 @@ function deriveType(r) {
 }
 
 /* ── Tier computation ───────────────────────────────────────────────── */
-// Type-to-stage-type compatibility: sprint/hilly/hardgc/mixed
-const TYPE_FIT = {
-  'Sprinter':    { sprint: 1.0, hilly: 0.2, hardgc: 0.0, mixed: 0.3 },
-  'Lead-out':    { sprint: 0.8, hilly: 0.1, hardgc: 0.0, mixed: 0.2 },
-  'Puncheur':    { sprint: 0.3, hilly: 0.9, hardgc: 0.5, mixed: 0.7 },
-  'All-rounder': { sprint: 0.2, hilly: 0.7, hardgc: 0.7, mixed: 0.8 },
-  'GC-Climber':  { sprint: 0.0, hilly: 0.7, hardgc: 1.0, mixed: 0.5 },
-  'TTT Spec.':   { sprint: 0.3, hilly: 0.2, hardgc: 0.3, mixed: 0.8 },
-};
-const TIER_THRESHOLD = 0.36;
-
-function riderStageScore(rider) {
-  const fit = TYPE_FIT[rider._type] || { sprint: 0.2, hilly: 0.2, hardgc: 0.2, mixed: 0.2 };
-  const sl = S.sliders.n1;
-  const total = sl.sprint + sl.hilly + sl.hardgc + sl.mixed || 100;
-  return (
-    (sl.sprint / total) * fit.sprint +
-    (sl.hilly  / total) * fit.hilly  +
-    (sl.hardgc / total) * fit.hardgc +
-    (sl.mixed  / total) * fit.mixed
-  );
-}
-
 function computeTier(rider) {
-  return riderStageScore(rider) >= TIER_THRESHOLD ? 'A' : 'B';
+  const w = pwin(rider.name);
+  return (w !== null && w >= 1) ? 'A' : 'B';
 }
 
 /* ── P(win) lookup from odds ────────────────────────────────────────── */
@@ -744,7 +735,6 @@ function updateSlider(key, type, val) {
   });
 
   updateSumDisplay(key);
-  if (key === 'n1') initOddsFromRiders();
   renderTable();
 }
 
@@ -772,32 +762,73 @@ async function saveWeights() {
 }
 
 /* ── Odds table ──────────────────────────────────────────────────────── */
-function initOddsFromRiders() {
-  if (!S.riders.length) return;
-  const top30 = [...S.riders]
-    .sort((a, b) => riderStageScore(b) - riderStageScore(a))
-    .slice(0, 30);
-  // Preserve any odds already entered
-  const existing = {};
-  S.oddsRows.forEach(r => { if (r.name) existing[r.name.toLowerCase()] = r; });
-  S.oddsRows = top30.map((r, i) => {
-    const prev = existing[r.name.toLowerCase()];
-    return { id: i, name: r.name, win: prev ? prev.win : '', top3: prev ? prev.top3 : '' };
-  });
-  renderOdds();
+function gatherOdds() {
+  const st = S.stages[S.activeStageIndex] || {};
+  const n = st.stage_number || '?';
+  firePrompt(`Search current bookmaker odds for Stage ${n} of Giro d'Italia 2026. Return implied win probability and top-3 probability for every rider with win% ≥ 1%. Format as a JSON array: [{name, win_pct, top3_pct}] sorted by win_pct descending.`);
+}
+
+function gatherIntel() {
+  const st = S.stages[S.activeStageIndex] || {};
+  const n = st.stage_number || '?';
+  firePrompt(`Scan the following sources for Stage ${n} Giro d'Italia 2026 expert analysis, weighted by expert_sources.yaml defaults: TV2/Axelgaard (1.5), Inner Ring (1.2), VeloNews (1.0), CyclingNews (1.0), ProCyclingStats (0.8), FirstCycling (0.8). Summarize key signals as bullet points: who is favoured, team tactics, weather, road conditions, any late changes. Keep it concise — decision-relevant only.`);
+}
+
+function firePrompt(prompt) {
+  if (typeof window.sendPrompt === 'function') {
+    window.sendPrompt(prompt);
+  } else {
+    navigator.clipboard.writeText(prompt).catch(() => {});
+  }
+}
+
+function tryParseOdds(text) {
+  const statusEl = $('odds-parse-status');
+  const match = text.match(/\[[\s\S]*\]/);
+  if (!match) { statusEl.textContent = ''; return; }
+  try {
+    const arr = JSON.parse(match[0]);
+    if (!Array.isArray(arr) || !arr.length) { statusEl.className = 'parse-err'; statusEl.textContent = 'No rows found'; return; }
+    S.oddsRows = arr
+      .sort((a, b) => (b.win_pct ?? b.win ?? 0) - (a.win_pct ?? a.win ?? 0))
+      .map((entry, i) => ({
+        id: i,
+        name: entry.name || '',
+        win:  entry.win_pct  ?? entry.win  ?? '',
+        top3: entry.top3_pct ?? entry.top3 ?? '',
+      }));
+    renderOdds();
+    renderTable();
+    statusEl.className = 'parse-ok';
+    statusEl.textContent = `✓ ${S.oddsRows.length} riders loaded`;
+  } catch (_) {
+    statusEl.className = 'parse-err';
+    statusEl.textContent = 'Invalid JSON';
+  }
+}
+
+function toggleIntel() {
+  const ta  = $('intel-notes');
+  const btn = $('intel-toggle');
+  const expanded = ta.classList.toggle('expanded');
+  btn.textContent = expanded ? '▴ Collapse' : '▾ Expand';
 }
 
 function renderOdds() {
   const tbody = $('odds-tbody');
   tbody.innerHTML = '';
-  S.oddsRows.forEach(row => {
+  const rows = [...S.oddsRows].sort((a, b) => (parseFloat(b.win) || 0) - (parseFloat(a.win) || 0));
+  rows.forEach(row => {
+    const winVal = parseFloat(row.win) || 0;
+    const tierCls = winVal >= 1 ? 'tier-a' : 'tier-b';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><span class="rider-name">${esc(row.name)}</span></td>
       <td><input type="number" value="${row.win}" min="0" max="100" step="0.1" placeholder="—"
-        onchange="updateOdds(${row.id},'win',+this.value);renderTable()"></td>
+        onchange="updateOdds(${row.id},'win',+this.value);renderOdds();renderTable()"></td>
       <td><input type="number" value="${row.top3}" min="0" max="100" step="0.1" placeholder="—"
         onchange="updateOdds(${row.id},'top3',+this.value)"></td>
+      <td><span class="${tierCls}">${winVal >= 1 ? 'A' : 'B'}</span></td>
     `;
     tbody.appendChild(tr);
   });
@@ -1041,7 +1072,6 @@ async function loadSnapshot() {
   } catch(_) {
     await loadFallbackRiders();
   }
-  initOddsFromRiders();
   renderTable();
 }
 
@@ -1050,7 +1080,6 @@ async function loadFallbackRiders() {
   if (window.RIDERS_DATA) {
     S.riders = window.RIDERS_DATA.map(r => ({ ...r, _type: deriveType(r) }));
     S.mockMode = true;
-    initOddsFromRiders();
     return;
   }
   // Final fallback: mock data
@@ -1060,7 +1089,6 @@ async function loadFallbackRiders() {
     { rider_id:'mock_3', name:'Primož Roglič', team:'Red Bull - Bora - Hansgrohe', price:12000000, startPrice:12000000, terrain_affinity:{sprint:.35,climbing:.88,time_trial:.9,mixed:.65}, status:'active', isEliminated:false },
   ].map(r => ({ ...r, _type: deriveType(r) }));
   S.mockMode = true;
-  initOddsFromRiders();
 }
 
 async function loadStages() {
