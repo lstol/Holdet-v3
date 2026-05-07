@@ -1,0 +1,144 @@
+{
+  "teams": [
+    {
+      "label": "Team-bonus concentration",
+      "riders": [
+        "Tobias Lund Andresen",
+        "Amanuel Ghebreigzabhier",
+        "Dries Van Gestel",
+        "Dylan Groenewegen",
+        "Johannes Staune-Mittet",
+        "Paul Magnier",
+        "Hartthijs de Vries",
+        "Jonathan Milan"
+      ],
+      "total_price": 50000000,
+      "ev_estimate": 885087,
+      "ev_breakdown": {
+        "stage_finish": 495953,
+        "captain_bonus": 154915,
+        "team_bonus": 142160,
+        "depth_bonus": 92059,
+        "gc_bonus": 0
+      },
+      "cdf": {
+        "p25": 780000,
+        "p50": 905000,
+        "p75": 1000000,
+        "p90": 1070000
+      },
+      "forward_pressure": {
+        "n2": "medium",
+        "n3": "medium"
+      },
+      "rationale": "Team-bonus concentration: anchored by Jonathan Milan & Paul Magnier. Expected 4.0 riders in top-15, analytical finish EV 476k."
+    },
+    {
+      "label": "Team-bonus concentration",
+      "riders": [
+        "Oliver Naesen",
+        "Dylan Groenewegen",
+        "Tobias Lund Andresen",
+        "Ayco Bastiaens",
+        "Jonathan Milan",
+        "Paul Magnier",
+        "Tomáš Kopecký",
+        "Amanuel Ghebreigzabhier"
+      ],
+      "total_price": 50000000,
+      "ev_estimate": 882844,
+      "ev_breakdown": {
+        "stage_finish": 494556,
+        "captain_bonus": 154876,
+        "team_bonus": 141350,
+        "depth_bonus": 92062,
+        "gc_bonus": 0
+      },
+      "cdf": {
+        "p25": 775000,
+        "p50": 905000,
+        "p75": 1000000,
+        "p90": 1065000
+      },
+      "forward_pressure": {
+        "n2": "medium",
+        "n3": "medium"
+      },
+      "rationale": "Team-bonus concentration: anchored by Jonathan Milan & Paul Magnier. Expected 4.0 riders in top-15, analytical finish EV 476k."
+    },
+    {
+      "label": "Team-bonus concentration",
+      "riders": [
+        "Tobias Lund Andresen",
+        "Hartthijs de Vries",
+        "Dylan Groenewegen",
+        "Amanuel Ghebreigzabhier",
+        "Oliver Naesen",
+        "Jonathan Milan",
+        "Fabio Van den Bossche",
+        "Paul Magnier"
+      ],
+      "total_price": 50000000,
+      "ev_estimate": 882173,
+      "ev_breakdown": {
+        "stage_finish": 494217,
+        "captain_bonus": 154768,
+        "team_bonus": 140454,
+        "depth_bonus": 92734,
+        "gc_bonus": 0
+      },
+      "cdf": {
+        "p25": 770000,
+        "p50": 905000,
+        "p75": 1005000,
+        "p90": 1070000
+      },
+      "forward_pressure": {
+        "n2": "medium",
+        "n3": "medium"
+      },
+      "rationale": "Team-bonus concentration: anchored by Jonathan Milan & Paul Magnier. Expected 4.0 riders in top-15, analytical finish EV 476k."
+    },
+    {
+      "label": "Team-bonus concentration",
+      "riders": [
+        "Paul Magnier",
+        "Dylan Groenewegen",
+        "Jonathan Milan",
+        "Amanuel Ghebreigzabhier",
+        "Tobias Lund Andresen",
+        "Fabio Van den Bossche",
+        "Tomáš Kopecký",
+        "Rasmus Søjberg Pedersen"
+      ],
+      "total_price": 50000000,
+      "ev_estimate": 881675,
+      "ev_breakdown": {
+        "stage_finish": 494293,
+        "captain_bonus": 154493,
+        "team_bonus": 140586,
+        "depth_bonus": 92303,
+        "gc_bonus": 0
+      },
+      "cdf": {
+        "p25": 775000,
+        "p50": 905000,
+        "p75": 1000000,
+        "p90": 1065000
+      },
+      "forward_pressure": {
+        "n2": "medium",
+        "n3": "medium"
+      },
+      "rationale": "Team-bonus concentration: anchored by Jonathan Milan & Paul Magnier. Expected 4.0 riders in top-15, analytical finish EV 476k."
+    }
+  ],
+  "captain": {
+    "name": "Jonathan Milan",
+    "rationale": "Jonathan Milan has the highest stage-finish EV in the team (~154k captain bonus, 95% top-3 probability). Doubling positive outcomes captures maximum right-tail upside."
+  },
+  "tier_a": [
+    "Tobias Lund Andresen",
+    "Oliver Naesen"
+  ]
+}
