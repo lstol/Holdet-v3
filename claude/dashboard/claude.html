@@ -395,7 +395,7 @@ input[type=range]::-webkit-slider-thumb {
       <div class="intel-panel">
         <div class="intel-panel-title">
           <span>Bookmaker odds</span>
-          <button class="btn btn-sm btn-ghost" onclick="gatherOdds()"><i class="ti ti-search"></i> Gather Odds</button>
+          <button id="gather-odds-btn" class="btn btn-sm btn-ghost" onclick="gatherOdds()"><i class="ti ti-search"></i> Gather Odds</button>
         </div>
         <textarea id="odds-paste" placeholder="Paste JSON odds response here…" oninput="tryParseOdds(this.value)"></textarea>
         <div id="odds-parse-status"></div>
@@ -418,7 +418,7 @@ input[type=range]::-webkit-slider-thumb {
       <div class="intel-panel">
         <div class="intel-panel-title">
           <span>Intel notes</span>
-          <button class="btn btn-sm btn-ghost" onclick="gatherIntel()"><i class="ti ti-antenna"></i> Gather Intel</button>
+          <button id="gather-intel-btn" class="btn btn-sm btn-ghost" onclick="gatherIntel()"><i class="ti ti-antenna"></i> Gather Intel</button>
         </div>
         <textarea id="intel-notes" placeholder="Paste expert analysis, team news, weather, race situation…"
           oninput="S.intelNotes = this.value"></textarea>
@@ -775,7 +775,8 @@ function gatherOdds() {
   if (typeof window.sendPrompt === 'function') {
     window.sendPrompt(`Search current bookmaker odds for Stage ${n} of Giro d'Italia 2026. Return implied win probability and top-3 probability for every rider with win% ≥ 1%. Format as a JSON array: [{name, win_pct, top3_pct}] sorted by win_pct descending.`);
   } else {
-    window.location.href = `holdet-odds://${n}`;
+    window.location.href = `holdet://odds/${n}`;
+    showGatherTooltip('gather-odds-btn', 'Prompt copied — paste into Claude');
   }
 }
 
@@ -785,8 +786,18 @@ function gatherIntel() {
   if (typeof window.sendPrompt === 'function') {
     window.sendPrompt(`Scan the following sources for Stage ${n} Giro d'Italia 2026 expert analysis, weighted by expert_sources.yaml defaults: TV2/Axelgaard (1.5), Inner Ring (1.2), VeloNews (1.0), CyclingNews (1.0), ProCyclingStats (0.8), FirstCycling (0.8). Summarize key signals as bullet points: who is favoured, team tactics, weather, road conditions, any late changes. Keep it concise — decision-relevant only.`);
   } else {
-    window.location.href = `holdet-intel://${n}`;
+    window.location.href = `holdet://intel/${n}`;
+    showGatherTooltip('gather-intel-btn', 'Prompt copied — paste into Claude');
   }
+}
+
+function showGatherTooltip(btnId, msg) {
+  const btn = $(btnId);
+  if (!btn) return;
+  const orig = btn.innerHTML;
+  btn.textContent = msg;
+  btn.disabled = true;
+  setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 3000);
 }
 
 function tryParseOdds(text) {
