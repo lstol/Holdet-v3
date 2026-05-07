@@ -2,7 +2,7 @@
 
 **Race:** Giro d'Italia 2026
 **Stage 1:** May 8 (Nessebar → Burgas, 147 km, flat sprint)
-**Last updated:** Session 5 (2026-05-08) — Cmd+V odds paste, /parse-odds-image endpoint, server architecture
+**Last updated:** ChatGPT rider loader (2026-05-07) — Giro 2026 rider universe artifact and dashboard hook
 
 ---
 

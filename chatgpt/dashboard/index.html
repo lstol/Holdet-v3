@@ -836,6 +836,8 @@
         ["07", "Rider G", "EFE", "value hold", 4300000, 24],
         ["08", "Rider H", "TBV", "low friction", 3800000, 19],
       ];
+      let dashboardRiders = riders;
+      let dashboardRiderSummary = null;
 
       const teams = [
         {
@@ -1055,8 +1057,12 @@
       }
 
       function renderSelectedTeam() {
-        document.getElementById("selectedTeamLabel").textContent = selectedTeam.label.toUpperCase();
-        document.getElementById("selectedRows").innerHTML = selectedTeam.riders
+        const label = dashboardRiderSummary
+          ? `GIRO 2026 RIDERS: ${dashboardRiderSummary.rider_count} / ${dashboardRiderSummary.team_count} TEAMS`
+          : selectedTeam.label.toUpperCase();
+        document.getElementById("selectedTeamLabel").textContent = label;
+        const rows = dashboardRiderSummary ? dashboardRiders : selectedTeam.riders;
+        document.getElementById("selectedRows").innerHTML = rows
           .map(
             ([slot, name, team, role, price, top15]) => `
               <tr>
@@ -1069,6 +1075,33 @@
               </tr>`,
           )
           .join("");
+      }
+
+      function loadDashboardRiders() {
+        fetch("data/riders_giro_2026.json")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`rider artifact returned ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((payload) => {
+            dashboardRiderSummary = payload.summary;
+            dashboardRiders = payload.riders.slice(0, 8).map((rider, index) => [
+              String(index + 1).padStart(2, "0"),
+              rider.name,
+              rider.team_code || rider.team,
+              "universe",
+              rider.price,
+              "-",
+            ]);
+            renderSelectedTeam();
+          })
+          .catch(() => {
+            dashboardRiderSummary = null;
+            dashboardRiders = riders;
+            renderSelectedTeam();
+          });
       }
 
       function renderChart() {
@@ -1213,6 +1246,7 @@
       renderAudit();
       renderTeams();
       renderSelectedTeam();
+      loadDashboardRiders();
       renderChart();
       renderCaptains();
       renderPressure();

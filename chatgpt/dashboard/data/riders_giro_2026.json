@@ -1,0 +1,1344 @@
+{
+  "detected_schema": {
+    "id_field": "holdet_id",
+    "name_field": "name",
+    "price_field": "price",
+    "raw_rider_count": 184,
+    "rider_container": "riders",
+    "sample_rider_keys": [
+      "age",
+      "captainPopularity",
+      "consistency_profile",
+      "data_version",
+      "exclusion_window_compliant",
+      "holdet_id",
+      "isEliminated",
+      "isInjured",
+      "name",
+      "nationality",
+      "owners",
+      "physiological_capacity",
+      "price",
+      "provenance",
+      "recovery_dynamics",
+      "rider_id",
+      "startPrice",
+      "status",
+      "team",
+      "terrain_affinity"
+    ],
+    "team_code_field": "team_code if present; otherwise null",
+    "team_field": "team",
+    "top_level_keys": [
+      "meta",
+      "riders"
+    ],
+    "top_level_type": "dict"
+  },
+  "race_id": "giro_2026",
+  "riders": [
+    {
+      "holdet_id": 47405,
+      "name": "Tobias Lund Andresen",
+      "price": 9000000,
+      "team": "Decathlon CMA CGM",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47349,
+      "name": "Felix Gall",
+      "price": 9000000,
+      "team": "Decathlon CMA CGM",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47406,
+      "name": "Tord Gudmestad",
+      "price": 3000000,
+      "team": "Decathlon CMA CGM",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47359,
+      "name": "Gregor M\u00fchlberger",
+      "price": 3500000,
+      "team": "Decathlon CMA CGM",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47395,
+      "name": "Oliver Naesen",
+      "price": 3000000,
+      "team": "Decathlon CMA CGM",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48481,
+      "name": "Rasmus S\u00f8jberg Pedersen",
+      "price": 3000000,
+      "team": "Decathlon CMA CGM",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48479,
+      "name": "Callum Scotson",
+      "price": 2500000,
+      "team": "Decathlon CMA CGM",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48480,
+      "name": "Johannes Staune-Mittet",
+      "price": 3000000,
+      "team": "Decathlon CMA CGM",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47403,
+      "name": "Thymen Arensman",
+      "price": 7500000,
+      "team": "Netcompany INEOS",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47419,
+      "name": "Egan Bernal",
+      "price": 7500000,
+      "team": "Netcompany INEOS",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47351,
+      "name": "Filippo Ganna",
+      "price": 9000000,
+      "team": "Netcompany INEOS",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48529,
+      "name": "Jack Haig",
+      "price": 3000000,
+      "team": "Netcompany INEOS",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48528,
+      "name": "Embret Svestad-B\u00e5rdseng",
+      "price": 3500000,
+      "team": "Netcompany INEOS",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48527,
+      "name": "Connor Swift",
+      "price": 2500000,
+      "team": "Netcompany INEOS",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48526,
+      "name": "Ben Turner",
+      "price": 6000000,
+      "team": "Netcompany INEOS",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48602,
+      "name": "Will Barta",
+      "price": 2500000,
+      "team": "Tudor Pro Cycling",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48601,
+      "name": "Robin Froideveaux",
+      "price": 3500000,
+      "team": "Tudor Pro Cycling",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48600,
+      "name": "Luca Mozzato",
+      "price": 4000000,
+      "team": "Tudor Pro Cycling",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47386,
+      "name": "Mathys Rondel",
+      "price": 5500000,
+      "team": "Tudor Pro Cycling",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47389,
+      "name": "Michael Storer",
+      "price": 7000000,
+      "team": "Tudor Pro Cycling",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48598,
+      "name": "Florian Stork",
+      "price": 3500000,
+      "team": "Tudor Pro Cycling",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48599,
+      "name": "Larry Warbasse",
+      "price": 2500000,
+      "team": "Tudor Pro Cycling",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48591,
+      "name": "Mattia Bais",
+      "price": 2500000,
+      "team": "Team Polti VisitMalta",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48592,
+      "name": "Ludovico Crescioli",
+      "price": 3500000,
+      "team": "Team Polti VisitMalta",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48593,
+      "name": "Giovanni Lonardi",
+      "price": 4000000,
+      "team": "Team Polti VisitMalta",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47392,
+      "name": "Mirco Maestri",
+      "price": 3000000,
+      "team": "Team Polti VisitMalta",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48596,
+      "name": "Andrea Mifsud",
+      "price": 3000000,
+      "team": "Team Polti VisitMalta",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48590,
+      "name": "Thomas Pesenti",
+      "price": 3000000,
+      "team": "Team Polti VisitMalta",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48594,
+      "name": "Diego Pablo Sevilla",
+      "price": 2500000,
+      "team": "Team Polti VisitMalta",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48667,
+      "name": "Alessandro Tonelli",
+      "price": 2500000,
+      "team": "Team Polti VisitMalta",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47400,
+      "name": "Santiago Buitrago",
+      "price": 6500000,
+      "team": "Bahrain Victorious",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47333,
+      "name": "Damiano Caruso",
+      "price": 6000000,
+      "team": "Bahrain Victorious",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47320,
+      "name": "Afonso Eul\u00e1lio",
+      "price": 4000000,
+      "team": "Bahrain Victorious",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48471,
+      "name": "Fran Miholjevi\u0107",
+      "price": 2500000,
+      "team": "Bahrain Victorious",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48472,
+      "name": "Mathijs Paasschens",
+      "price": 2500000,
+      "team": "Bahrain Victorious",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47323,
+      "name": "Alec Segaert",
+      "price": 4000000,
+      "team": "Bahrain Victorious",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47344,
+      "name": "Edoardo Zambanini",
+      "price": 4000000,
+      "team": "Bahrain Victorious",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48627,
+      "name": "Erlend Blikra",
+      "price": 6000000,
+      "team": "Uno-X Mobility",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48628,
+      "name": "Fredrik Dversnes",
+      "price": 3000000,
+      "team": "Uno-X Mobility",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48629,
+      "name": "Markus Hoelgaard",
+      "price": 2500000,
+      "team": "Uno-X Mobility",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48625,
+      "name": "\u00c5dne Holter",
+      "price": 3000000,
+      "team": "Uno-X Mobility",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47371,
+      "name": "Johannes Kulset",
+      "price": 3500000,
+      "team": "Uno-X Mobility",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48626,
+      "name": "Andreas Leknessund",
+      "price": 4000000,
+      "team": "Uno-X Mobility",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48631,
+      "name": "Sakarias Koller L\u00f8land",
+      "price": 3000000,
+      "team": "Uno-X Mobility",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48630,
+      "name": "Martin Tj\u00f8tta",
+      "price": 3000000,
+      "team": "Uno-X Mobility",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48532,
+      "name": "Jan Hirt",
+      "price": 3000000,
+      "team": "NSN Cycling",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48533,
+      "name": "Ryan Mullen",
+      "price": 2500000,
+      "team": "NSN Cycling",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47415,
+      "name": "Alessandro Pinarello",
+      "price": 4500000,
+      "team": "NSN Cycling",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47394,
+      "name": "Nick Schultz",
+      "price": 3000000,
+      "team": "NSN Cycling",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47341,
+      "name": "Dion Smith",
+      "price": 2500000,
+      "team": "NSN Cycling",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48531,
+      "name": "Jake Stewart",
+      "price": 4000000,
+      "team": "NSN Cycling",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47332,
+      "name": "Corbin Strong",
+      "price": 6500000,
+      "team": "NSN Cycling",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47348,
+      "name": "Ethan Vernon",
+      "price": 8000000,
+      "team": "NSN Cycling",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48573,
+      "name": "Sjoerd Bax",
+      "price": 2500000,
+      "team": "Pinarello Q36.5",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48569,
+      "name": "Fabio Christen",
+      "price": 4000000,
+      "team": "Pinarello Q36.5",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47336,
+      "name": "David De La Cruz",
+      "price": 3500000,
+      "team": "Pinarello Q36.5",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48570,
+      "name": "Mark Donovan",
+      "price": 3000000,
+      "team": "Pinarello Q36.5",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48568,
+      "name": "David Gonz\u00e1lez",
+      "price": 3500000,
+      "team": "Pinarello Q36.5",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48459,
+      "name": "Chris Harper",
+      "price": 4500000,
+      "team": "Pinarello Q36.5",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48571,
+      "name": "Matteo Moschetti",
+      "price": 5500000,
+      "team": "Pinarello Q36.5",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48572,
+      "name": "Nick Zukowsky",
+      "price": 2500000,
+      "team": "Pinarello Q36.5",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47357,
+      "name": "Giulio Ciccone",
+      "price": 8000000,
+      "team": "Lidl-Trek",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48659,
+      "name": "Simone Consonni",
+      "price": 3000000,
+      "team": "Lidl-Trek",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48649,
+      "name": "Amanuel Ghebreigzabhier",
+      "price": 2500000,
+      "team": "Lidl-Trek",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47373,
+      "name": "Jonathan Milan",
+      "price": 11500000,
+      "team": "Lidl-Trek",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48461,
+      "name": "Matteo Sobrero",
+      "price": 4000000,
+      "team": "Lidl-Trek",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48660,
+      "name": "Tim Torn Teutenberg",
+      "price": 4000000,
+      "team": "Lidl-Trek",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47388,
+      "name": "Max Walscheid",
+      "price": 3000000,
+      "team": "Lidl-Trek",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48470,
+      "name": "Tobias Bayer",
+      "price": 2500000,
+      "team": "Alpecin-Premier Tech",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47354,
+      "name": "Francesco Busatto",
+      "price": 3500000,
+      "team": "Alpecin-Premier Tech",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48468,
+      "name": "Jonas Geens",
+      "price": 3000000,
+      "team": "Alpecin-Premier Tech",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47375,
+      "name": "Kaden Groves",
+      "price": 8500000,
+      "team": "Alpecin-Premier Tech",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48465,
+      "name": "Edward Planckaert",
+      "price": 3500000,
+      "team": "Alpecin-Premier Tech",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48466,
+      "name": "Jensen Plowright",
+      "price": 4000000,
+      "team": "Alpecin-Premier Tech",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48467,
+      "name": "Johan Price-Pejtersen",
+      "price": 3500000,
+      "team": "Alpecin-Premier Tech",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48469,
+      "name": "Luca Vergallito",
+      "price": 3500000,
+      "team": "Alpecin-Premier Tech",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47396,
+      "name": "Pascal Ackermann",
+      "price": 6000000,
+      "team": "Team Jayco AlUla",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47376,
+      "name": "Koen Bouwman",
+      "price": 3000000,
+      "team": "Team Jayco AlUla",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48584,
+      "name": "Robert Donaldson",
+      "price": 3000000,
+      "team": "Team Jayco AlUla",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48583,
+      "name": "Felix Engelhardt",
+      "price": 3500000,
+      "team": "Team Jayco AlUla",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47321,
+      "name": "Alan Hatherly",
+      "price": 4000000,
+      "team": "Team Jayco AlUla",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47328,
+      "name": "Ben O'Connor",
+      "price": 7000000,
+      "team": "Team Jayco AlUla",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48581,
+      "name": "Andrea Vendrame",
+      "price": 5000000,
+      "team": "Team Jayco AlUla",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48574,
+      "name": "Giovanni Aleotti",
+      "price": 3500000,
+      "team": "Red Bull BORA hansgrohe",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48576,
+      "name": "Mick van Dijke",
+      "price": 3000000,
+      "team": "Red Bull BORA hansgrohe",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47363,
+      "name": "Jai Hindley",
+      "price": 8000000,
+      "team": "Red Bull BORA hansgrohe",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48464,
+      "name": "Gianni Moscon",
+      "price": 2500000,
+      "team": "Red Bull BORA hansgrohe",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47358,
+      "name": "Giulio Pellizzari",
+      "price": 9500000,
+      "team": "Red Bull BORA hansgrohe",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47324,
+      "name": "Aleksandr Vlasov",
+      "price": 6000000,
+      "team": "Red Bull BORA hansgrohe",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47329,
+      "name": "Ben Zwiehoff",
+      "price": 2500000,
+      "team": "Red Bull BORA hansgrohe",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47337,
+      "name": "Davide Ballerini",
+      "price": 4000000,
+      "team": "XDS Astana",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47322,
+      "name": "Alberto Bettiol",
+      "price": 3500000,
+      "team": "XDS Astana",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48632,
+      "name": "Arjen Livyns",
+      "price": 2500000,
+      "team": "XDS Astana",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47361,
+      "name": "Harold Martin Lopez",
+      "price": 4000000,
+      "team": "XDS Astana",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48634,
+      "name": "Matteo Malucelli",
+      "price": 5500000,
+      "team": "XDS Astana",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47331,
+      "name": "Christian Scaroni",
+      "price": 5500000,
+      "team": "XDS Astana",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47340,
+      "name": "Diego Ulissi",
+      "price": 4000000,
+      "team": "XDS Astana",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47399,
+      "name": "Samuele Battistella",
+      "price": 3000000,
+      "team": "EF Education EasyPost",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48690,
+      "name": "Madis Mihkels",
+      "price": 4500000,
+      "team": "EF Education EasyPost",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47335,
+      "name": "Darren Rafferty",
+      "price": 2500000,
+      "team": "EF Education EasyPost",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48482,
+      "name": "James Shaw",
+      "price": 3000000,
+      "team": "EF Education EasyPost",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47390,
+      "name": "Michael Valgren",
+      "price": 4000000,
+      "team": "EF Education EasyPost",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47355,
+      "name": "Frank van den Broek",
+      "price": 3500000,
+      "team": "Team Picnic PostNL",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48587,
+      "name": "Sean Flynn",
+      "price": 2500000,
+      "team": "Team Picnic PostNL",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48589,
+      "name": "Chris Hamilton",
+      "price": 3000000,
+      "team": "Team Picnic PostNL",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48585,
+      "name": "Timo de Jong",
+      "price": 3000000,
+      "team": "Team Picnic PostNL",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48588,
+      "name": "Gijs Leemreize",
+      "price": 2500000,
+      "team": "Team Picnic PostNL",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48586,
+      "name": "Tim Naberman",
+      "price": 2500000,
+      "team": "Team Picnic PostNL",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47330,
+      "name": "Casper van Uden",
+      "price": 5500000,
+      "team": "Team Picnic PostNL",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48662,
+      "name": "Toon Aerts",
+      "price": 3500000,
+      "team": "Lotto-Intermarch\u00e9",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47377,
+      "name": "Lennert Van Eetvelt",
+      "price": 7500000,
+      "team": "Lotto-Intermarch\u00e9",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47402,
+      "name": "Simone Gualdi",
+      "price": 3500000,
+      "team": "Lotto-Intermarch\u00e9",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48650,
+      "name": "Arnaud De Lie",
+      "price": 8000000,
+      "team": "Lotto-Intermarch\u00e9",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48654,
+      "name": "Lorenzo Rota",
+      "price": 3000000,
+      "team": "Lotto-Intermarch\u00e9",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48652,
+      "name": "Jonas Rutsch",
+      "price": 2500000,
+      "team": "Lotto-Intermarch\u00e9",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47407,
+      "name": "Victor Campenaerts",
+      "price": 4500000,
+      "team": "Team Visma Lease a Bike",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47408,
+      "name": "Wilco Kelderman",
+      "price": 4000000,
+      "team": "Team Visma Lease a Bike",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47404,
+      "name": "Timo Kielich",
+      "price": 3500000,
+      "team": "Team Visma Lease a Bike",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47401,
+      "name": "Sepp Kuss",
+      "price": 6000000,
+      "team": "Team Visma Lease a Bike",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47327,
+      "name": "Bart Lemmen",
+      "price": 3500000,
+      "team": "Team Visma Lease a Bike",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47338,
+      "name": "Davide Piganzoli",
+      "price": 5500000,
+      "team": "Team Visma Lease a Bike",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48597,
+      "name": "Tim Rex",
+      "price": 3000000,
+      "team": "Team Visma Lease a Bike",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47372,
+      "name": "Jonas Vingegaard",
+      "price": 17500000,
+      "team": "Team Visma Lease a Bike",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48578,
+      "name": "Ayco Bastiaens",
+      "price": 2500000,
+      "team": "Soudal Quick-Step",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48579,
+      "name": "Dries Van Gestel",
+      "price": 2500000,
+      "team": "Soudal Quick-Step",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47397,
+      "name": "Paul Magnier",
+      "price": 9000000,
+      "team": "Soudal Quick-Step",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47366,
+      "name": "Jasper Stuyven",
+      "price": 4000000,
+      "team": "Soudal Quick-Step",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47353,
+      "name": "Filippo Zana",
+      "price": 4500000,
+      "team": "Soudal Quick-Step",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47362,
+      "name": "Igor Arrieta",
+      "price": 4000000,
+      "team": "UAE Team Emirates XRG",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47365,
+      "name": "Jan Christen",
+      "price": 6000000,
+      "team": "UAE Team Emirates XRG",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47326,
+      "name": "Ant\u00f3nio Morgado",
+      "price": 4000000,
+      "team": "UAE Team Emirates XRG",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47384,
+      "name": "Marc Soler",
+      "price": 5000000,
+      "team": "UAE Team Emirates XRG",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47368,
+      "name": "Jay Vine",
+      "price": 8000000,
+      "team": "UAE Team Emirates XRG",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47319,
+      "name": "Adam Yates",
+      "price": 7500000,
+      "team": "UAE Team Emirates XRG",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48488,
+      "name": "Cyril Barthe",
+      "price": 2500000,
+      "team": "Groupama FDJ United",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48492,
+      "name": "R\u00e9mi Cavagna",
+      "price": 4000000,
+      "team": "Groupama FDJ United",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48486,
+      "name": "Axel Huens",
+      "price": 3000000,
+      "team": "Groupama FDJ United",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48489,
+      "name": "Johan Jacobs",
+      "price": 2500000,
+      "team": "Groupama FDJ United",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48490,
+      "name": "Josh Kench",
+      "price": 2500000,
+      "team": "Groupama FDJ United",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48491,
+      "name": "Paul Penho\u00ebt",
+      "price": 6000000,
+      "team": "Groupama FDJ United",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48493,
+      "name": "R\u00e9my Rochas",
+      "price": 3500000,
+      "team": "Groupama FDJ United",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48487,
+      "name": "Brieuc Rolland",
+      "price": 3500000,
+      "team": "Groupama FDJ United",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48476,
+      "name": "Filippo Magli",
+      "price": 2500000,
+      "team": "Bardiani CSF 7 Saber",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48478,
+      "name": "Martin Marcellusi",
+      "price": 3500000,
+      "team": "Bardiani CSF 7 Saber",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48477,
+      "name": "Luca Paletti",
+      "price": 3000000,
+      "team": "Bardiani CSF 7 Saber",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48669,
+      "name": "Vicente Rojas",
+      "price": 3000000,
+      "team": "Bardiani CSF 7 Saber",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47382,
+      "name": "Manuele Tarozzi",
+      "price": 2500000,
+      "team": "Bardiani CSF 7 Saber",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48668,
+      "name": "Nikita Tsvetkov",
+      "price": 3000000,
+      "team": "Bardiani CSF 7 Saber",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47352,
+      "name": "Filippo Turconi",
+      "price": 3000000,
+      "team": "Bardiani CSF 7 Saber",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48474,
+      "name": "Enrico Zanoncello",
+      "price": 3500000,
+      "team": "Bardiani CSF 7 Saber",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48525,
+      "name": "Orluis Aular",
+      "price": 6000000,
+      "team": "Movistar Team",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48523,
+      "name": "Iv\u00e1n Garc\u00eda Cortina",
+      "price": 4000000,
+      "team": "Movistar Team",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47374,
+      "name": "Juanpe Lopez",
+      "price": 4000000,
+      "team": "Movistar Team",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48524,
+      "name": "Lorenzo Milesi",
+      "price": 3500000,
+      "team": "Movistar Team",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47393,
+      "name": "Nelson Oliveira",
+      "price": 3500000,
+      "team": "Movistar Team",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47367,
+      "name": "Javier Romo",
+      "price": 6000000,
+      "team": "Movistar Team",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47342,
+      "name": "Dylan Groenewegen",
+      "price": 10000000,
+      "team": "Unibet Rose Rockets",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48661,
+      "name": "Tom\u00e1\u0161 Kopeck\u00fd",
+      "price": 2500000,
+      "team": "Unibet Rose Rockets",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48655,
+      "name": "Luk\u00e1\u0161 Kubi\u0161",
+      "price": 4000000,
+      "team": "Unibet Rose Rockets",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48658,
+      "name": "Niklas Larsen",
+      "price": 3500000,
+      "team": "Unibet Rose Rockets",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47409,
+      "name": "Wout Poels",
+      "price": 4500000,
+      "team": "Unibet Rose Rockets",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47346,
+      "name": "Elmar Reinders",
+      "price": 3000000,
+      "team": "Unibet Rose Rockets",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47420,
+      "name": "Hartthijs de Vries",
+      "price": 2500000,
+      "team": "Unibet Rose Rockets",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48633,
+      "name": "Guillermo Thomas Silva",
+      "price": 4500000,
+      "team": "XDS Astana Team",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48483,
+      "name": "Jardi Christiaan van der Lee",
+      "price": 2500000,
+      "team": "EF Education - EasyPost",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48484,
+      "name": "Jefferson Alexander Cepeda",
+      "price": 4000000,
+      "team": "EF Education - EasyPost",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48577,
+      "name": "Andrea Raccagni Noviero",
+      "price": 3500000,
+      "team": "Soudal Quick-Step",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48580,
+      "name": "Gianmarco Garofoli",
+      "price": 4000000,
+      "team": "Soudal Quick-Step",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48657,
+      "name": "Milan Menten",
+      "price": 5000000,
+      "team": "Lotto Intermarch\u00e9",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47339,
+      "name": "Derek Gee",
+      "price": 8000000,
+      "team": "Lidl - Trek",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48530,
+      "name": "Magnus Sheffield",
+      "price": 5000000,
+      "team": "Netcompany INEOS Cycling Team",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47345,
+      "name": "Einer Augusto Rubio",
+      "price": 5500000,
+      "team": "Movistar Team",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47347,
+      "name": "Enric Mas Nicolau",
+      "price": 7000000,
+      "team": "Movistar Team",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48582,
+      "name": "Christopher Juul Jensen",
+      "price": 2500000,
+      "team": "Team Jayco AlUla",
+      "team_code": null
+    },
+    {
+      "holdet_id": 47369,
+      "name": "Jhonatan Manuel Narvaez Prado",
+      "price": 5500000,
+      "team": "UAE Team Emirates - XRG",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48691,
+      "name": "Markel Beloki",
+      "price": 3500000,
+      "team": "EF Education - EasyPost",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48680,
+      "name": "Robert Stannard",
+      "price": 2500000,
+      "team": "Bahrain - Victorious",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48689,
+      "name": "Fabio Van den Bossche",
+      "price": 2500000,
+      "team": "Soudal Quick-Step",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48698,
+      "name": "Joshua Giddings",
+      "price": 2500000,
+      "team": "Lotto Intermarch\u00e9",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48686,
+      "name": "Warren Barguil",
+      "price": 3000000,
+      "team": "Team Picnic PostNL",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48685,
+      "name": "Nico Denz",
+      "price": 3500000,
+      "team": "Red Bull - BORA - hansgrohe",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48679,
+      "name": "Mikkel Bjerg",
+      "price": 3000000,
+      "team": "UAE Team Emirates - XRG",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48677,
+      "name": "Fabian Lienhard",
+      "price": 2500000,
+      "team": "Tudor Pro Cycling Team",
+      "team_code": null
+    },
+    {
+      "holdet_id": 48678,
+      "name": "Matyas Kopecky",
+      "price": 3000000,
+      "team": "Unibet Rose Rockets",
+      "team_code": null
+    }
+  ],
+  "source": "/Users/lassestoltenberg/Claude/Holdet-v3/shared/data/riders/giro_2026/riders.json",
+  "summary": {
+    "max_price": 17500000,
+    "median_price": 3500000,
+    "min_price": 2500000,
+    "rider_count": 184,
+    "team_count": 32
+  },
+  "validation": {
+    "duplicate_ids": [],
+    "invalid_price_rows": [],
+    "is_valid": true,
+    "missing_id_rows": [],
+    "missing_name_rows": []
+  }
+}

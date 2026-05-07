@@ -17,6 +17,9 @@ Current runnable dashboard:
 - Stage image loading tries multiple local paths in order and shows the resolved
   path under the carousel. If every path fails, the dashboard shows a visible
   stage-specific error with all attempted paths.
+- Rider table attempts to load `chatgpt/dashboard/data/riders_giro_2026.json`,
+  generated from the authoritative shared Giro 2026 rider universe. If browser
+  local-file rules block JSON loading, it falls back to static scaffold rows.
 
 Image path order for direct file mode:
 
