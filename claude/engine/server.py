@@ -138,9 +138,55 @@ def refresh():
 def gather_odds():
     if request.method == 'OPTIONS':
         return '', 204
-    if not HAS_ANTHROPIC:
-        return jsonify({'status': 'error', 'message': 'anthropic package not installed'}), 500
     stage = request.json.get('stage', '?')
+    api_key = os.getenv('ODDS_API_KEY', '')
+
+    if api_key:
+        try:
+            resp = req_lib.get(
+                'https://api.the-odds-api.com/v4/sports/cycling/odds',
+                params={'apiKey': api_key, 'regions': 'eu', 'markets': 'outrights', 'oddsFormat': 'decimal'},
+                timeout=10,
+            )
+            data = resp.json()
+            _log(f"gather-odds Odds API HTTP {resp.status_code} stage={stage} raw[:500]={json.dumps(data)[:500]}")
+
+            odds_data = []
+            for event in data:
+                title = event.get('sport_title', '').lower()
+                desc = (event.get('description') or event.get('home_team') or '').lower()
+                if f"stage {stage}" not in title and f"stage {stage}" not in desc:
+                    continue
+                for bookmaker in event.get('bookmakers', [])[:1]:
+                    for market in bookmaker.get('markets', []):
+                        for outcome in market.get('outcomes', []):
+                            decimal = outcome.get('price', 0)
+                            if decimal > 1:
+                                win_pct = round(100 / decimal, 1)
+                                if win_pct >= 1.0:
+                                    odds_data.append({
+                                        'name': outcome['name'],
+                                        'win_pct': win_pct,
+                                        'top3_pct': round(win_pct * 3, 1),
+                                    })
+
+            odds_data.sort(key=lambda x: x['win_pct'], reverse=True)
+            _log(f"gather-odds Odds API parsed {len(odds_data)} riders for stage {stage}")
+
+            if odds_data:
+                return jsonify(odds_data)
+            _log("gather-odds Odds API returned no stage match — falling back to web search")
+        except Exception as e:
+            _log(f"gather-odds Odds API error: {e} — falling back to web search")
+    else:
+        _log("gather-odds ODDS_API_KEY not set — falling back to web search")
+
+    return _gather_odds_websearch(stage)
+
+
+def _gather_odds_websearch(stage):
+    if not HAS_ANTHROPIC:
+        return jsonify({'status': 'error', 'message': 'ODDS_API_KEY not set and anthropic not installed'}), 500
     raw = ''
     try:
         client = anthropic.Anthropic()
@@ -151,38 +197,24 @@ def gather_odds():
             messages=[{
                 'role': 'user',
                 'content': (
-                    f"Search current bookmaker odds for Stage {stage} Giro d'Italia 2026. "
-                    'Find implied win probabilities from bookmakers such as Oddschecker, Betfair, or Unibet. '
-                    'Convert decimal odds to implied probability: 1/odds * 100. '
-                    'Include every rider with win% >= 1%. Estimate top3_pct as win_pct * 3 if not available. '
-                    'Output ONLY a raw JSON array — no explanation, no caveats, no markdown, no text before or after. '
-                    'Even if data is partial, return what you found. '
-                    'Format: [{"name": "Rider Name", "win_pct": 5.2, "top3_pct": 18.0}] '
-                    'sorted by win_pct descending. Start your response with [ and end with ].'
+                    f"Find current bookmaker odds for Stage {stage} Giro d'Italia 2026 winner. "
+                    'Return ONLY a JSON array: [{"name": "Rider Name", "win_pct": 5.2, "top3_pct": 18.0}] '
+                    'sorted by win_pct descending, no other text. Start with [ and end with ].'
                 ),
             }],
         )
-        for block in message.content:
-            if block.type == 'text':
-                raw = block.text.strip()
-
-        _log(f"gather-odds stage={stage} raw response: {raw}")
-
+        raw = next((b.text for b in message.content if b.type == 'text'), '[]').strip()
+        _log(f"gather-odds websearch stage={stage} raw={raw[:300]}")
         if raw.startswith('```'):
             raw = re.sub(r'^```[a-z]*\n?', '', raw)
             raw = re.sub(r'\n?```$', '', raw)
             raw = raw.strip()
-
         m = re.search(r'\[.*\]', raw, re.DOTALL)
         if m:
             raw = m.group(0)
-
         return jsonify(json.loads(raw))
-    except json.JSONDecodeError as e:
-        _log(f"gather-odds JSON parse error: {e}")
-        return jsonify({'status': 'error', 'message': str(e), 'raw': raw}), 500
     except Exception as e:
-        _log(f"gather-odds error: {e}")
+        _log(f"gather-odds websearch error: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
