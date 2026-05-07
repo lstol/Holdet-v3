@@ -574,16 +574,22 @@ function pwin(name) {
 function loadProfileImage(stageNumber) {
   const img = $('profile-img');
   const ph  = $('profile-placeholder');
+  const localUrl  = `${SERVER}/stage-images/giro_2026/stage-${stageNumber}.jpg`;
+  const remoteUrl = `https://raw.githubusercontent.com/lstol/Holdet-v3/main/shared/data/stage_images/giro_2026/stage-${stageNumber}.jpg`;
 
   img.onload = () => { img.style.display = 'block'; ph.style.display = 'none'; };
   img.onerror = () => {
-    img.onerror = null;
-    img.style.display = 'none';
-    ph.style.display = 'block';
-    ph.textContent = `Stage ${stageNumber} — image not available`;
+    if (img.src !== remoteUrl) {
+      img.src = remoteUrl;
+    } else {
+      img.onerror = null;
+      img.style.display = 'none';
+      ph.style.display = 'block';
+      ph.textContent = `Stage ${stageNumber} — image not available`;
+    }
   };
 
-  img.src = `${SERVER}/stage-images/giro_2026/stage-${stageNumber}.jpg`;
+  img.src = localUrl;
 }
 
 function renderProfile(stage) {
