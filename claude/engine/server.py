@@ -373,86 +373,53 @@ def gather_intel():
     if not HAS_ANTHROPIC:
         return jsonify({'status': 'error', 'message': 'anthropic package not installed'}), 500
     stage = request.json.get('stage', '?')
-    source_list = 'TV2/Axelgaard (1.5), Inner Ring (1.2), VeloNews (1.0), CyclingNews (1.0), ProCyclingStats (0.8), FirstCycling (0.8)'
-    if HAS_YAML:
-        try:
-            with open(EXPERT_SOURCES) as f:
-                sources = yaml.safe_load(f)
-            source_list = ', '.join(
-                f"{s['name']} (weight {s['weight']})" for s in sources.get('sources', [])
-            )
-        except Exception:
-            pass
     raw = ''
     try:
         client = anthropic.Anthropic()
-        message = client.messages.create(
+
+        # Step 1 — gather raw intel via web search
+        search_message = client.messages.create(
+            model='claude-haiku-4-5-20251001',
+            max_tokens=3000,
+            tools=[{'type': 'web_search_20250305', 'name': 'web_search'}],
+            messages=[{'role': 'user', 'content': f"""Search for Stage {stage} Giro d'Italia 2026 expert analysis.
+
+Search these in order:
+1. "axelgaards optakt til {stage} etape giro ditalia 2026 site:sport.tv2.dk" (Danish, read it)
+2. "giro 2026 stage {stage} preview site:inrng.com"
+3. "giro 2026 stage {stage} preview site:velonews.com"
+4. "giro 2026 stage {stage} preview site:cyclingnews.com"
+5. "giro d'italia 2026 stage {stage} favourites"
+
+Collect everything you find about: rider favourites, team tactics, weather, road conditions, finish profile. Return all raw findings as detailed prose."""}],
+        )
+        raw_intel = ' '.join(b.text for b in search_message.content if b.type == 'text')
+        _log(f"gather-intel stage={stage} raw_intel={raw_intel[:300]}")
+
+        # Step 2 — structure into JSON
+        structure_message = client.messages.create(
             model='claude-haiku-4-5-20251001',
             max_tokens=2000,
-            tools=[{'type': 'web_search_20250305', 'name': 'web_search'}],
-            messages=[{
-                'role': 'user',
-                'content': f"""Search for expert analysis for Stage {stage} Giro d'Italia 2026.
+            messages=[{'role': 'user', 'content': f"""Convert this cycling analysis into a JSON object.
 
-PRIORITY SOURCES — search each explicitly:
+Raw analysis:
+{raw_intel}
 
-1. Emil Axelgaard / TV2 (weight 1.5, most important):
-   Search: "axelgaards optakt til {stage} etape giro ditalia 2026 site:sport.tv2.dk"
-   URL pattern: sport.tv2.dk/cykling/YYYY-MM-DD-axelgaards-optakt-til-{stage}-etape-af-giro-ditalia
-   Written in Danish — read and summarize in English.
-   Also search: "axelgaard giro 2026 etape {stage}"
-
-2. Inner Ring (weight 1.2):
-   Search: "giro 2026 stage {stage} site:inrng.com"
-
-3. VeloNews (weight 1.0):
-   Search: "giro 2026 stage {stage} preview site:velonews.com"
-
-4. CyclingNews (weight 1.0):
-   Search: "giro 2026 stage {stage} preview site:cyclingnews.com"
-
-5. ProCyclingStats / general previews (weight 0.8):
-   Search: "giro d'italia 2026 stage {stage} favourites preview"
-
-INSTRUCTIONS:
-- Read as many sources as you can find
-- Axelgaard/TV2 is the highest priority — always search for it first
-- TV2 content is in Danish — you must read and interpret Danish text
-- If a source is paywalled or unavailable, skip it and note it
-- Never refuse — always return the JSON with whatever you found
-
-Return ONLY this JSON object, no markdown, no preamble:
+Return ONLY this JSON, no other text, no markdown:
 {{
-  "sources_consulted": ["TV2/Axelgaard", "Inner Ring", ...],
+  "sources_consulted": ["list of sources found"],
   "key_signals": [
-    {{
-      "rider": "Jonathan Milan",
-      "signal": "Lidl-Trek fully committed to sprint lead-out, team strongest in race",
-      "direction": "up",
-      "strength": "strong"
-    }},
-    {{
-      "rider": "Paul Magnier",
-      "signal": "First Grand Tour start, unknown under bunch sprint pressure",
-      "direction": "down",
-      "strength": "moderate"
-    }}
+    {{"rider": "Name", "signal": "what was said", "direction": "up/down/neutral", "strength": "strong/moderate/weak"}}
   ],
-  "weather": "Description of weather and wind conditions",
-  "stage_notes": "Key tactical notes about this stage",
-  "summary": "Two sentence max overall summary"
+  "weather": "weather summary",
+  "stage_notes": "key tactical notes",
+  "summary": "two sentence summary"
 }}
 
-direction: up = increases win probability vs raw odds, down = decreases, neutral = no change
-strength: strong / moderate / weak
-Include EVERY rider mentioned by any source.""",
-            }],
+Include every rider mentioned. direction=up means favoured beyond raw odds, down means risks not in odds."""}],
         )
-        for block in message.content:
-            if block.type == 'text':
-                raw = block.text
-        raw = raw.strip()
-        _log(f"gather-intel stage={stage} raw={raw[:200]}")
+        raw = structure_message.content[0].text.strip()
+        _log(f"gather-intel stage={stage} structured={raw[:200]}")
         if raw.startswith('```'):
             raw = re.sub(r'^```[a-z]*\n?', '', raw)
             raw = re.sub(r'\n?```$', '', raw)
