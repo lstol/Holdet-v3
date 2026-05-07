@@ -150,7 +150,7 @@ def run_optimizer():
     active_riders = [r for r in rider_data['riders'] if not r.get('isOut') and r.get('status') != 'dns']
 
     intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
-    intel = json.load(open(intel_path)).get('intel', '') if os.path.exists(intel_path) else ''
+    intel_data = json.load(open(intel_path)).get('intel', {}) if os.path.exists(intel_path) else {}
 
     def sl(key):
         s = sliders.get(key, {})
@@ -165,7 +165,20 @@ def run_optimizer():
     odds_json = json.dumps(odds, indent=2)
     force_in_str  = str(force_in)  if force_in  else 'none'
     force_out_str = str(force_out) if force_out else 'none'
-    intel_str = intel if intel else 'Not yet gathered — use odds only.'
+    if intel_data and isinstance(intel_data, dict) and intel_data.get('key_signals'):
+        signals = intel_data.get('key_signals', [])
+        intel_str = (
+            f"Summary: {intel_data.get('summary', '')}\n"
+            f"Weather: {intel_data.get('weather', '')}\n"
+            f"Stage notes: {intel_data.get('stage_notes', '')}\n\n"
+            "Key signals (adjust win probability accordingly):\n" +
+            '\n'.join(
+                f"  {s['rider']}: {s['direction'].upper()} ({s['strength']}) — {s['signal']}"
+                for s in signals
+            )
+        )
+    else:
+        intel_str = 'Not yet gathered — use odds only.'
 
     prompt = f"""You are a Giro d'Italia fantasy optimizer. Rules and scoring are fixed — optimize for them exactly.
 
@@ -252,11 +265,22 @@ def save_intel():
     if request.method == 'OPTIONS':
         return '', 204
     stage = request.json.get('stage')
-    intel = request.json.get('intel', '')
+    intel = request.json.get('intel', {})
     path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
     with open(path, 'w') as f:
         json.dump({'stage': stage, 'intel': intel}, f, indent=2, ensure_ascii=False)
     return jsonify({'status': 'ok'})
+
+
+@app.route('/load-intel', methods=['GET'])
+def load_intel():
+    stage = request.args.get('stage')
+    path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
+    if os.path.exists(path):
+        with open(path) as f:
+            data = json.load(f)
+        return jsonify(data.get('intel', {}))
+    return jsonify({})
 
 
 # ── Save / load odds ─────────────────────────────────────────────────────────
@@ -359,6 +383,7 @@ def gather_intel():
             )
         except Exception:
             pass
+    raw = ''
     try:
         client = anthropic.Anthropic()
         message = client.messages.create(
@@ -367,20 +392,51 @@ def gather_intel():
             tools=[{'type': 'web_search_20250305', 'name': 'web_search'}],
             messages=[{
                 'role': 'user',
-                'content': (
-                    f"Search and summarize expert analysis for Stage {stage} Giro d'Italia 2026 "
-                    f'from these sources weighted by importance: {source_list}. '
-                    'Summarize as concise bullet points covering: who is favoured, team tactics, '
-                    'weather, road conditions, any late changes. Decision-relevant only, no fluff.'
-                ),
+                'content': f"""Search and summarize expert analysis for Stage {stage} Giro d'Italia 2026.
+
+You MUST search and read each of these sources separately, weighted by importance:
+{source_list}
+
+For each source found, extract:
+- Which riders are explicitly mentioned as favourites or threats
+- Any team tactics mentioned (lead-out trains, protection, attacks)
+- Weather and road condition notes
+- Any late news (illness, injury, form)
+
+Return ONLY a JSON object, no markdown, no preamble:
+{{
+  "sources_consulted": ["TV2/Axelgaard", "Inner Ring", ...],
+  "key_signals": [
+    {{"rider": "Jonathan Milan", "signal": "Lidl-Trek leading out, team fully committed to sprint", "direction": "up", "strength": "strong"}},
+    {{"rider": "Paul Magnier", "signal": "First Grand Tour, unknown under pressure", "direction": "down", "strength": "moderate"}},
+    ...
+  ],
+  "weather": "Tailwind expected on finishing straight, warm",
+  "stage_notes": "Two laps of circuit increase crash risk in final, nervous peloton expected",
+  "summary": "Two sentence max overall summary"
+}}
+
+direction: up = increases win probability vs odds, down = decreases, neutral = no change
+strength: strong / moderate / weak
+Include every rider mentioned by any source, not just top favourites.""",
             }],
         )
-        raw = ''
         for block in message.content:
             if block.type == 'text':
-                raw += block.text
-        return jsonify({'intel': raw.strip()})
+                raw = block.text
+        raw = raw.strip()
+        _log(f"gather-intel stage={stage} raw={raw[:200]}")
+        if raw.startswith('```'):
+            raw = re.sub(r'^```[a-z]*\n?', '', raw)
+            raw = re.sub(r'\n?```$', '', raw)
+            raw = raw.strip()
+        result = json.loads(raw)
+        return jsonify(result)
+    except json.JSONDecodeError as e:
+        _log(f"gather-intel JSON error: {e}")
+        return jsonify({'status': 'error', 'message': str(e), 'raw': raw}), 500
     except Exception as e:
+        _log(f"gather-intel error: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
