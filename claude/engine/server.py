@@ -12,6 +12,8 @@ import sys
 import datetime
 import subprocess
 
+import requests as req_lib
+from bs4 import BeautifulSoup
 from flask import Flask, jsonify, request, send_from_directory
 from dotenv import load_dotenv
 
@@ -37,6 +39,7 @@ RIDERS_FILE    = os.path.join(BASE_DIR, 'shared', 'data', 'riders', 'giro_2026',
 EXPERT_SOURCES = os.path.join(BASE_DIR, 'claude', 'engine', 'expert_sources.yaml')
 FETCH_RIDERS   = os.path.join(BASE_DIR, 'claude', 'engine', 'fetch_riders.py')
 LOG_FILE       = os.path.join(BASE_DIR, 'claude', 'logs', 'server.log')
+ODDS_RAW_FILE  = os.path.join(BASE_DIR, 'claude', 'logs', 'odds-raw.html')
 
 
 def _log(msg: str) -> None:
@@ -165,13 +168,11 @@ def gather_odds():
 
         _log(f"gather-odds stage={stage} raw response: {raw}")
 
-        # Strip markdown code fences if present
         if raw.startswith('```'):
             raw = re.sub(r'^```[a-z]*\n?', '', raw)
             raw = re.sub(r'\n?```$', '', raw)
             raw = raw.strip()
 
-        # Extract JSON array from response (handles preamble/postamble text)
         m = re.search(r'\[.*\]', raw, re.DOTALL)
         if m:
             raw = m.group(0)
