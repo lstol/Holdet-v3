@@ -395,7 +395,7 @@ input[type=range]::-webkit-slider-thumb {
       <div class="intel-panel">
         <div class="intel-panel-title">
           <span>Bookmaker odds</span>
-          <button class="btn btn-sm" onclick="gatherOdds()"><i class="ti ti-search"></i> Gather Odds</button>
+          <button class="btn btn-sm btn-ghost" onclick="gatherOdds()"><i class="ti ti-search"></i> Gather Odds</button>
         </div>
         <textarea id="odds-paste" placeholder="Paste JSON odds response here…" oninput="tryParseOdds(this.value)"></textarea>
         <div id="odds-parse-status"></div>
@@ -418,7 +418,7 @@ input[type=range]::-webkit-slider-thumb {
       <div class="intel-panel">
         <div class="intel-panel-title">
           <span>Intel notes</span>
-          <button class="btn btn-sm" onclick="gatherIntel()"><i class="ti ti-antenna"></i> Gather Intel</button>
+          <button class="btn btn-sm btn-ghost" onclick="gatherIntel()"><i class="ti ti-antenna"></i> Gather Intel</button>
         </div>
         <textarea id="intel-notes" placeholder="Paste expert analysis, team news, weather, race situation…"
           oninput="S.intelNotes = this.value"></textarea>
