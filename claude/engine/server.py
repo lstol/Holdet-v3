@@ -129,6 +129,136 @@ def refresh():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+# ── Run optimizer ────────────────────────────────────────────────────────────
+
+@app.route('/run-optimizer', methods=['POST', 'OPTIONS'])
+def run_optimizer():
+    if request.method == 'OPTIONS':
+        return '', 204
+    if not HAS_ANTHROPIC:
+        return jsonify({'status': 'error', 'message': 'anthropic package not installed'}), 500
+    data = request.json
+    stage = data.get('stage', 1)
+    sliders = data.get('sliders', {})
+    force_in = data.get('force_in', [])
+    force_out = data.get('force_out', [])
+
+    odds_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
+    odds = json.load(open(odds_path)) if os.path.exists(odds_path) else []
+
+    rider_data = json.load(open(RIDERS_FILE))
+    active_riders = [r for r in rider_data['riders'] if not r.get('isOut') and r.get('status') != 'dns']
+
+    intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
+    intel = json.load(open(intel_path)).get('intel', '') if os.path.exists(intel_path) else ''
+
+    def sl(key):
+        s = sliders.get(key, {})
+        return (f"Sprint {s.get('sprint',0)}%  Hilly {s.get('hilly',0)}%  "
+                f"Hard GC {s.get('hardgc',0)}%  Mixed {s.get('mixed',0)}%")
+
+    riders_json = json.dumps(
+        [{'name': r['name'], 'price': r.get('price', 0), 'team': r.get('team', '')}
+         for r in active_riders],
+        indent=2
+    )
+    odds_json = json.dumps(odds, indent=2)
+    force_in_str  = str(force_in)  if force_in  else 'none'
+    force_out_str = str(force_out) if force_out else 'none'
+    intel_str = intel if intel else 'Not yet gathered — use odds only.'
+
+    prompt = f"""You are a Giro d'Italia fantasy optimizer. Rules and scoring are fixed — optimize for them exactly.
+
+SCORING (fantasy points per stage):
+Stage finish: 1st=200k 2nd=150k 3rd=130k 4th=120k 5th=110k 6th=100k 7th=95k 8th=90k 9th=85k 10th=80k 11th=70k 12th=55k 13th=40k 14th=30k 15th=15k
+GC bonus: top-10 GC pays 100k/90k/80k/70k/60k/50k/40k/30k/20k/10k per stage
+Team bonus: if teammate finishes 1st/2nd/3rd, all your riders from that team get +60k/+30k/+20k
+Depth bonus: non-linear bonus for 0-8 riders in stage top-15: 0/4k/8k/15k/35k/65k/120k/220k/400k
+Captain: positive value growth doubled, losses NOT amplified
+DNF: -50k. DNS: -100k per remaining stage.
+Budget: 50,000,000 kr. Team: exactly 8 riders. Max 2 per real-world team. Transfer cost: 1% buy cost.
+
+STAGE {stage} TYPE MIX:
+n+1 (this stage): {sl('n1')}
+n+2: {sl('n2')}
+n+3: {sl('n3')}
+
+BOOKMAKER ODDS (implied win probability):
+{odds_json}
+
+AVAILABLE RIDERS (name, price, team):
+{riders_json}
+
+CONSTRAINTS:
+Force include: {force_in_str}
+Force exclude: {force_out_str}
+
+EXPERT INTEL:
+{intel_str}
+
+OUTPUT — Return ONLY a JSON object, no preamble, no markdown, no code fences:
+{{
+  "teams": [
+    {{
+      "label": "Sprint-maximal",
+      "riders": ["Name 1", "Name 2", "Name 3", "Name 4", "Name 5", "Name 6", "Name 7", "Name 8"],
+      "total_price": 49500000,
+      "ev_estimate": 850000,
+      "cdf": {{"p25": 400000, "p50": 750000, "p75": 1100000, "p90": 1600000}},
+      "forward_pressure": {{"n2": "low", "n3": "medium"}},
+      "rationale": "One sentence."
+    }}
+  ],
+  "captain": {{
+    "name": "Rider Name",
+    "rationale": "One sentence on right-tail EV logic."
+  }},
+  "tier_a": ["Name 1", "Name 2"]
+}}
+
+Generate 3-5 structurally distinct teams. Each exactly 8 riders, budget ≤50,000,000 kr, max 2 per real-world team."""
+
+    try:
+        client = anthropic.Anthropic()
+        message = client.messages.create(
+            model='claude-sonnet-4-6',
+            max_tokens=4000,
+            messages=[{'role': 'user', 'content': prompt}],
+        )
+        raw = message.content[0].text.strip()
+        _log(f"run-optimizer stage={stage} raw={raw[:200]}")
+        if raw.startswith('```'):
+            raw = re.sub(r'^```[a-z]*\n?', '', raw)
+            raw = re.sub(r'\n?```$', '', raw)
+            raw = raw.strip()
+        result = json.loads(raw)
+        out_path = os.path.join(BASE_DIR, 'claude', 'output', f'stage_{stage}_claude.json')
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        with open(out_path, 'w') as f:
+            json.dump(result, f, indent=2, ensure_ascii=False)
+        return jsonify(result)
+    except json.JSONDecodeError as e:
+        _log(f"run-optimizer JSON error: {e}")
+        return jsonify({'status': 'error', 'message': str(e), 'raw': raw}), 500
+    except Exception as e:
+        _log(f"run-optimizer error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+# ── Save / load intel ─────────────────────────────────────────────────────────
+
+@app.route('/save-intel', methods=['POST', 'OPTIONS'])
+def save_intel():
+    if request.method == 'OPTIONS':
+        return '', 204
+    stage = request.json.get('stage')
+    intel = request.json.get('intel', '')
+    path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
+    with open(path, 'w') as f:
+        json.dump({'stage': stage, 'intel': intel}, f, indent=2, ensure_ascii=False)
+    return jsonify({'status': 'ok'})
+
+
 # ── Save / load odds ─────────────────────────────────────────────────────────
 
 @app.route('/save-odds', methods=['POST', 'OPTIONS'])

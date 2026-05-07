@@ -430,7 +430,7 @@ input[type=range]::-webkit-slider-thumb {
     <div id="candidates-panel">
       <div id="candidates-header">
         <h2>Candidate teams</h2>
-        <button class="btn btn-primary" onclick="runOptimizer()">
+        <button id="run-optimizer-btn" class="btn btn-primary" onclick="runOptimizer()">
           <i class="ti ti-player-play"></i> Run optimizer
         </button>
       </div>
@@ -860,6 +860,11 @@ async function gatherIntel() {
       ta.classList.add('expanded');
       $('intel-toggle').textContent = '▴ Collapse';
     }
+    fetch(`${SERVER}/save-intel`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({stage: n, intel: S.intelNotes}),
+    }).catch(() => {});
   } catch(e) {
     alert(`Gather Intel error: ${e.message}`);
   } finally {
@@ -1086,20 +1091,58 @@ ${S.intelNotes || '(none)'}
 `;
 }
 
-function runOptimizer() {
-  const prompt = buildOptimizerPrompt();
+async function runOptimizer() {
+  const btn = $('run-optimizer-btn');
   const outEl = $('optimizer-output');
+  btn.textContent = 'Running…';
+  btn.disabled = true;
   outEl.className = '';
-
-  if (typeof window.sendPrompt === 'function') {
-    outEl.textContent = 'Prompt sent to Claude…';
-    window.sendPrompt(prompt);
-  } else {
-    outEl.textContent = 'Copy the prompt below and paste it to Claude chat.';
-    const area = $('prompt-copy-area');
-    area.style.display = 'block';
-    $('prompt-text').value = prompt;
+  outEl.textContent = 'Calling optimizer…';
+  const st = S.stages[S.activeStageIndex] || {};
+  const stage = st.stage_number || 1;
+  try {
+    const res = await fetch(`${SERVER}/run-optimizer`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        stage,
+        sliders: S.sliders,
+        force_in:  [...S.forceIn].map(id => { const r = S.riders.find(x => (x.rider_id || x.holdet_id) == id); return r ? r.name : id; }),
+        force_out: [...S.forceOut].map(id => { const r = S.riders.find(x => (x.rider_id || x.holdet_id) == id); return r ? r.name : id; }),
+      }),
+    });
+    const data = await res.json();
+    if (data.status === 'error') throw new Error(data.message);
+    renderOptimizerOutput(data);
+  } catch(e) {
+    outEl.innerHTML = `<div style="color:var(--color-danger,#e05)">Error: ${e.message}</div>`;
+  } finally {
+    btn.innerHTML = '<i class="ti ti-player-play"></i> Run optimizer';
+    btn.disabled = false;
   }
+}
+
+function renderOptimizerOutput(data) {
+  const area = $('optimizer-output');
+  area.innerHTML = (data.teams || []).map(team => `
+    <div class="tcard" style="border:1px solid var(--color-border);border-radius:var(--radius-md);padding:10px;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+        <span style="font-weight:600;font-size:13px;">${team.label}</span>
+        <span style="font-size:11px;color:var(--color-text-2);">${(team.total_price/1e6).toFixed(2)}M · EV ${(team.ev_estimate/1000).toFixed(0)}k</span>
+      </div>
+      <div style="font-size:12px;margin-bottom:5px;">${(team.riders||[]).join(' · ')}</div>
+      <div style="font-size:11px;color:var(--color-text-2);margin-bottom:4px;">
+        p25: ${(team.cdf.p25/1000).toFixed(0)}k · p50: ${(team.cdf.p50/1000).toFixed(0)}k · p75: ${(team.cdf.p75/1000).toFixed(0)}k · p90: ${(team.cdf.p90/1000).toFixed(0)}k
+      </div>
+      <div style="font-size:11px;color:var(--color-text-2);margin-bottom:4px;">Forward → n+2: ${team.forward_pressure?.n2 ?? '—'} · n+3: ${team.forward_pressure?.n3 ?? '—'}</div>
+      <div style="font-size:11px;color:var(--color-text-3);">${team.rationale}</div>
+    </div>
+  `).join('') + (data.captain ? `
+    <div style="margin-top:10px;padding:8px 10px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-md);">
+      <span style="font-size:12px;font-weight:600;">⚡ Captain: ${data.captain.name}</span>
+      <div style="font-size:11px;color:var(--color-text-2);margin-top:2px;">${data.captain.rationale}</div>
+    </div>
+  ` : '');
 }
 
 function copyPrompt() {
