@@ -2,7 +2,7 @@
 
 **Race:** Giro d'Italia 2026
 **Stage 1:** May 8 (Nessebar → Burgas, 147 km, flat sprint)
-**Last updated:** Session 4 (2026-05-07) — dashboard fully wired, one-click refresh, 184-rider lock
+**Last updated:** Session 5 (2026-05-08) — Cmd+V odds paste, /parse-odds-image endpoint, server architecture
 
 ---
 
@@ -20,9 +20,10 @@
 | expert_sources.yaml | ✅ Created — `claude/engine/expert_sources.yaml` (Claude-internal only) |
 | chatgpt/ scaffold | ✅ Created — explicit ChatGPT optimizer workspace under `chatgpt/src/` |
 | chatgpt/dashboard | ✅ Created — dark static cockpit + direct-file stage image loader |
+| chatgpt rider loader | ✅ Created — explicit Giro 2026 loader and dashboard rider artifact |
 | Dashboard | ✅ `claude/dashboard/claude.html` — fully wired, no server needed, opens as file:// |
 | build_dashboard.py | ✅ Embeds riders + stages as `window.RIDERS_DATA` / `window.STAGES_DATA` |
-| server.py | ✅ `claude/engine/server.py` — local server with /refresh, /save-weights, /snapshot, /embed-riders |
+| server.py | ✅ Full Flask app — /riders, /refresh, /parse-odds-image, /gather-intel, /save-weights |
 | claude/output/ | ✅ Created — per-stage Claude optimization output (never written to shared/) |
 | Stage images | ✅ 21 images at `shared/data/stage_images/giro_2026/stage-{N}.jpg`; served via GitHub raw URL |
 | giro_2026/ subfolder pattern | ✅ Canonical — riders/, stages/, stage_images/ all use race subfolders |
@@ -37,6 +38,9 @@
 | Tier logic | ✅ TYPE_FIT matrix replaces terrain_affinity formula |
 | Slider auto-sum | ✅ Stage-type sliders auto-balance to 100% |
 | Odds table | ✅ Auto-populated top-30 by stage relevance (not just price) |
+| Odds image paste | ✅ Cmd+V Oddschecker screenshot → /parse-odds-image → odds table |
+| Stage 1 date | ✅ May 8, Nessebar → Burgas, 147km flat sprint |
+| LaunchAgent | ✅ Server auto-starts on login via com.holdet.server |
 
 ---
 
@@ -49,11 +53,13 @@
 - [x] Verify `claude/engine/fetch_riders.py` runs clean against live Holdet.dk
 - [x] Run pre-Stage 1 data fetch and commit `shared/data/snapshots/stage_1_holdet.json`
 - [x] One-click refresh: refresh.sh + HoldetRefresh.app + holdet:// URL scheme
-- [ ] Claude gathers odds + expert intel for Stage 1
+- [x] Odds: Cmd+V Oddschecker screenshot → /parse-odds-image (Session 5)
+- [ ] Claude gathers expert intel for Stage 1
 - [ ] Produce `stage_1_snapshot.json` for ChatGPT handoff
 - [x] ChatGPT onboarding: scaffold independent optimizer workspace and session log
 - [x] Define initial `stage_N_chatgpt.json` output writer scaffold
 - [x] Create local static ChatGPT expert cockpit with all core sections visible
+- [x] Load Giro 2026 rider universe into ChatGPT-local dashboard artifact
 - [ ] Replace ChatGPT dashboard mock data with `chatgpt/output/stage_N_chatgpt.json`
 
 ---
@@ -84,6 +90,7 @@
 - [ ] Captain EV display alongside candidate teams
 - [ ] Depth bonus table display in Stage controls tab
 - [ ] Decide whether to introduce a React/shadcn/Tailwind/Recharts frontend stack for `chatgpt/dashboard/react/`
+- [ ] Pre-Tour de France: migrate to hosted frontend
 
 ---
 
@@ -105,4 +112,6 @@
 | ChatGPT Safari verification | 2026-05-06 | Dashboard verification narrowed to Safari/manual only; no Chrome or browser automation |
 | ChatGPT image fallback | 2026-05-07 | Stage carousel now tries four local image paths and displays resolved/attempted path diagnostics |
 | ChatGPT direct-file dashboard | 2026-05-07 | Dashboard image loader now prioritizes direct Safari file mode and includes `open_dashboard.command` |
+| ChatGPT rider loader | 2026-05-07 | Loaded authoritative Giro 2026 rider universe, validated IDs/prices/names, and exported dashboard artifact |
 | Session 4 | 2026-05-07 | Dashboard fully wired (file:// mode, no server); fetch_riders.py verified; 184-rider lock; one-click refresh via holdet:// URL scheme; column sort, 21-stage carousel, TYPE_FIT tier logic, slider auto-sum, stage-relevance odds table |
+| Session 5 | 2026-05-08 | Full server rewrite (Flask/5050, LaunchAgent); /parse-odds-image Cmd+V paste; /gather-intel web search; /gather-odds removed; stage date fixed |

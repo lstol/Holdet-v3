@@ -129,49 +129,60 @@ def refresh():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-# ── Gather odds ───────────────────────────────────────────────────────────────
+# ── Parse odds image ─────────────────────────────────────────────────────────
 
-@app.route('/gather-odds', methods=['POST', 'OPTIONS'])
-def gather_odds():
+@app.route('/parse-odds-image', methods=['POST', 'OPTIONS'])
+def parse_odds_image():
     if request.method == 'OPTIONS':
         return '', 204
     if not HAS_ANTHROPIC:
         return jsonify({'status': 'error', 'message': 'anthropic package not installed'}), 500
     stage = request.json.get('stage', '?')
+    image_data = request.json.get('image')
+    media_type = request.json.get('media_type', 'image/png')
+    raw = ''
     try:
         client = anthropic.Anthropic()
         message = client.messages.create(
             model='claude-haiku-4-5-20251001',
             max_tokens=2000,
-            tools=[{'type': 'web_search_20250305', 'name': 'web_search'}],
             messages=[{
                 'role': 'user',
-                'content': (
-                    f"Find current bookmaker odds for Stage {stage} Giro d'Italia 2026 winner. "
-                    'Convert decimal odds to implied probability (100/decimal). '
-                    'Include every rider with win% >= 1%. Estimate top3_pct as win_pct * 3. '
-                    'Your final response must be ONLY a JSON array with no other text: '
-                    '[{"name": "Rider Name", "win_pct": 5.2, "top3_pct": 18.0}] '
-                    'sorted by win_pct descending.'
-                ),
+                'content': [
+                    {
+                        'type': 'image',
+                        'source': {'type': 'base64', 'media_type': media_type, 'data': image_data},
+                    },
+                    {
+                        'type': 'text',
+                        'text': (
+                            f"These are Oddschecker odds for Stage {stage} Giro d'Italia 2026. "
+                            'Each row is a rider. Columns are different bookmakers showing decimal odds. '
+                            'For each rider: calculate the average of all visible decimal odds across all bookmakers, '
+                            'then convert to implied win probability: win_pct = 100 / avg_odds. '
+                            'Return ONLY a JSON array, no preamble, no markdown, no code fences: '
+                            '[{"name": "Rider Name", "win_pct": 5.2, "top3_pct": null}] '
+                            'sorted by win_pct descending. Include only riders where win_pct >= 1.0.'
+                        ),
+                    },
+                ],
             }],
         )
-        # Collect all text blocks — model may produce intermediate steps before final answer
-        all_text = '\n'.join(b.text for b in message.content if b.type == 'text')
-        _log(f"gather-odds stage={stage} all_text={all_text[:400]}")
-
-        # Find the last JSON array in the response (most likely to be the final answer)
-        matches = list(re.finditer(r'\[[\s\S]*?\]', all_text))
-        if not matches:
-            _log("gather-odds no JSON array found in response")
-            return jsonify([])
-        raw = matches[-1].group(0)
+        raw = message.content[0].text.strip()
+        _log(f"parse-odds-image stage={stage} raw={raw[:300]}")
+        if raw.startswith('```'):
+            raw = re.sub(r'^```[a-z]*\n?', '', raw)
+            raw = re.sub(r'\n?```$', '', raw)
+            raw = raw.strip()
+        m = re.search(r'\[.*\]', raw, re.DOTALL)
+        if m:
+            raw = m.group(0)
         return jsonify(json.loads(raw))
     except json.JSONDecodeError as e:
-        _log(f"gather-odds JSON error: {e}")
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        _log(f"parse-odds-image JSON error: {e}")
+        return jsonify({'status': 'error', 'message': str(e), 'raw': raw}), 500
     except Exception as e:
-        _log(f"gather-odds error: {e}")
+        _log(f"parse-odds-image error: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 

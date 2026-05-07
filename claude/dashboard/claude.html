@@ -391,12 +391,11 @@ input[type=range]::-webkit-slider-thumb {
     <div id="intel-grid">
 
       <!-- Bookmaker odds -->
-      <div class="intel-panel">
+      <div id="odds-panel" class="intel-panel" tabindex="0">
         <div class="intel-panel-title">
           <span>Bookmaker odds</span>
-          <button id="gather-odds-btn" class="btn btn-sm btn-ghost" onclick="gatherOdds()"><i class="ti ti-search"></i> Gather Odds</button>
         </div>
-        <div id="odds-parse-status"></div>
+        <div id="odds-parse-status" style="font-size:10px;color:var(--color-text-3);margin-bottom:6px;min-height:14px;">📷 Screenshot Oddschecker → Cmd+V here to load odds</div>
         <div id="odds-table-wrap">
           <table id="odds-table">
             <thead>
@@ -766,40 +765,53 @@ async function saveWeights() {
 }
 
 /* ── Odds table ──────────────────────────────────────────────────────── */
-async function gatherOdds() {
-  const st = S.stages[S.activeStageIndex] || {};
-  const n = st.stage_number || 1;
-  const btn = $('gather-odds-btn');
-  btn.disabled = true;
-  btn.textContent = 'Fetching…';
-  try {
-    const res = await fetch(`${SERVER}/gather-odds`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({stage: n}),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    const arr = await res.json();
-    S.oddsRows = arr
-      .sort((a, b) => (b.win_pct ?? 0) - (a.win_pct ?? 0))
-      .map((entry, i) => ({id: i, name: entry.name || '', win: entry.win_pct ?? '', top3: entry.top3_pct ?? ''}));
-    renderOdds();
-    renderTable();
-    const statusEl = $('odds-parse-status');
-    statusEl.className = 'parse-ok';
-    statusEl.textContent = `✓ ${S.oddsRows.length} riders loaded`;
-  } catch(e) {
-    const statusEl = $('odds-parse-status');
-    statusEl.className = 'parse-err';
-    const msg = (e instanceof TypeError && e.message.includes('fetch'))
-      ? 'Server not running — start with: launchctl start com.holdet.server'
-      : `Error: ${e.message}`;
-    statusEl.textContent = msg;
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="ti ti-search"></i> Gather Odds';
-  }
+function populateOddsTable(arr) {
+  S.oddsRows = arr
+    .sort((a, b) => (b.win_pct ?? 0) - (a.win_pct ?? 0))
+    .map((entry, i) => ({id: i, name: entry.name || '', win: entry.win_pct ?? '', top3: entry.top3_pct ?? ''}));
+  renderOdds();
+  renderTable();
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+  const panel = document.getElementById('odds-panel');
+  if (!panel) return;
+  panel.addEventListener('paste', async function(e) {
+    const items = e.clipboardData.items;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        const reader = new FileReader();
+        reader.onload = async function(ev) {
+          const base64 = ev.target.result.split(',')[1];
+          const statusEl = $('odds-parse-status');
+          statusEl.className = '';
+          statusEl.textContent = 'Reading odds from screenshot…';
+          const st = S.stages[S.activeStageIndex] || {};
+          const stage = st.stage_number || 1;
+          try {
+            const res = await fetch(`${SERVER}/parse-odds-image`, {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({stage, image: base64, media_type: item.type}),
+            });
+            const data = await res.json();
+            if (data.status === 'error') throw new Error(data.message);
+            populateOddsTable(data);
+            statusEl.className = 'parse-ok';
+            statusEl.textContent = `✓ ${data.length} riders loaded`;
+          } catch(err) {
+            statusEl.className = 'parse-err';
+            statusEl.textContent = `Error: ${err.message}`;
+          }
+        };
+        reader.readAsDataURL(file);
+        break;
+      }
+    }
+  });
+});
 
 async function gatherIntel() {
   const st = S.stages[S.activeStageIndex] || {};
