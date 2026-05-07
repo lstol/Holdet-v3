@@ -7,6 +7,7 @@
 
 import json
 import os
+import re
 import sys
 import datetime
 import subprocess
@@ -35,6 +36,13 @@ SNAPSHOT_DIR   = os.path.join(BASE_DIR, 'shared', 'data', 'snapshots')
 RIDERS_FILE    = os.path.join(BASE_DIR, 'shared', 'data', 'riders', 'giro_2026', 'riders.json')
 EXPERT_SOURCES = os.path.join(BASE_DIR, 'claude', 'engine', 'expert_sources.yaml')
 FETCH_RIDERS   = os.path.join(BASE_DIR, 'claude', 'engine', 'fetch_riders.py')
+LOG_FILE       = os.path.join(BASE_DIR, 'claude', 'logs', 'server.log')
+
+
+def _log(msg: str) -> None:
+    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+    with open(LOG_FILE, 'a') as f:
+        f.write(f"[{datetime.datetime.utcnow().isoformat()}] {msg}\n")
 
 
 @app.after_request
@@ -134,20 +142,34 @@ def gather_odds():
         client = anthropic.Anthropic()
         message = client.messages.create(
             model='claude-opus-4-5',
-            max_tokens=1000,
+            max_tokens=2000,
             messages=[{
                 'role': 'user',
                 'content': (
                     f'Search current bookmaker odds for Stage {stage} Giro d\'Italia 2026. '
                     'Return implied win probability and top-3 probability for every rider with win% >= 1%. '
-                    'Format as a JSON array only, no other text: '
-                    '[{"name": "Rider Name", "win_pct": 0.0, "top3_pct": 0.0}] '
+                    'Return ONLY a JSON array, no preamble, no markdown, no code fences. '
+                    'Schema: [{"name": "Rider Name", "win_pct": 0.0, "top3_pct": 0.0}] '
                     'sorted by win_pct descending.'
                 ),
             }],
         )
-        return jsonify(json.loads(message.content[0].text))
+        raw = message.content[0].text.strip()
+        _log(f"gather-odds stage={stage} raw response: {raw}")
+
+        # Strip markdown code fences if present
+        if raw.startswith('```'):
+            raw = re.sub(r'^```[a-z]*\n?', '', raw)
+            raw = re.sub(r'\n?```$', '', raw)
+            raw = raw.strip()
+
+        data = json.loads(raw)
+        return jsonify(data)
+    except json.JSONDecodeError as e:
+        _log(f"gather-odds JSON parse error: {e}")
+        return jsonify({'status': 'error', 'message': str(e), 'raw': raw}), 500
     except Exception as e:
+        _log(f"gather-odds error: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
