@@ -19,11 +19,11 @@
 | Repo structure | ✅ Clean — claude/ chatgpt/ shared/ layout, no duplicates |
 | expert_sources.yaml | ✅ Created — `claude/engine/expert_sources.yaml` (Claude-internal only) |
 | chatgpt/ scaffold | ✅ Created — explicit ChatGPT optimizer workspace under `chatgpt/src/` |
-| chatgpt/dashboard | ✅ Created — dark static cockpit + preserved React component source |
+| chatgpt/dashboard | ✅ Created — dark static cockpit + Safari-only verification workflow |
 | Dashboard | ✅ `claude/dashboard/claude.html` — full expert dashboard built (Session 3) |
 | server.py | ✅ `claude/engine/server.py` — local server stub with /refresh, /save-weights, /snapshot |
 | claude/output/ | ✅ Created — per-stage Claude optimization output (never written to shared/) |
-| Stage images | ✅ 21 images at `shared/data/stage_images/giro_2026/stage-{N}.jpg`, served via GitHub raw URL |
+| Stage images | ✅ 21 images at `shared/data/stage_images/giro_2026/stage-{N}.jpg`; compatibility symlink at `shared/stage_images/` |
 | giro_2026/ subfolder pattern | ✅ Canonical — riders/, stages/, stage_images/ all use race subfolders |
 | sessions/notes/decisions | ✅ Under `claude/` — Claude-specific, not shared |
 | decisions_log.md | ✅ `claude/decisions/decisions_log.md` — decisions from Sessions 1–2 |
@@ -96,3 +96,4 @@
 | ChatGPT scaffold | 2026-05-06 | ChatGPT optimizer scaffold, tests, output writer, and static dashboard created |
 | ChatGPT dashboard preservation | 2026-05-06 | Proposed React expert dashboard preserved under `chatgpt/dashboard/react/` |
 | ChatGPT static cockpit | 2026-05-06 | Rebuilt `chatgpt/dashboard/index.html` as a no-build dark cockpit with all required sections visible |
+| ChatGPT Safari verification | 2026-05-06 | Dashboard verification narrowed to Safari/manual only; no Chrome or browser automation |

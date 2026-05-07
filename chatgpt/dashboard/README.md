@@ -13,7 +13,33 @@ Current runnable dashboard:
 - Audit/rules validation, candidate teams, payoff distribution, captain EV,
   selected-team table, forward pressure, decision notes, and lock readiness all
   visible at once.
-- Uses local image assets from `../../shared/data/stage_images/giro_2026/stage-N.jpg`.
+- Loads local image assets from `../../shared/stage_images/giro_2026/stage-N.jpg`.
+  `shared/stage_images/` is a compatibility symlink to the current repository
+  image directory.
+
+## Verification
+
+Use Safari only. Do not use Chrome, Playwright, Puppeteer, Selenium, or browser
+automation for this dashboard.
+
+From repo root:
+
+```bash
+open -a Safari chatgpt/dashboard/index.html
+```
+
+If local relative paths fail, serve from repo root:
+
+```bash
+python3 -m http.server 8765
+open -a Safari http://localhost:8765/chatgpt/dashboard/index.html
+```
+
+Direct image checks:
+
+```text
+http://localhost:8765/shared/stage_images/giro_2026/stage-1.jpg
+```
 
 The pasted React source is also preserved at:
 
