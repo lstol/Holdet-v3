@@ -138,23 +138,31 @@ def gather_odds():
     if not HAS_ANTHROPIC:
         return jsonify({'status': 'error', 'message': 'anthropic package not installed'}), 500
     stage = request.json.get('stage', '?')
+    raw = ''
     try:
         client = anthropic.Anthropic()
         message = client.messages.create(
-            model='claude-opus-4-5',
+            model='claude-sonnet-4-5',
             max_tokens=2000,
+            tools=[{'type': 'web_search_20250305', 'name': 'web_search'}],
             messages=[{
                 'role': 'user',
                 'content': (
-                    f'Search current bookmaker odds for Stage {stage} Giro d\'Italia 2026. '
-                    'Return implied win probability and top-3 probability for every rider with win% >= 1%. '
-                    'Return ONLY a JSON array, no preamble, no markdown, no code fences. '
-                    'Schema: [{"name": "Rider Name", "win_pct": 0.0, "top3_pct": 0.0}] '
-                    'sorted by win_pct descending.'
+                    f"Search current bookmaker odds for Stage {stage} Giro d'Italia 2026. "
+                    'Find implied win probabilities from bookmakers such as Oddschecker, Betfair, or Unibet. '
+                    'Convert decimal odds to implied probability: 1/odds * 100. '
+                    'Include every rider with win% >= 1%. Estimate top3_pct as win_pct * 3 if not available. '
+                    'Output ONLY a raw JSON array — no explanation, no caveats, no markdown, no text before or after. '
+                    'Even if data is partial, return what you found. '
+                    'Format: [{"name": "Rider Name", "win_pct": 5.2, "top3_pct": 18.0}] '
+                    'sorted by win_pct descending. Start your response with [ and end with ].'
                 ),
             }],
         )
-        raw = message.content[0].text.strip()
+        for block in message.content:
+            if block.type == 'text':
+                raw = block.text.strip()
+
         _log(f"gather-odds stage={stage} raw response: {raw}")
 
         # Strip markdown code fences if present
@@ -163,8 +171,12 @@ def gather_odds():
             raw = re.sub(r'\n?```$', '', raw)
             raw = raw.strip()
 
-        data = json.loads(raw)
-        return jsonify(data)
+        # Extract JSON array from response (handles preamble/postamble text)
+        m = re.search(r'\[.*\]', raw, re.DOTALL)
+        if m:
+            raw = m.group(0)
+
+        return jsonify(json.loads(raw))
     except json.JSONDecodeError as e:
         _log(f"gather-odds JSON parse error: {e}")
         return jsonify({'status': 'error', 'message': str(e), 'raw': raw}), 500
@@ -195,18 +207,24 @@ def gather_intel():
     try:
         client = anthropic.Anthropic()
         message = client.messages.create(
-            model='claude-opus-4-5',
+            model='claude-sonnet-4-5',
             max_tokens=2000,
+            tools=[{'type': 'web_search_20250305', 'name': 'web_search'}],
             messages=[{
                 'role': 'user',
                 'content': (
-                    f'Scan {source_list} for Stage {stage} Giro d\'Italia 2026 expert analysis. '
-                    'Summarize key signals as concise bullet points: who is favoured, team tactics, '
-                    'weather, road conditions, any late changes. Decision-relevant only.'
+                    f"Search and summarize expert analysis for Stage {stage} Giro d'Italia 2026 "
+                    f'from these sources weighted by importance: {source_list}. '
+                    'Summarize as concise bullet points covering: who is favoured, team tactics, '
+                    'weather, road conditions, any late changes. Decision-relevant only, no fluff.'
                 ),
             }],
         )
-        return jsonify({'intel': message.content[0].text})
+        raw = ''
+        for block in message.content:
+            if block.type == 'text':
+                raw += block.text
+        return jsonify({'intel': raw.strip()})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
