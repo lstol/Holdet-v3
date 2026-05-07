@@ -783,7 +783,7 @@
           and stage-conditional structural value.
         </div>
         <div class="ticker-line">
-          <strong>Asset paths:</strong> shared/stage_images + shared/data/stage_images fallbacks
+          <strong>Asset paths:</strong> direct-file relative paths first; local server fallback optional
         </div>
         <div class="ticker-line" id="footerClock">
           <strong>Mode:</strong> local static / no backend / no build
@@ -793,10 +793,10 @@
 
     <script>
       const imagePathTemplates = [
-        "../../shared/stage_images/giro_2026/stage-{stage}.jpg",
         "../../shared/data/stage_images/giro_2026/stage-{stage}.jpg",
-        "/shared/stage_images/giro_2026/stage-{stage}.jpg",
-        "/shared/data/stage_images/giro_2026/stage-{stage}.jpg",
+        "../../shared/stage_images/giro_2026/stage-{stage}.jpg",
+        "../shared/data/stage_images/giro_2026/stage-{stage}.jpg",
+        "../shared/stage_images/giro_2026/stage-{stage}.jpg",
       ];
 
       function imagePathsForStage(stage) {
@@ -956,15 +956,18 @@
       function showStageImageError(stage, attemptedPaths) {
         const image = document.getElementById("stageImage");
         const error = document.getElementById("stageImageError");
+        const dashboardLocation = window.location.href;
         image.removeAttribute("src");
         image.style.visibility = "hidden";
         error.classList.add("visible");
         error.innerHTML = `
           <strong>Stage image not found for stage ${stage}</strong>
+          <div>Dashboard location: ${dashboardLocation}</div>
+          <div>Open this file from inside the repo at chatgpt/dashboard/index.html</div>
           <div>Attempted paths:</div>
           <ul>${attemptedPaths.map((path) => `<li>${path}</li>`).join("")}</ul>
         `;
-        setImageDebug(`ERROR: Stage image not found for stage ${stage}. Attempted: ${attemptedPaths.join(" | ")}`, "error");
+        setImageDebug(`ERROR: Stage image not found for stage ${stage}. Dashboard: ${dashboardLocation}. Attempted: ${attemptedPaths.join(" | ")}`, "error");
       }
 
       function loadStageImage(stage) {

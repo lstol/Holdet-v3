@@ -2,9 +2,9 @@
 
 Static expert cockpit dashboard for the ChatGPT-side Holdet v3 optimizer.
 
-Open `chatgpt/dashboard/index.html` in Safari from a local server. It is
-intentionally dependency-free: single HTML file, no React, no build step, no npm
-dependencies, no backend.
+Open `chatgpt/dashboard/index.html` directly in Safari. It is intentionally
+dependency-free: single HTML file, no React, no build step, no npm dependencies,
+no backend.
 
 Current runnable dashboard:
 
@@ -18,12 +18,12 @@ Current runnable dashboard:
   path under the carousel. If every path fails, the dashboard shows a visible
   stage-specific error with all attempted paths.
 
-Image path order:
+Image path order for direct file mode:
 
-1. `../../shared/stage_images/giro_2026/stage-N.jpg`
-2. `../../shared/data/stage_images/giro_2026/stage-N.jpg`
-3. `/shared/stage_images/giro_2026/stage-N.jpg`
-4. `/shared/data/stage_images/giro_2026/stage-N.jpg`
+1. `../../shared/data/stage_images/giro_2026/stage-N.jpg`
+2. `../../shared/stage_images/giro_2026/stage-N.jpg`
+3. `../shared/data/stage_images/giro_2026/stage-N.jpg`
+4. `../shared/stage_images/giro_2026/stage-N.jpg`
 
 ## Verification
 
@@ -33,14 +33,20 @@ automation for this dashboard.
 Recommended from repo root:
 
 ```bash
-python3 -m http.server 8765
-open -a Safari http://localhost:8765/chatgpt/dashboard/index.html
+open -a Safari chatgpt/dashboard/index.html
 ```
 
-Direct file mode can be tried, but local server mode is the supported path:
+Or double-click:
 
 ```bash
-open -a Safari chatgpt/dashboard/index.html
+chatgpt/dashboard/open_dashboard.command
+```
+
+Local server mode is only a fallback:
+
+```bash
+python3 -m http.server 8765
+open -a Safari http://localhost:8765/chatgpt/dashboard/index.html
 ```
 
 Direct image checks:
