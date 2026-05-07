@@ -2,7 +2,7 @@
 
 **Race:** Giro d'Italia 2026
 **Stage 1:** May 9 (TTT, Durazzo → Tirana, 13.7 km)
-**Last updated:** ChatGPT static cockpit (2026-05-06)
+**Last updated:** Session 4 (2026-05-07) — dashboard fully wired, one-click refresh, 184-rider lock
 
 ---
 
@@ -13,35 +13,42 @@
 | Framing doc | ✅ Locked — `shared/rules/Giro_Fantasy_Optimizer_Framing.md` |
 | Scoring rules | ✅ Carried from v2 — `shared/rules/02_rules_payoff.md` |
 | Game strategy | ✅ Carried from v2 — `shared/rules/game_strategy.md` |
-| fetch_riders.py | ✅ Carried from v2 — `claude/engine/fetch_riders.py` |
+| fetch_riders.py | ✅ Verified live against Holdet.dk — 184 active riders locked |
 | capture_cookie.py | ✅ Carried from v2 — `claude/engine/capture_cookie.py` |
-| Rider universe | ✅ 199 riders with holdet_ids — `shared/data/riders/` |
-| Repo structure | ✅ Clean — claude/ chatgpt/ shared/ layout, no duplicates |
+| Rider universe | ✅ 184 active riders — `shared/data/riders/giro_2026/riders.json` |
+| Repo structure | ✅ Clean — claude/ chatgpt/ shared/ layout, giro_2026/ subfolders |
 | expert_sources.yaml | ✅ Created — `claude/engine/expert_sources.yaml` (Claude-internal only) |
 | chatgpt/ scaffold | ✅ Created — explicit ChatGPT optimizer workspace under `chatgpt/src/` |
 | chatgpt/dashboard | ✅ Created — dark static cockpit + Safari-only verification workflow |
-| Dashboard | ✅ `claude/dashboard/claude.html` — full expert dashboard built (Session 3) |
-| server.py | ✅ `claude/engine/server.py` — local server stub with /refresh, /save-weights, /snapshot |
+| Dashboard | ✅ `claude/dashboard/claude.html` — fully wired, no server needed, opens as file:// |
+| build_dashboard.py | ✅ Embeds riders + stages as `window.RIDERS_DATA` / `window.STAGES_DATA` |
+| server.py | ✅ `claude/engine/server.py` — local server with /refresh, /save-weights, /snapshot, /embed-riders |
 | claude/output/ | ✅ Created — per-stage Claude optimization output (never written to shared/) |
-| Stage images | ✅ 21 images at `shared/data/stage_images/giro_2026/stage-{N}.jpg`; compatibility symlink at `shared/stage_images/` |
+| Stage images | ✅ 21 images at `shared/data/stage_images/giro_2026/stage-{N}.jpg`; served via GitHub raw URL |
 | giro_2026/ subfolder pattern | ✅ Canonical — riders/, stages/, stage_images/ all use race subfolders |
 | sessions/notes/decisions | ✅ Under `claude/` — Claude-specific, not shared |
-| decisions_log.md | ✅ `claude/decisions/decisions_log.md` — decisions from Sessions 1–2 |
+| decisions_log.md | ✅ `claude/decisions/decisions_log.md` — decisions from Sessions 1–4 |
 | Optimizer | ❌ Not started — stub at `claude/engine/optimizer.py` |
 | Snapshot schema | ✅ Specified in framing doc Section 12 |
-| Session log | ✅ `sessions/` directory created |
+| Pre-race snapshot | ✅ `shared/data/snapshots/stage_1_holdet.json` — 184 riders, pre-race prices |
+| One-click refresh | ✅ `claude/engine/refresh.sh` + `HoldetRefresh.app` with `holdet://` URL scheme |
+| Column sorting | ✅ All columns sortable in rider table |
+| Stage carousel | ✅ All 21 stages in profile carousel |
+| Tier logic | ✅ TYPE_FIT matrix replaces terrain_affinity formula |
+| Slider auto-sum | ✅ Stage-type sliders auto-balance to 100% |
+| Odds table | ✅ Auto-populated top-30 by stage relevance (not just price) |
 
 ---
 
 ## Immediate — before Stage 1 (May 9)
 
 - [x] Scaffold repo structure into claude/ chatgpt/ shared/ layout (Session 2)
-- [x] Create `claude/engine/expert_sources.yaml` with default weights (Session 2b — intelligence is Claude-internal, never in shared/)
+- [x] Create `claude/engine/expert_sources.yaml` with default weights (Session 2b)
 - [x] Clean repo: remove duplicates, consolidate claude/, create chatgpt/ stub (Session 2c)
-- [ ] Wire dashboard to read `stage_N_holdet.json` (replace mock data)
-- [ ] Add local dev server endpoint so Refresh button calls `fetch_riders.py`
-- [ ] Verify `claude/engine/fetch_riders.py` runs clean against live Holdet.dk
-- [ ] Run pre-Stage 1 data fetch and commit `shared/data/snapshots/stage_1_holdet.json`
+- [x] Wire dashboard to read rider + stage data (build_dashboard.py injection, no server needed)
+- [x] Verify `claude/engine/fetch_riders.py` runs clean against live Holdet.dk
+- [x] Run pre-Stage 1 data fetch and commit `shared/data/snapshots/stage_1_holdet.json`
+- [x] One-click refresh: refresh.sh + HoldetRefresh.app + holdet:// URL scheme
 - [ ] Claude gathers odds + expert intel for Stage 1
 - [ ] Produce `stage_1_snapshot.json` for ChatGPT handoff
 - [x] ChatGPT onboarding: scaffold independent optimizer workspace and session log
@@ -71,7 +78,6 @@
 - [ ] Build `claude/engine/optimizer.py` — probability construction + team generation
 - [ ] CDF output rendering in dashboard Output tab
 - [ ] Forward transfer pressure display (n+2, n+3) in dashboard
-- [ ] Wire /refresh endpoint to live fetch_riders.py run (test end-to-end)
 - [ ] chatgpt/dashboard/chatgpt.html — post-ChatGPT onboarding
 - [ ] compare.html dashboard — Claude vs ChatGPT comparison view (post-ChatGPT onboarding)
 - [ ] Post-stage data refresh (results, jerseys, GC standings)
@@ -97,3 +103,4 @@
 | ChatGPT dashboard preservation | 2026-05-06 | Proposed React expert dashboard preserved under `chatgpt/dashboard/react/` |
 | ChatGPT static cockpit | 2026-05-06 | Rebuilt `chatgpt/dashboard/index.html` as a no-build dark cockpit with all required sections visible |
 | ChatGPT Safari verification | 2026-05-06 | Dashboard verification narrowed to Safari/manual only; no Chrome or browser automation |
+| Session 4 | 2026-05-07 | Dashboard fully wired (file:// mode, no server); fetch_riders.py verified; 184-rider lock; one-click refresh via holdet:// URL scheme; column sort, 21-stage carousel, TYPE_FIT tier logic, slider auto-sum, stage-relevance odds table |
