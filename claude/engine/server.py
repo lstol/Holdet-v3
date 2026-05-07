@@ -11,6 +11,7 @@ import re
 import sys
 import datetime
 import subprocess
+import time
 
 # ── Load .env FIRST — before any anthropic instantiation ─────────────────────
 from dotenv import load_dotenv
@@ -58,6 +59,20 @@ def _log(msg: str) -> None:
     os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     with open(LOG_FILE, 'a') as f:
         f.write(f"[{datetime.datetime.utcnow().isoformat()}] {msg}\n")
+
+
+def call_with_retry(fn, max_retries=3):
+    """Call fn(), retrying on RateLimitError with exponential backoff (60s, 120s, 180s)."""
+    for attempt in range(max_retries):
+        try:
+            return fn()
+        except anthropic.RateLimitError:
+            if attempt == max_retries - 1:
+                raise
+            wait = 60 * (attempt + 1)
+            app.logger.warning(f"Rate limit hit, waiting {wait}s (attempt {attempt + 1}/{max_retries})")
+            _log(f"call_with_retry: rate limit, sleeping {wait}s")
+            time.sleep(wait)
 
 
 @app.after_request
@@ -499,9 +514,9 @@ def gather_intel():
     try:
         client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
 
-        # Step 1 — gather raw intel via web search
-        search_message = client.messages.create(
-            model='claude-haiku-4-5-20251001',
+        # Step 1 — gather raw intel via web search (Sonnet: higher rate limit, better search)
+        search_message = call_with_retry(lambda: client.messages.create(
+            model='claude-sonnet-4-6',
             max_tokens=3000,
             tools=[{'type': 'web_search_20250305', 'name': 'web_search'}],
             messages=[{'role': 'user', 'content': f"""Search for Stage {stage} Giro d'Italia 2026 expert analysis.
@@ -514,12 +529,12 @@ Search these in order:
 5. "giro d'italia 2026 stage {stage} favourites"
 
 Collect everything you find about: rider favourites, team tactics, weather, road conditions, finish profile. Return all raw findings as detailed prose."""}],
-        )
+        ))
         raw_intel = ' '.join(b.text for b in search_message.content if b.type == 'text')
         _log(f"gather-intel stage={stage} raw_intel={raw_intel[:300]}")
 
-        # Step 2 — structure into JSON
-        structure_message = client.messages.create(
+        # Step 2 — structure into JSON (Haiku: small input, no search tool)
+        structure_message = call_with_retry(lambda: client.messages.create(
             model='claude-haiku-4-5-20251001',
             max_tokens=2000,
             messages=[{'role': 'user', 'content': f"""Convert this cycling analysis into a JSON object.
@@ -562,7 +577,7 @@ Return ONLY this JSON, no other text, no markdown:
 
 Include every rider mentioned. direction=up means favoured beyond raw odds, down means risks not in odds.
 source weight values: TV2/Axelgaard=1.5, Inner Ring=1.2, VeloNews=1.0, CyclingNews=1.0, other=0.8."""}],
-        )
+        ))
         raw = structure_message.content[0].text.strip()
         _log(f"gather-intel stage={stage} structured={raw[:200]}")
         if raw.startswith('```'):
