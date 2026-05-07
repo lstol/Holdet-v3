@@ -771,6 +771,32 @@ function populateOddsTable(arr) {
     .map((entry, i) => ({id: i, name: entry.name || '', win: entry.win_pct ?? '', top3: entry.top3_pct ?? ''}));
   renderOdds();
   renderTable();
+  saveOdds(arr);
+}
+
+async function saveOdds(data) {
+  const stage = (S.stages[S.activeStageIndex] || {}).stage_number || 1;
+  try {
+    await fetch(`${SERVER}/save-odds`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({stage, odds: data}),
+    });
+  } catch(_) {}
+}
+
+async function loadSavedOdds() {
+  const stage = (S.stages[S.activeStageIndex] || {}).stage_number || 1;
+  try {
+    const res = await fetch(`${SERVER}/load-odds?stage=${stage}`);
+    const data = await res.json();
+    if (Array.isArray(data) && data.length > 0) {
+      populateOddsTable(data);
+      const statusEl = $('odds-parse-status');
+      statusEl.className = 'parse-ok';
+      statusEl.textContent = `✓ ${data.length} riders loaded`;
+    }
+  } catch(_) {}
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1157,6 +1183,7 @@ async function init() {
   updateHeader();
 
   await loadRiders();
+  await loadSavedOdds();
   updateHeader();
 }
 

@@ -129,6 +129,30 @@ def refresh():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+# ── Save / load odds ─────────────────────────────────────────────────────────
+
+@app.route('/save-odds', methods=['POST', 'OPTIONS'])
+def save_odds():
+    if request.method == 'OPTIONS':
+        return '', 204
+    stage = request.json.get('stage')
+    odds = request.json.get('odds')
+    path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
+    with open(path, 'w') as f:
+        json.dump(odds, f, indent=2)
+    return jsonify({'status': 'ok'})
+
+
+@app.route('/load-odds', methods=['GET'])
+def load_odds():
+    stage = request.args.get('stage')
+    path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
+    if os.path.exists(path):
+        with open(path) as f:
+            return jsonify(json.load(f))
+    return jsonify([])
+
+
 # ── Parse odds image ─────────────────────────────────────────────────────────
 
 @app.route('/parse-odds-image', methods=['POST', 'OPTIONS'])
