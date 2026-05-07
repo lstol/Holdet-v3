@@ -12,8 +12,18 @@ import sys
 import datetime
 import subprocess
 
-from flask import Flask, jsonify, request, send_from_directory
+# ── Load .env FIRST — before any anthropic instantiation ─────────────────────
 from dotenv import load_dotenv
+
+_HERE    = os.path.dirname(os.path.abspath(__file__))          # …/claude/engine
+_ENV     = os.path.join(_HERE, '..', '..', '.env')             # repo root .env
+load_dotenv(os.path.abspath(_ENV))                             # explicit abs path
+
+_API_KEY = os.getenv('ANTHROPIC_API_KEY')
+if not _API_KEY:
+    raise RuntimeError("ANTHROPIC_API_KEY not set — check .env at repo root")
+
+from flask import Flask, jsonify, request, send_from_directory
 
 # Python optimizer (imported lazily so server starts even if numpy missing)
 try:
@@ -21,8 +31,6 @@ try:
     HAS_OPTIMIZER = True
 except ImportError:
     HAS_OPTIMIZER = False
-
-load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), '.env'))
 
 try:
     import yaml
@@ -254,7 +262,7 @@ OUTPUT — Return ONLY a JSON object, no preamble, no markdown, no code fences:
 Generate 3-5 structurally distinct teams. Each exactly 8 riders, budget ≤50,000,000 kr, max 2 per real-world team."""
 
     try:
-        client = anthropic.Anthropic()
+        client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
         message = client.messages.create(
             model='claude-sonnet-4-6',
             max_tokens=4000,
@@ -434,7 +442,7 @@ def parse_odds_image():
     media_type = request.json.get('media_type', 'image/png')
     raw = ''
     try:
-        client = anthropic.Anthropic()
+        client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
         message = client.messages.create(
             model='claude-haiku-4-5-20251001',
             max_tokens=2000,
@@ -489,7 +497,7 @@ def gather_intel():
     stage = request.json.get('stage', '?')
     raw = ''
     try:
-        client = anthropic.Anthropic()
+        client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
 
         # Step 1 — gather raw intel via web search
         search_message = client.messages.create(
