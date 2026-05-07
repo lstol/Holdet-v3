@@ -142,15 +142,38 @@ The commit message must start with `session N:` so the log is easy to scan.
 
 ## Daily use
 
+**Dashboard is always at `http://localhost:5050`** — bookmark this.
+
+The Flask server starts automatically on login via LaunchAgent:
 ```
-claude/tools/Open Dashboard.app    → opens the dashboard directly (add to Dock)
-claude/tools/Holdet Refresh.app    → fetches latest data, rebuilds dashboard, reopens
+~/Library/LaunchAgents/com.holdet.server.plist
+```
+Source: `claude/tools/com.holdet.server.plist` — uses `/usr/local/bin/python3`.
+
+To start/stop manually:
+```bash
+launchctl load   ~/Library/LaunchAgents/com.holdet.server.plist
+launchctl unload ~/Library/LaunchAgents/com.holdet.server.plist
+# or directly:
+python3 claude/engine/server.py
 ```
 
-Both apps live in `claude/tools/` and are machine-specific (not committed).
-To rebuild them: `osacompile -o "claude/tools/Holdet Refresh.app" -e 'do shell script "bash /Users/lassestoltenberg/Claude/Holdet-v3/claude/engine/refresh.sh"'`
+Logs: `claude/logs/server.log` and `claude/logs/server-error.log`
 
-Manual equivalent: `bash claude/engine/refresh.sh`
+```
+claude/tools/Open Dashboard.app    → opens http://localhost:5050 (add to Dock)
+claude/tools/Holdet Refresh.app    → runs holdet-refresh.sh (fetch + reopen dashboard)
+```
+
+**Setup requirements:**
+```bash
+pip install flask anthropic pyyaml python-dotenv
+```
+`.env` must contain:
+```
+ANTHROPIC_API_KEY=sk-ant-...   # for /gather-odds and /gather-intel
+HOLDET_COOKIE=...              # for fetch_riders.py
+```
 
 ---
 

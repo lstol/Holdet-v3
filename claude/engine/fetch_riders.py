@@ -398,10 +398,7 @@ def main():
     if args.team:
         fetch_team_state(cartridge, fantasy_team_id, cookie, dry_run=args.dry_run)
 
-    if not args.dry_run:
-        import subprocess
-        build = ROOT / "claude" / "engine" / "build_dashboard.py"
-        subprocess.run([sys.executable, str(build)], check=True)
+    # build_dashboard.py removed — dashboard loads riders via GET /riders
 
 
 if __name__ == "__main__":
