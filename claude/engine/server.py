@@ -392,33 +392,60 @@ def gather_intel():
             tools=[{'type': 'web_search_20250305', 'name': 'web_search'}],
             messages=[{
                 'role': 'user',
-                'content': f"""Search and summarize expert analysis for Stage {stage} Giro d'Italia 2026.
+                'content': f"""Search for expert analysis for Stage {stage} Giro d'Italia 2026.
 
-You MUST search and read each of these sources separately, weighted by importance:
-{source_list}
+PRIORITY SOURCES — search each explicitly:
 
-For each source found, extract:
-- Which riders are explicitly mentioned as favourites or threats
-- Any team tactics mentioned (lead-out trains, protection, attacks)
-- Weather and road condition notes
-- Any late news (illness, injury, form)
+1. Emil Axelgaard / TV2 (weight 1.5, most important):
+   Search: "axelgaards optakt til {stage} etape giro ditalia 2026 site:sport.tv2.dk"
+   URL pattern: sport.tv2.dk/cykling/YYYY-MM-DD-axelgaards-optakt-til-{stage}-etape-af-giro-ditalia
+   Written in Danish — read and summarize in English.
+   Also search: "axelgaard giro 2026 etape {stage}"
 
-Return ONLY a JSON object, no markdown, no preamble:
+2. Inner Ring (weight 1.2):
+   Search: "giro 2026 stage {stage} site:inrng.com"
+
+3. VeloNews (weight 1.0):
+   Search: "giro 2026 stage {stage} preview site:velonews.com"
+
+4. CyclingNews (weight 1.0):
+   Search: "giro 2026 stage {stage} preview site:cyclingnews.com"
+
+5. ProCyclingStats / general previews (weight 0.8):
+   Search: "giro d'italia 2026 stage {stage} favourites preview"
+
+INSTRUCTIONS:
+- Read as many sources as you can find
+- Axelgaard/TV2 is the highest priority — always search for it first
+- TV2 content is in Danish — you must read and interpret Danish text
+- If a source is paywalled or unavailable, skip it and note it
+- Never refuse — always return the JSON with whatever you found
+
+Return ONLY this JSON object, no markdown, no preamble:
 {{
   "sources_consulted": ["TV2/Axelgaard", "Inner Ring", ...],
   "key_signals": [
-    {{"rider": "Jonathan Milan", "signal": "Lidl-Trek leading out, team fully committed to sprint", "direction": "up", "strength": "strong"}},
-    {{"rider": "Paul Magnier", "signal": "First Grand Tour, unknown under pressure", "direction": "down", "strength": "moderate"}},
-    ...
+    {{
+      "rider": "Jonathan Milan",
+      "signal": "Lidl-Trek fully committed to sprint lead-out, team strongest in race",
+      "direction": "up",
+      "strength": "strong"
+    }},
+    {{
+      "rider": "Paul Magnier",
+      "signal": "First Grand Tour start, unknown under bunch sprint pressure",
+      "direction": "down",
+      "strength": "moderate"
+    }}
   ],
-  "weather": "Tailwind expected on finishing straight, warm",
-  "stage_notes": "Two laps of circuit increase crash risk in final, nervous peloton expected",
+  "weather": "Description of weather and wind conditions",
+  "stage_notes": "Key tactical notes about this stage",
   "summary": "Two sentence max overall summary"
 }}
 
-direction: up = increases win probability vs odds, down = decreases, neutral = no change
+direction: up = increases win probability vs raw odds, down = decreases, neutral = no change
 strength: strong / moderate / weak
-Include every rider mentioned by any source, not just top favourites.""",
+Include EVERY rider mentioned by any source.""",
             }],
         )
         for block in message.content:
