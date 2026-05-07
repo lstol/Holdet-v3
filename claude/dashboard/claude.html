@@ -213,7 +213,6 @@ input[type=range]::-webkit-slider-thumb {
 .intel-panel-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-2); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
 
 /* Odds table */
-#odds-paste { width: 100%; height: 2.4em; padding: 5px 8px; font-size: 11px; font-family: var(--font-mono); border-radius: var(--radius-sm); color: var(--color-text-2); border: 1px dashed var(--color-border); margin-bottom: 6px; resize: none; background: var(--color-surface-2); }
 #odds-parse-status { font-size: 10px; margin-bottom: 6px; min-height: 14px; }
 .parse-ok  { color: var(--color-success); }
 .parse-err { color: var(--color-warning); }
@@ -397,7 +396,6 @@ input[type=range]::-webkit-slider-thumb {
           <span>Bookmaker odds</span>
           <button id="gather-odds-btn" class="btn btn-sm btn-ghost" onclick="gatherOdds()"><i class="ti ti-search"></i> Gather Odds</button>
         </div>
-        <textarea id="odds-paste" placeholder="Paste JSON odds response here…" oninput="tryParseOdds(this.value)"></textarea>
         <div id="odds-parse-status"></div>
         <div id="odds-table-wrap">
           <table id="odds-table">
@@ -793,7 +791,10 @@ async function gatherOdds() {
   } catch(e) {
     const statusEl = $('odds-parse-status');
     statusEl.className = 'parse-err';
-    statusEl.textContent = `Error: ${e.message}`;
+    const msg = (e instanceof TypeError && e.message.includes('fetch'))
+      ? 'Server not running — start with: launchctl start com.holdet.server'
+      : `Error: ${e.message}`;
+    statusEl.textContent = msg;
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="ti ti-search"></i> Gather Odds';
@@ -829,30 +830,7 @@ async function gatherIntel() {
   }
 }
 
-function tryParseOdds(text) {
-  const statusEl = $('odds-parse-status');
-  const match = text.match(/\[[\s\S]*\]/);
-  if (!match) { statusEl.textContent = ''; return; }
-  try {
-    const arr = JSON.parse(match[0]);
-    if (!Array.isArray(arr) || !arr.length) { statusEl.className = 'parse-err'; statusEl.textContent = 'No rows found'; return; }
-    S.oddsRows = arr
-      .sort((a, b) => (b.win_pct ?? b.win ?? 0) - (a.win_pct ?? a.win ?? 0))
-      .map((entry, i) => ({
-        id: i,
-        name: entry.name || '',
-        win:  entry.win_pct  ?? entry.win  ?? '',
-        top3: entry.top3_pct ?? entry.top3 ?? '',
-      }));
-    renderOdds();
-    renderTable();
-    statusEl.className = 'parse-ok';
-    statusEl.textContent = `✓ ${S.oddsRows.length} riders loaded`;
-  } catch (_) {
-    statusEl.className = 'parse-err';
-    statusEl.textContent = 'Invalid JSON';
-  }
-}
+
 
 function toggleIntel() {
   const ta  = $('intel-notes');
