@@ -237,6 +237,57 @@
         overflow: hidden;
       }
 
+      .stage-path-debug {
+        min-height: 18px;
+        padding: 4px 6px 0;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 9px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .stage-path-debug.resolved {
+        color: var(--green);
+      }
+
+      .stage-path-debug.error {
+        min-height: 52px;
+        color: var(--red);
+        overflow: visible;
+        white-space: normal;
+      }
+
+      .stage-image-error {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-content: center;
+        justify-items: start;
+        gap: 8px;
+        padding: 18px;
+        background: rgba(2, 4, 9, 0.92);
+        color: var(--red);
+        font-family: var(--mono);
+        font-size: 12px;
+        z-index: 4;
+      }
+
+      .stage-image-error.visible {
+        display: grid;
+      }
+
+      .stage-image-error strong {
+        color: var(--red);
+        font-size: 14px;
+      }
+
+      .stage-image-error ul {
+        margin: 0;
+        padding-left: 16px;
+      }
+
       .stage-frame img {
         width: 100%;
         height: 100%;
@@ -633,11 +684,13 @@
           </div>
           <div class="stage-frame">
             <img id="stageImage" alt="Giro 2026 stage profile" />
+            <div class="stage-image-error" id="stageImageError"></div>
             <div class="stage-overlay">
               <div class="stage-number" id="stageOverlayNumber">01</div>
               <div class="stage-meta" id="stageOverlayMeta">TTT / 13.7 KM<br />DURAZZO - TIRANA</div>
             </div>
           </div>
+          <div class="stage-path-debug" id="stagePathDebug">IMAGE PATH: pending</div>
           <div class="stage-controls" id="stageControls"></div>
         </section>
 
@@ -730,7 +783,7 @@
           and stage-conditional structural value.
         </div>
         <div class="ticker-line">
-          <strong>Asset path:</strong> ../../shared/stage_images/giro_2026/stage-N.jpg
+          <strong>Asset paths:</strong> shared/stage_images + shared/data/stage_images fallbacks
         </div>
         <div class="ticker-line" id="footerClock">
           <strong>Mode:</strong> local static / no backend / no build
@@ -739,7 +792,16 @@
     </main>
 
     <script>
-      const imageBase = "../../shared/stage_images/giro_2026";
+      const imagePathTemplates = [
+        "../../shared/stage_images/giro_2026/stage-{stage}.jpg",
+        "../../shared/data/stage_images/giro_2026/stage-{stage}.jpg",
+        "/shared/stage_images/giro_2026/stage-{stage}.jpg",
+        "/shared/data/stage_images/giro_2026/stage-{stage}.jpg",
+      ];
+
+      function imagePathsForStage(stage) {
+        return imagePathTemplates.map((template) => template.replace("{stage}", stage));
+      }
 
       const stages = Array.from({ length: 21 }, (_, index) => {
         const stage = index + 1;
@@ -751,7 +813,7 @@
           type: known[stage]?.type || "TBD",
           distance: known[stage]?.distance || "PROFILE",
           route: known[stage]?.route || "GIRO 2026",
-          image: `${imageBase}/stage-${stage}.jpg`,
+          imagePaths: imagePathsForStage(stage),
         };
       });
 
@@ -851,6 +913,7 @@
       let selectedStage = 1;
       let selectedTeam = teams[0];
       let loadedImages = 0;
+      const resolvedImagePaths = new Map();
 
       const money = (value) => `${Math.round(value / 1000)}k`;
       const fullMoney = (value) => `${Number(value).toLocaleString()} kr`;
@@ -876,12 +939,68 @@
 
       function renderStage() {
         const item = stages[selectedStage - 1];
-        document.getElementById("stageImage").src = item.image;
         document.getElementById("stageMetric").textContent = String(item.stage).padStart(2, "0");
         document.getElementById("typeMetric").textContent = item.type;
         document.getElementById("stageCaption").textContent = `STAGE ${String(item.stage).padStart(2, "0")} / 21`;
         document.getElementById("stageOverlayNumber").textContent = String(item.stage).padStart(2, "0");
         document.getElementById("stageOverlayMeta").innerHTML = `${item.type} / ${item.distance}<br>${item.route}`;
+        loadStageImage(item);
+      }
+
+      function setImageDebug(text, className = "") {
+        const debug = document.getElementById("stagePathDebug");
+        debug.className = `stage-path-debug ${className}`.trim();
+        debug.textContent = text;
+      }
+
+      function showStageImageError(stage, attemptedPaths) {
+        const image = document.getElementById("stageImage");
+        const error = document.getElementById("stageImageError");
+        image.removeAttribute("src");
+        image.style.visibility = "hidden";
+        error.classList.add("visible");
+        error.innerHTML = `
+          <strong>Stage image not found for stage ${stage}</strong>
+          <div>Attempted paths:</div>
+          <ul>${attemptedPaths.map((path) => `<li>${path}</li>`).join("")}</ul>
+        `;
+        setImageDebug(`ERROR: Stage image not found for stage ${stage}. Attempted: ${attemptedPaths.join(" | ")}`, "error");
+      }
+
+      function loadStageImage(stage) {
+        const image = document.getElementById("stageImage");
+        const error = document.getElementById("stageImageError");
+        const attemptedPaths = [];
+        const preferredResolvedPath = resolvedImagePaths.get(stage.stage);
+        const paths = preferredResolvedPath
+          ? [preferredResolvedPath, ...stage.imagePaths.filter((path) => path !== preferredResolvedPath)]
+          : stage.imagePaths;
+
+        image.onload = null;
+        image.onerror = null;
+        image.style.visibility = "visible";
+        error.classList.remove("visible");
+        error.innerHTML = "";
+
+        function tryPath(index) {
+          if (index >= paths.length) {
+            showStageImageError(stage.stage, attemptedPaths);
+            return;
+          }
+
+          const path = paths[index];
+          attemptedPaths.push(path);
+          setImageDebug(`TRYING: ${path}`);
+
+          image.onload = () => {
+            resolvedImagePaths.set(stage.stage, path);
+            setImageDebug(`RESOLVED: ${path}`, "resolved");
+          };
+          image.onerror = () => tryPath(index + 1);
+          image.src = path;
+        }
+
+        tryPath(0);
       }
 
       function renderAudit() {
@@ -1031,17 +1150,30 @@
       function verifyImages() {
         let failedImages = 0;
         stages.forEach((stage) => {
-          const image = new Image();
-          image.onload = () => {
+          preloadImagePaths(stage.imagePaths, (resolvedPath) => {
             loadedImages += 1;
+            resolvedImagePaths.set(stage.stage, resolvedPath);
             updateImageStatus(failedImages);
-          };
-          image.onerror = () => {
+          }, () => {
             failedImages += 1;
             updateImageStatus(failedImages);
-          };
-          image.src = stage.image;
+          });
         });
+      }
+
+      function preloadImagePaths(paths, onResolved, onFailed) {
+        function tryPath(index) {
+          if (index >= paths.length) {
+            onFailed();
+            return;
+          }
+          const image = new Image();
+          image.onload = () => onResolved(paths[index]);
+          image.onerror = () => tryPath(index + 1);
+          image.src = paths[index];
+        }
+
+        tryPath(0);
       }
 
       function updateImageStatus(failedImages) {

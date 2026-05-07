@@ -2,8 +2,9 @@
 
 Static expert cockpit dashboard for the ChatGPT-side Holdet v3 optimizer.
 
-Open `chatgpt/dashboard/index.html` in a browser. It is intentionally dependency-free:
-single HTML file, no React, no build step, no npm dependencies, no backend.
+Open `chatgpt/dashboard/index.html` in Safari from a local server. It is
+intentionally dependency-free: single HTML file, no React, no build step, no npm
+dependencies, no backend.
 
 Current runnable dashboard:
 
@@ -13,31 +14,39 @@ Current runnable dashboard:
 - Audit/rules validation, candidate teams, payoff distribution, captain EV,
   selected-team table, forward pressure, decision notes, and lock readiness all
   visible at once.
-- Loads local image assets from `../../shared/stage_images/giro_2026/stage-N.jpg`.
-  `shared/stage_images/` is a compatibility symlink to the current repository
-  image directory.
+- Stage image loading tries multiple local paths in order and shows the resolved
+  path under the carousel. If every path fails, the dashboard shows a visible
+  stage-specific error with all attempted paths.
+
+Image path order:
+
+1. `../../shared/stage_images/giro_2026/stage-N.jpg`
+2. `../../shared/data/stage_images/giro_2026/stage-N.jpg`
+3. `/shared/stage_images/giro_2026/stage-N.jpg`
+4. `/shared/data/stage_images/giro_2026/stage-N.jpg`
 
 ## Verification
 
 Use Safari only. Do not use Chrome, Playwright, Puppeteer, Selenium, or browser
 automation for this dashboard.
 
-From repo root:
-
-```bash
-open -a Safari chatgpt/dashboard/index.html
-```
-
-If local relative paths fail, serve from repo root:
+Recommended from repo root:
 
 ```bash
 python3 -m http.server 8765
 open -a Safari http://localhost:8765/chatgpt/dashboard/index.html
 ```
 
+Direct file mode can be tried, but local server mode is the supported path:
+
+```bash
+open -a Safari chatgpt/dashboard/index.html
+```
+
 Direct image checks:
 
 ```text
+http://localhost:8765/shared/data/stage_images/giro_2026/stage-1.jpg
 http://localhost:8765/shared/stage_images/giro_2026/stage-1.jpg
 ```
 

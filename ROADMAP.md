@@ -19,7 +19,7 @@
 | Repo structure | ✅ Clean — claude/ chatgpt/ shared/ layout, giro_2026/ subfolders |
 | expert_sources.yaml | ✅ Created — `claude/engine/expert_sources.yaml` (Claude-internal only) |
 | chatgpt/ scaffold | ✅ Created — explicit ChatGPT optimizer workspace under `chatgpt/src/` |
-| chatgpt/dashboard | ✅ Created — dark static cockpit + Safari-only verification workflow |
+| chatgpt/dashboard | ✅ Created — dark static cockpit + multi-path stage image loader |
 | Dashboard | ✅ `claude/dashboard/claude.html` — fully wired, no server needed, opens as file:// |
 | build_dashboard.py | ✅ Embeds riders + stages as `window.RIDERS_DATA` / `window.STAGES_DATA` |
 | server.py | ✅ `claude/engine/server.py` — local server with /refresh, /save-weights, /snapshot, /embed-riders |
@@ -103,4 +103,5 @@
 | ChatGPT dashboard preservation | 2026-05-06 | Proposed React expert dashboard preserved under `chatgpt/dashboard/react/` |
 | ChatGPT static cockpit | 2026-05-06 | Rebuilt `chatgpt/dashboard/index.html` as a no-build dark cockpit with all required sections visible |
 | ChatGPT Safari verification | 2026-05-06 | Dashboard verification narrowed to Safari/manual only; no Chrome or browser automation |
+| ChatGPT image fallback | 2026-05-07 | Stage carousel now tries four local image paths and displays resolved/attempted path diagnostics |
 | Session 4 | 2026-05-07 | Dashboard fully wired (file:// mode, no server); fetch_riders.py verified; 184-rider lock; one-click refresh via holdet:// URL scheme; column sort, 21-stage carousel, TYPE_FIT tier logic, slider auto-sum, stage-relevance odds table |
