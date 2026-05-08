@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import datetime
+from datetime import datetime as _dt
 import subprocess
 import time
 
@@ -425,7 +426,7 @@ def save_intel():
     path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
     with open(path, 'w') as f:
         json.dump({'stage': stage, 'intel': intel,
-                   'gathered_at': datetime.now().isoformat()}, f, indent=2, ensure_ascii=False)
+                   'gathered_at': _dt.now().isoformat()}, f, indent=2, ensure_ascii=False)
     return jsonify({'status': 'ok'})
 
 
@@ -465,7 +466,7 @@ def save_odds():
     path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
     with open(path, 'w') as f:
         json.dump({'odds': odds, 'stage': stage,
-                   'gathered_at': datetime.now().isoformat()}, f, indent=2)
+                   'gathered_at': _dt.now().isoformat()}, f, indent=2)
     return jsonify({'status': 'ok'})
 
 
@@ -522,14 +523,16 @@ def parse_odds_image():
             ]}],
         )
         raw = message.content[0].text.strip()
-        _log(f"parse-odds-image stage={stage} type={odds_type} raw={raw[:200]}")
-        if raw.startswith('```'):
-            raw = re.sub(r'^```[a-z]*\n?', '', raw)
-            raw = re.sub(r'\n?```$', '', raw)
-            raw = raw.strip()
-        m = re.search(r'\[.*\]', raw, re.DOTALL)
-        if m:
-            raw = m.group(0)
+        _log(f"parse-odds-image stage={stage} type={odds_type} raw={raw[:400]}")
+        # Strip markdown fences (handle leading spaces/newlines too)
+        raw = re.sub(r'^[\s]*```[a-z]*\s*', '', raw)
+        raw = re.sub(r'\s*```[\s]*$', '', raw)
+        raw = raw.strip()
+        # Extract the JSON array — find outermost [ ... ]
+        start = raw.find('[')
+        end   = raw.rfind(']')
+        if start != -1 and end != -1 and end > start:
+            raw = raw[start:end+1]
         parsed = json.loads(raw)  # [{name, pct}, ...]
 
         # Load existing odds to merge into
@@ -561,7 +564,7 @@ def parse_odds_image():
         # Save merged result with timestamp
         with open(odds_path, 'w') as f:
             json.dump({'odds': merged, 'stage': stage,
-                       'gathered_at': datetime.now().isoformat()}, f, indent=2)
+                       'gathered_at': _dt.now().isoformat()}, f, indent=2)
 
         return jsonify(merged)
     except json.JSONDecodeError as e:
@@ -672,9 +675,9 @@ direction: up = favoured beyond raw odds, down = risk not in odds, neutral = in 
         intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
         with open(intel_path, 'w') as f:
             json.dump({'stage': stage, 'intel': result,
-                       'gathered_at': datetime.now().isoformat()}, f, indent=2, ensure_ascii=False)
+                       'gathered_at': _dt.now().isoformat()}, f, indent=2, ensure_ascii=False)
         _log(f"gather-intel saved to {intel_path}")
-        result['_gathered_at'] = datetime.now().isoformat()
+        result['_gathered_at'] = _dt.now().isoformat()
         return jsonify(result)
     except json.JSONDecodeError as e:
         _log(f"gather-intel JSON error: {e}")
