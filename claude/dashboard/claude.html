@@ -873,6 +873,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             const data = await res.json();
             if (data.status === 'error') throw new Error(data.message);
+            // Clear existing odds before populating so paste always replaces, never appends
+            S.oddsRows = [];
+            $('odds-tbody').innerHTML = '';
             populateOddsTable(data);
             statusEl.className = 'parse-ok';
             statusEl.textContent = `✓ ${data.length} riders loaded`;
