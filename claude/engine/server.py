@@ -506,20 +506,33 @@ def parse_odds_image():
     raw = ''
     try:
         client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+        prompt = (
+            f"This is an Oddschecker odds table for Stage {stage} Giro d'Italia 2026.\n\n"
+            "TABLE STRUCTURE:\n"
+            "- Each ROW is one rider (rider name in the leftmost column)\n"
+            "- Each subsequent COLUMN is a different bookmaker showing decimal odds\n"
+            "- The LAST column on the right is often the best odds (highlighted)\n"
+            "- Ignore any highlighted/bold values — use ALL columns equally\n\n"
+            "TASK:\n"
+            "For each rider row:\n"
+            "1. Read ALL decimal odds values across ALL bookmaker columns for that rider\n"
+            "2. Calculate the AVERAGE of all those decimal values\n"
+            "3. Convert average to implied probability: pct = round(100 / average, 1)\n"
+            "4. Include only riders where pct >= 1.0\n\n"
+            f"This is {prob_label} data — not win odds.\n\n"
+            "IMPORTANT: Every rider must have a DIFFERENT probability. If you find yourself\n"
+            "assigning the same value to multiple riders, you are reading the table incorrectly.\n"
+            "Re-examine the image carefully — each row has different odds.\n\n"
+            "Return ONLY a JSON array, no markdown, no other text:\n"
+            '[{"name": "Rider Name", "pct": 5.2}]\n'
+            "Sorted by pct descending."
+        )
         message = client.messages.create(
             model='claude-haiku-4-5-20251001',
             max_tokens=2000,
             messages=[{'role': 'user', 'content': [
                 {'type': 'image', 'source': {'type': 'base64', 'media_type': media_type, 'data': image_data}},
-                {'type': 'text',  'text': (
-                    f"These are Oddschecker odds for Stage {stage} Giro d'Italia 2026. "
-                    f"Extract the {prob_label} for every rider shown. "
-                    "Each row is a rider. Columns are different bookmakers showing decimal odds. "
-                    "For each rider: calculate the average of all visible decimal odds across all bookmakers, "
-                    f"then convert to implied probability percentage: pct = 100 / avg_odds. "
-                    "Return ONLY a JSON array, no preamble, no markdown, no code fences: "
-                    f'[{{"name": "Rider Name", "pct": 5.2}}] sorted by pct descending.'
-                )},
+                {'type': 'text',  'text': prompt},
             ]}],
         )
         raw = message.content[0].text.strip()
@@ -535,6 +548,18 @@ def parse_odds_image():
             raw = raw[start:end+1]
         _log(f"parse-odds-image after-strip raw={repr(raw[:200])}")
         parsed = json.loads(raw)  # [{name, pct}, ...]
+
+        # Validate: suspicious uniformity means the model misread the table
+        pcts = [item.get('pct') or item.get(field_name) or item.get('win_pct') or 0 for item in parsed]
+        if len(pcts) > 3:
+            unique_pcts = len(set(pcts))
+            if unique_pcts <= 2:
+                _log(f"parse-odds-image suspicious uniformity: {unique_pcts} unique values for {len(pcts)} riders")
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Parsing error: {unique_pcts} unique value(s) for {len(pcts)} riders — model misread the table. Try a cleaner screenshot.',
+                    'raw': raw,
+                }), 500
 
         # Load existing odds to merge into (guard against empty/corrupt file)
         odds_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
