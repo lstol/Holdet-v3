@@ -984,6 +984,24 @@ def current_team_endpoint():
     })
 
 
+@app.route('/stage-results', methods=['GET'])
+def stage_results():
+    """Return scored results for the completed stage (target_stage - 1).
+    Loads stage_{n}_results.json; returns {found: false} if absent."""
+    target_stage = request.args.get('target_stage', type=int, default=1)
+    completed    = target_stage - 1
+    if completed < 1:
+        return jsonify({'found': False})
+    path = os.path.join(SNAPSHOT_DIR, f'stage_{completed}_results.json')
+    if not os.path.exists(path):
+        return jsonify({'found': False, 'completed_stage': completed})
+    with open(path) as f:
+        data = json.load(f)
+    data['found'] = True
+    data['completed_stage'] = completed
+    return jsonify(data)
+
+
 # ── Save weights ──────────────────────────────────────────────────────────────
 
 @app.route('/save-weights', methods=['POST', 'OPTIONS'])

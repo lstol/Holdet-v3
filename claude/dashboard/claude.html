@@ -462,7 +462,19 @@ input[type=range]::-webkit-slider-thumb {
   <header id="header">
     <div id="header-left">
       <div class="race-label">Holdet v3 · Giro d'Italia 2026</div>
-      <div class="stage-title" id="h-stage-title">—</div>
+      <div style="display:flex;align-items:center;gap:8px;margin:3px 0;">
+        <span style="font-size:11px;color:var(--color-text-2);">Preparing for</span>
+        <select id="target-stage-select" onchange="setTargetStage(parseInt(this.value))"
+                style="font-size:13px;font-weight:500;padding:4px 8px;
+                       border-radius:var(--radius-md);
+                       background:var(--color-surface-2);
+                       border:1px solid var(--color-border);
+                       color:var(--color-text);">
+        </select>
+        <span style="font-size:11px;color:var(--color-text-2);">
+          · Current team from Stage <span id="current-stage-label">—</span>
+        </span>
+      </div>
       <div class="stage-meta" id="h-stage-meta">—</div>
     </div>
     <div id="header-right">
@@ -565,6 +577,7 @@ input[type=range]::-webkit-slider-thumb {
           <span>Intelligence</span>
           <span class="panel-header-ts" id="intel-header-ts">Stage — · Not yet gathered</span>
           <button id="gather-intel-btn" class="btn btn-sm btn-ghost" onclick="gatherIntel()"><i class="ti ti-antenna"></i> Gather</button>
+          <button id="gather-ingemann-btn" class="btn btn-sm btn-ghost" onclick="gatherIngemann()" style="margin-left:4px;"><i class="ti ti-user-star"></i> Ingemann</button>
         </div>
         <div id="intel-display">
           <div class="intel-empty">No intel gathered yet — click Gather</div>
@@ -573,6 +586,9 @@ input[type=range]::-webkit-slider-thumb {
 
     </div>
   </div>
+
+  <!-- ── Stage results panel ───────────────────────────────────── -->
+  <div id="stage-results-panel" style="display:none;margin-top:12px;"></div>
 
   <!-- ── Candidate teams ─────────────────────────────────────── -->
   <div class="section">
@@ -725,6 +741,182 @@ function pwin(name) {
   return row ? row.win : null;
 }
 
+/* ── Target stage state ─────────────────────────────────────────────── */
+let targetStage = 1;
+window.INGEMANN_DATA = null;
+window.OPTIMIZER_DATA = null;
+
+function initStageSelect() {
+  const sel = $('target-stage-select');
+  for (let i = 1; i <= 21; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `Stage ${i}`;
+    sel.appendChild(opt);
+  }
+  const saved = localStorage.getItem('holdet_target_stage');
+  const upcomingIdx = S.stages.findIndex(st => st.date >= TODAY);
+  targetStage = saved ? parseInt(saved) : (upcomingIdx >= 0 ? upcomingIdx + 1 : 1);
+  sel.value = targetStage;
+  updateStageLabel();
+}
+
+function setTargetStage(n) {
+  targetStage = n;
+  localStorage.setItem('holdet_target_stage', n);
+  S.activeStageIndex = Math.max(0, n - 1);
+  S.carouselOffset   = Math.max(0, S.activeStageIndex - 1);
+  renderCarousel();
+  updateStageLabel();
+  updateHeader();
+  loadSavedOdds();
+  loadSavedIntel();
+  loadSavedOutput();
+  loadSavedIngemann();
+  loadStageResults();
+}
+
+function updateStageLabel() {
+  const completed = Math.max(0, targetStage - 1);
+  $('current-stage-label').textContent =
+    completed === 0 ? 'None (pre-race)' : String(completed);
+}
+
+/* ── Stage results panel ─────────────────────────────────────────────── */
+async function loadStageResults() {
+  if (targetStage <= 1) {
+    $('stage-results-panel').style.display = 'none';
+    return;
+  }
+  try {
+    const res  = await fetch(`${SERVER}/stage-results?target_stage=${targetStage}`);
+    const data = await res.json();
+    renderStageResults(data);
+  } catch(_) {}
+}
+
+function renderStageResults(data) {
+  const el = $('stage-results-panel');
+  if (!data || !data.found) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+
+  const fmt  = n => n > 0 ? `+${(n/1000).toFixed(0)}k` : n < 0 ? `${(n/1000).toFixed(0)}k` : '—';
+  const fmtM = n => (n/1e6).toFixed(3) + 'M kr';
+
+  el.innerHTML = `
+  <div style="border:1px solid var(--color-border);border-radius:var(--radius-md);overflow:hidden;">
+    <div style="display:flex;justify-content:space-between;align-items:center;
+                padding:8px 12px;background:var(--color-surface);
+                border-bottom:1px solid var(--color-border);">
+      <div style="font-size:13px;font-weight:600;">Stage ${data.completed_stage} — How it unfolded</div>
+      <div style="display:flex;gap:16px;font-size:11px;color:var(--color-text-2);">
+        ${data.player_rank ? `<span>Rank: <strong style="color:var(--color-text);">#${data.player_rank}</strong></span>` : ''}
+        <span>Bank: <strong style="color:var(--color-text);">${fmtM(data.bank_balance)}</strong></span>
+        <span>Stage total: <strong style="color:var(--color-success);">+${(data.stage_total/1000).toFixed(0)}k</strong></span>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;">
+      <thead>
+        <tr style="background:var(--color-surface-2);border-bottom:1px solid var(--color-border);">
+          <th style="padding:5px 10px;text-align:left;font-size:11px;color:var(--color-text-2);font-weight:500;width:22%;">Rider</th>
+          <th style="padding:5px 8px;text-align:center;font-size:11px;color:var(--color-text-2);font-weight:500;width:8%;">Finish</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Stage</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Sprint</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Jersey</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">GC</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Team</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:12%;">Cap.</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:8%;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${(data.rider_results || []).map(r => {
+          const isCap = r.name === data.captain_name;
+          const isDNF = r.finish === 'DNF';
+          const finishColor = r.finish === '1st' ? 'var(--color-success)'
+                            : isDNF ? 'var(--color-danger)' : 'var(--color-text)';
+          return `<tr style="border-top:1px solid rgba(43,48,88,.4);${isDNF?'opacity:.5;':''}">
+            <td style="padding:5px 10px;font-weight:${isCap?600:400};overflow:hidden;
+                       text-overflow:ellipsis;white-space:nowrap;">
+              ${esc(r.name)}${isCap?' ⚡':''}
+            </td>
+            <td style="padding:5px 8px;text-align:center;color:${finishColor};">${esc(r.finish)}</td>
+            <td style="padding:5px 8px;text-align:right;">${fmt(r.stage_pts)}</td>
+            <td style="padding:5px 8px;text-align:right;">${fmt(r.sprint_pts)}</td>
+            <td style="padding:5px 8px;text-align:right;">${fmt(r.jersey_bonus)}</td>
+            <td style="padding:5px 8px;text-align:right;">${fmt(r.gc_bonus)}</td>
+            <td style="padding:5px 8px;text-align:right;">${fmt(r.team_bonus)}</td>
+            <td style="padding:5px 8px;text-align:right;color:var(--color-warning);">
+              ${r.captain_bonus ? fmt(r.captain_bonus) : '—'}
+            </td>
+            <td style="padding:5px 8px;text-align:right;font-weight:500;
+                       color:${r.total>0?'var(--color-success)':r.total<0?'var(--color-danger)':'var(--color-text-2)'};">
+              ${fmt(r.total)}
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    </div>
+    <div style="padding:7px 12px;background:var(--color-surface);
+                border-top:1px solid var(--color-border);
+                font-size:11px;color:var(--color-text-2);
+                display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
+      <span>Depth bonus (${data.riders_in_top15}/8 in top 15):
+            <strong>+${(data.depth_bonus/1000).toFixed(0)}k</strong></span>
+      ${data.captain_bonus ?
+        `<span>Captain bonus: <strong style="color:var(--color-warning);">+${(data.captain_bonus/1000).toFixed(0)}k</strong></span>` : ''}
+      <span style="margin-left:auto;font-size:12px;font-weight:600;color:var(--color-success);">
+        Stage total: +${(data.stage_total/1000).toFixed(0)}k
+      </span>
+    </div>
+  </div>`;
+}
+
+/* ── Ingemann ─────────────────────────────────────────────────────────── */
+async function gatherIngemann() {
+  const btn = $('gather-ingemann-btn');
+  btn.textContent = 'Fetching…';
+  btn.disabled = true;
+  try {
+    const r1 = await fetch(`${SERVER}/gather-ingemann`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({stage: targetStage}),
+    });
+    const team = await r1.json();
+    if (team.status === 'error') throw new Error(team.message);
+
+    const r2 = await fetch(`${SERVER}/score-ingemann`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({stage: targetStage}),
+    });
+    const scored = await r2.json();
+    if (scored.status === 'error') throw new Error(scored.message);
+
+    window.INGEMANN_DATA = scored;
+    if (window.OPTIMIZER_DATA) renderOptimizerOutput(window.OPTIMIZER_DATA);
+    btn.textContent = '✓ Ingemann loaded';
+  } catch(e) {
+    btn.textContent = `Error: ${e.message.slice(0, 30)}`;
+    btn.disabled = false;
+  }
+}
+
+async function loadSavedIngemann() {
+  try {
+    const res  = await fetch(`${SERVER}/load-ingemann-scored?stage=${targetStage}`);
+    const data = await res.json();
+    if (data && data.riders) {
+      window.INGEMANN_DATA = data;
+    } else {
+      window.INGEMANN_DATA = null;
+    }
+  } catch(_) {}
+}
+
 /* ── Stage profile image ─────────────────────────────────────────────── */
 function loadProfileImage(stageNumber) {
   const img = $('profile-img');
@@ -797,7 +989,7 @@ function renderCarousel() {
     pill.className = 'stage-pill' + (isActive ? ' active' : '') + (isPast ? ' past' : '');
     pill.textContent = `S${st.stage_number}`;
     pill.title = `${st.stage_name} · ${st.date}`;
-    pill.onclick = () => { S.activeStageIndex = realIdx; renderCarousel(); renderProfile(S.stages[S.activeStageIndex]); updateHeader(); };
+    pill.onclick = () => { S.activeStageIndex = realIdx; renderCarousel(); renderProfile(S.stages[S.activeStageIndex]); updateHeader(); setTargetStage(st.stage_number); };
     pills.appendChild(pill);
   });
 
@@ -972,20 +1164,18 @@ function populateOddsTable(arr, gatheredAt) {
 }
 
 async function saveOdds(data) {
-  const stage = (S.stages[S.activeStageIndex] || {}).stage_number || 1;
   try {
     await fetch(`${SERVER}/save-odds`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({stage, odds: data}),
+      body: JSON.stringify({stage: targetStage, odds: data}),
     });
   } catch(_) {}
 }
 
 async function loadSavedOdds() {
-  const stage = (S.stages[S.activeStageIndex] || {}).stage_number || 1;
   try {
-    const res  = await fetch(`${SERVER}/load-odds?stage=${stage}`);
+    const res  = await fetch(`${SERVER}/load-odds?stage=${targetStage}`);
     const env  = await res.json();
     const arr  = Array.isArray(env) ? env : (env.odds || []);
     const ts   = env.gathered_at || null;
@@ -994,6 +1184,9 @@ async function loadSavedOdds() {
       const statusEl = $('odds-parse-status');
       statusEl.className = 'parse-ok';
       statusEl.textContent = `✓ ${arr.length} riders loaded`;
+    } else {
+      S.oddsRows = [];
+      $('odds-tbody').innerHTML = '';
     }
   } catch(_) {}
 }
@@ -1034,8 +1227,7 @@ document.addEventListener('DOMContentLoaded', function() {
       reader.onload   = function(ev) {
         const base64   = ev.target.result.split(',')[1];
         const statusEl = document.getElementById('odds-parse-status');
-        const st       = S.stages[S.activeStageIndex] || {};
-        const stage    = st.stage_number || 1;
+        const stage    = targetStage;
         statusEl.className   = '';
         statusEl.textContent = 'Reading ' + oddsType + ' odds from screenshot…';
 
@@ -1140,8 +1332,6 @@ function renderIntel() {
 }
 
 async function gatherIntel() {
-  const st = S.stages[S.activeStageIndex] || {};
-  const n = st.stage_number || 1;
   const btn = $('gather-intel-btn');
   btn.disabled = true;
   btn.textContent = 'Fetching…';
@@ -1149,7 +1339,7 @@ async function gatherIntel() {
     const res = await fetch(`${SERVER}/gather-intel`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({stage: n}),
+      body: JSON.stringify({stage: targetStage}),
     });
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
@@ -1157,11 +1347,11 @@ async function gatherIntel() {
     S.intelData = data;
     renderIntel();
     renderOdds();
-    updateIntelHeader(n, data._gathered_at || new Date().toISOString());
+    updateIntelHeader(targetStage, data._gathered_at || new Date().toISOString());
     fetch(`${SERVER}/save-intel`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({stage: n, intel: data}),
+      body: JSON.stringify({stage: targetStage, intel: data}),
     }).catch(() => {});
   } catch(e) {
     alert(`Gather Intel error: ${e.message}`);
@@ -1177,27 +1367,28 @@ function updateIntelHeader(stageN, isoTs) {
 }
 
 async function loadSavedIntel() {
-  const stage = (S.stages[S.activeStageIndex] || {}).stage_number || 1;
   try {
-    const res  = await fetch(`${SERVER}/load-intel?stage=${stage}`);
+    const res  = await fetch(`${SERVER}/load-intel?stage=${targetStage}`);
     const data = await res.json();
     if (data && data.key_signals) {
       S.intelData = data;
       renderIntel();
       renderOdds();
-      updateIntelHeader(stage, data._gathered_at);
+      updateIntelHeader(targetStage, data._gathered_at);
+    } else {
+      S.intelData = null;
+      renderIntel();
     }
   } catch(_) {}
 }
 
 async function loadSavedOutput() {
-  const stage = (S.stages[S.activeStageIndex] || {}).stage_number || 1;
   try {
-    const metaRes = await fetch(`${SERVER}/load-last-optimizer?stage=${stage}`);
+    const metaRes = await fetch(`${SERVER}/load-last-optimizer?stage=${targetStage}`);
     const meta = await metaRes.json();
     const endpoint = meta.last === 'py'
-      ? `${SERVER}/load-output-py?stage=${stage}`
-      : `${SERVER}/load-output?stage=${stage}`;
+      ? `${SERVER}/load-output-py?stage=${targetStage}`
+      : `${SERVER}/load-output?stage=${targetStage}`;
     const res = await fetch(endpoint);
     const data = await res.json();
     if (data && data.teams) renderOptimizerOutput(data);
@@ -1454,14 +1645,12 @@ async function runOptimizer() {
   btn.disabled = true;
   outEl.className = '';
   outEl.textContent = 'Calling optimizer…';
-  const st = S.stages[S.activeStageIndex] || {};
-  const stage = st.stage_number || 1;
   try {
     const res = await fetch(`${SERVER}/run-optimizer`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        stage,
+        stage: targetStage,
         sliders: S.sliders,
         force_in:  [...S.forceIn].map(id => { const r = S.riders.find(x => (x.rider_id || x.holdet_id) == id); return r ? r.name : id; }),
         force_out: [...S.forceOut].map(id => { const r = S.riders.find(x => (x.rider_id || x.holdet_id) == id); return r ? r.name : id; }),
@@ -1484,8 +1673,6 @@ async function runPyOptimizer() {
   btn.disabled = true;
   outEl.className = '';
   outEl.textContent = 'Running Python Monte Carlo optimizer…';
-  const st = S.stages[S.activeStageIndex] || {};
-  const stage = st.stage_number || 1;
 
   let elapsed = 0;
   const timer = setInterval(() => {
@@ -1503,7 +1690,7 @@ async function runPyOptimizer() {
       headers: {'Content-Type': 'application/json'},
       signal: controller.signal,
       body: JSON.stringify({
-        stage,
+        stage: targetStage,
         sliders: S.sliders,
         force_in:  [...S.forceIn].map(id => { const r = S.riders.find(x => (x.rider_id || x.holdet_id) == id); return r ? r.name : id; }),
         force_out: [...S.forceOut].map(id => { const r = S.riders.find(x => (x.rider_id || x.holdet_id) == id); return r ? r.name : id; }),
@@ -1525,9 +1712,9 @@ async function runPyOptimizer() {
 }
 
 function renderOptimizerOutput(data) {
+  window.OPTIMIZER_DATA = data;
   const area        = $('optimizer-output');
   const strip       = $('captain-strip');
-  const sorted      = [...(data.teams || [])].sort((a, b) => (b.ev_estimate || 0) - (a.ev_estimate || 0));
   const actualBudget = data.budget || 50_000_000;
 
   const EV_COMPONENTS = [
@@ -1543,12 +1730,12 @@ function renderOptimizerOutput(data) {
 
   function fmt(v) { return ((v||0)/1000).toFixed(0)+'k'; }
 
-  function riderHtml(name) {
-    const rd   = S.riders.find(x => x.name === name) || {};
+  function riderHtml(r) {
+    const name = typeof r === 'string' ? r : (r.name || '');
+    const rd   = S.riders.find(x => x.name === name) || (typeof r === 'object' ? r : {});
     const odd  = S.oddsRows.find(x => x.name === name) || {};
     const tier = (parseFloat(odd.win) || 0) >= 1 ? 'A' : 'B';
     const price = rd.price || rd.startPrice || 0;
-    // Shorten long names to fit 300px card
     const shortName = name.length > 22 ? name.slice(0, 21) + '…' : name;
     return `<div class="tc-rider-row">
       <span class="tc-rname" title="${esc(name)}">${esc(shortName)}</span>
@@ -1573,22 +1760,56 @@ function renderOptimizerOutput(data) {
       }).join('');
   }
 
-  area.className = '';
-  let selectedIdx = 0;
+  function fwdHtml(fwd) {
+    if (!fwd || fwd.transfers_n1 === undefined) {
+      return `<div class="tc-fwd" style="color:var(--color-text-3)">No forward data</div>`;
+    }
+    const trColor = n => n <= 2 ? 'var(--color-success)' : n <= 4 ? 'var(--color-warning)' : 'var(--color-danger)';
+    return `<div class="tc-fwd">
+      <span style="color:${trColor(fwd.transfers_n1)}">n+1: ${fwd.transfers_n1} tr · ${(fwd.cost_n1/1000).toFixed(0)}k</span>
+      &nbsp;·&nbsp;
+      <span style="color:${trColor(fwd.transfers_n2)}">n+2: ${fwd.transfers_n2} tr · ${(fwd.cost_n2/1000).toFixed(0)}k</span>
+      &nbsp;·&nbsp;
+      <span style="color:var(--color-text-2)">Total: ${(fwd.total_forward_cost/1000).toFixed(0)}k</span>
+    </div>`;
+  }
 
-  const cards = sorted.map((team, i) => {
-    const bd   = team.ev_breakdown || {};
-    const cdf  = team.cdf || {};
-    const fp   = team.forward_pressure || {};
+  function buildCard(team, idx, isIngemann) {
+    const bd    = team.ev_breakdown || {};
+    const cdf   = team.cdf || {};
+    const fwd   = team.forward || {};
     const total = team.ev_estimate || 1;
     const priceStr = `${((team.total_price||0)/1e6).toFixed(2)}M of ${(actualBudget/1e6).toFixed(2)}M`;
+    const capName  = isIngemann
+      ? (team.captain && team.captain.name ? team.captain.name : team.captain || '')
+      : (team.captain && team.captain.name ? team.captain.name : '');
+    const borderStyle = isIngemann
+      ? 'border-color:var(--color-accent);'
+      : (idx === 0 ? 'border-color:var(--color-primary);' : '');
+    const labelPrefix = isIngemann ? '🏅 ' : `#${idx+1} `;
 
-    return `<div class="team-card${i === 0 ? ' selected' : ''}" data-idx="${i}">
+    const riders = team.riders || [];
+    const ridersHtml = riders.map(r => {
+      const name = typeof r === 'string' ? r : (r.name || '');
+      const isCapRow = name === capName;
+      const rd   = S.riders.find(x => x.name === name) || (typeof r === 'object' ? r : {});
+      const odd  = S.oddsRows.find(x => x.name === name) || {};
+      const tier = (parseFloat(odd.win) || 0) >= 1 ? 'A' : 'B';
+      const price = rd.price || rd.startPrice || 0;
+      const shortName = name.length > 22 ? name.slice(0, 21) + '…' : name;
+      return `<div class="tc-rider-row" style="${isCapRow?'background:rgba(240,168,50,.06);':''}">
+        <span class="tc-rname" title="${esc(name)}">${isCapRow?'⚡ ':''}${esc(shortName)}</span>
+        <span class="tc-rprice">${price ? (price/1e6).toFixed(2)+'M' : '—'}</span>
+        <span class="tbadge t${tier}">${tier}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="team-card${idx===0&&!isIngemann?' selected':''}" data-idx="${idx}" style="${borderStyle}">
       <div class="tc-head">
-        <div class="tc-label">#${i+1} ${esc(team.label)}</div>
+        <div class="tc-label">${labelPrefix}${esc(team.label || team.strategy || '')}</div>
         <div class="tc-ev">EV ${fmt(team.ev_estimate)}<span class="tc-price">${priceStr}</span></div>
       </div>
-      <div class="tc-riders">${(team.riders || []).map(riderHtml).join('')}</div>
+      <div class="tc-riders">${ridersHtml}</div>
       <div class="tc-ev-section">
         <div class="tc-ev-title">EV breakdown</div>
         ${evBarsHtml(bd, total)}
@@ -1599,14 +1820,27 @@ function renderOptimizerOutput(data) {
       </div>
       <div class="tc-meta">
         <div class="tc-cdf">p25:${fmt(cdf.p25)} p50:${fmt(cdf.p50)} p75:${fmt(cdf.p75)} p90:${fmt(cdf.p90)}</div>
-        <div class="tc-fwd">Fwd n+2:${fp.n2||'—'} · n+3:${fp.n3||'—'}</div>
-        <div class="tc-rationale">${esc(team.rationale || '')}</div>
+        ${fwdHtml(fwd)}
+        <div class="tc-rationale">${esc(team.rationale || team.description || '')}</div>
         <div class="tc-depth-note">¹ Non-linear bonus for riders finishing top-15 (0–8 riders: 0/0/20/50/90/140/200/270/350k)</div>
       </div>
     </div>`;
+  }
+
+  area.className = '';
+  let html = '';
+
+  // Ingemann leftmost
+  if (window.INGEMANN_DATA) {
+    html += buildCard(window.INGEMANN_DATA, 0, true);
+  }
+
+  // Optimizer teams (preserve strategy order)
+  (data.teams || []).forEach((team, i) => {
+    html += buildCard(team, i, false);
   });
 
-  area.innerHTML = cards.join('');
+  area.innerHTML = html;
 
   // Click to select
   area.querySelectorAll('.team-card').forEach(card => {
@@ -1616,10 +1850,12 @@ function renderOptimizerOutput(data) {
     });
   });
 
-  // Captain strip
-  if (data.captain) {
-    $('captain-name').textContent    = data.captain.name || '—';
-    $('captain-rationale').textContent = data.captain.rationale || '';
+  // Captain strip — show captain of first optimizer team
+  const firstTeam = (data.teams || [])[0];
+  const capData   = firstTeam ? firstTeam.captain : data.captain;
+  if (capData) {
+    $('captain-name').textContent     = capData.name || '—';
+    $('captain-rationale').textContent = capData.rationale || '';
     strip.style.display = 'flex';
   } else {
     strip.style.display = 'none';
@@ -1705,11 +1941,14 @@ async function init() {
   renderOdds();
   renderCarousel();
   updateHeader();
+  initStageSelect();
 
   await loadRiders();
   await loadSavedOdds();
   await loadSavedIntel();
   await loadSavedOutput();
+  await loadSavedIngemann();
+  await loadStageResults();
   updateHeader();
 }
 
