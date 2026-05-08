@@ -1000,7 +1000,10 @@ document.addEventListener('DOMContentLoaded', function() {
         statusEl.className   = '';
         statusEl.textContent = 'Reading ' + oddsType + ' odds from screenshot…';
 
-        fetch(SERVER + '/parse-odds-image', {
+        var endpoint = oddsType === 'win'
+          ? SERVER + '/parse-odds-image'
+          : SERVER + '/parse-odds-image-single';
+        fetch(endpoint, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({stage: stage, image: base64, media_type: mediaType, type: oddsType}),

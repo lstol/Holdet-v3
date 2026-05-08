@@ -603,6 +603,92 @@ def parse_odds_image():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+# ── Parse single-bookmaker two-column odds image ──────────────────────────────
+
+@app.route('/parse-odds-image-single', methods=['POST', 'OPTIONS'])
+def parse_odds_image_single():
+    if request.method == 'OPTIONS':
+        return '', 204
+    if not HAS_ANTHROPIC:
+        return jsonify({'status': 'error', 'message': 'anthropic package not installed'}), 500
+    body       = request.json
+    stage      = body.get('stage', '?')
+    image_data = body.get('image')
+    media_type = body.get('media_type', 'image/png')
+    odds_type  = body.get('type', 'top3')   # 'top3' | 'top10'
+
+    field_map = {'top3': 'top3_pct', 'top10': 'top10_pct'}
+    col_map   = {'top3': '(1-3)',    'top10': '(1-10)'}
+    field_name = field_map.get(odds_type, 'top3_pct')
+    col_label  = col_map.get(odds_type, '(1-3)')
+
+    raw = ''
+    try:
+        client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+        message = client.messages.create(
+            model='claude-haiku-4-5-20251001',
+            max_tokens=2000,
+            messages=[{'role': 'user', 'content': [
+                {'type': 'image', 'source': {'type': 'base64', 'media_type': media_type, 'data': image_data}},
+                {'type': 'text',  'text': (
+                    f"This table has two columns: 'Vinder' (win odds) and '{col_label}' ({odds_type} odds).\n"
+                    f"Read ONLY the '{col_label}' column — the RIGHTMOST column.\n"
+                    "For each rider, read their decimal odds value from that column only.\n"
+                    "Convert to implied probability: pct = round(100 / odds, 1)\n"
+                    "Include all riders visible.\n"
+                    "Return ONLY a JSON array, no markdown:\n"
+                    '[{"name": "Rider Name", "pct": 74.1}] sorted by pct descending.'
+                )},
+            ]}],
+        )
+        raw = message.content[0].text.strip()
+        _log(f"parse-odds-image-single stage={stage} type={odds_type} raw={raw[:400]}")
+        # Strip markdown fences
+        raw = re.sub(r'^[\s]*```[a-z]*\s*', '', raw)
+        raw = re.sub(r'\s*```[\s]*$', '', raw)
+        raw = raw.strip()
+        start = raw.find('[')
+        end   = raw.rfind(']')
+        if start != -1 and end != -1 and end > start:
+            raw = raw[start:end+1]
+        parsed = json.loads(raw)
+
+        # Load existing odds to merge into (guard against empty/corrupt file)
+        odds_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
+        existing = []
+        if os.path.exists(odds_path) and os.path.getsize(odds_path) > 0:
+            try:
+                existing_file = json.load(open(odds_path))
+                existing = existing_file.get('odds', existing_file) if isinstance(existing_file, dict) else existing_file
+            except (json.JSONDecodeError, ValueError):
+                existing = []
+
+        existing_map = {r['name']: r for r in existing}
+        for item in parsed:
+            name = item.get('name', '')
+            pct  = item.get('pct') or 0
+            if not name:
+                continue
+            if name in existing_map:
+                existing_map[name][field_name] = pct
+            else:
+                existing_map[name] = {'name': name, field_name: pct}
+
+        merged = sorted(existing_map.values(), key=lambda r: r.get('win_pct', 0), reverse=True)
+
+        with open(odds_path, 'w') as f:
+            json.dump({'odds': merged, 'stage': stage,
+                       'gathered_at': _dt.now().isoformat()}, f, indent=2)
+
+        return jsonify(merged)
+    except json.JSONDecodeError as e:
+        _log(f"parse-odds-image-single JSON error: {e}")
+        return jsonify({'status': 'error', 'message': str(e), 'raw': raw}), 500
+    except Exception as e:
+        _log(f"parse-odds-image-single error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 # ── Gather intel ──────────────────────────────────────────────────────────────
 
 @app.route('/gather-intel', methods=['POST', 'OPTIONS'])
