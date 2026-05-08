@@ -1,146 +1,323 @@
 {
   "stage": 2,
   "intel": {
-    "_gathered_at": "2026-05-08T22:32:41.552472",
-    "gathered_at": "2026-05-08T22:32:41.550375",
+    "_gathered_at": "2026-05-08T23:17:41.004301",
+    "gathered_at": "2026-05-08T23:17:41.001068",
     "key_signals": [
       {
         "direction": "up",
-        "rider": "Jhonathan Narvaez",
-        "signal": "Won stage sprint ahead of Pogačar and Schachmann; took maglia rosa with Ineos; triumphant return after Gent-Wevelgem crash",
-        "strength": "strong"
-      },
-      {
-        "direction": "neutral",
-        "rider": "Tadej Pogačar",
-        "signal": "Strong on climb, couldn't drop field despite extended effort; lost sprint to Narvaez but gained 14 seconds on rivals; UAE team control softened after Colle Maddelena",
+        "rider": "Corbin Strong",
+        "signal": "Highest-ranked favourite by TV2 expert for stage with puncheur finish",
         "strength": "strong"
       },
       {
         "direction": "up",
-        "rider": "Rafał Majka",
-        "signal": "Only UAE domestique to reach final climb with Pogačar; successfully launched winning move",
-        "strength": "moderate"
+        "rider": "Giulio Ciccone",
+        "signal": "Feltet.dk top pick with punch for finish climb and superior descending ability",
+        "strength": "strong"
       },
       {
         "direction": "up",
-        "rider": "Max Schachmann",
-        "signal": "Within range at finish; welcome return after prolonged illness and recurring virus setbacks",
-        "strength": "moderate"
-      },
-      {
-        "direction": "down",
-        "rider": "Thymen Arensman",
-        "signal": "Lost 2 minutes on Colle Maddelena; GC bid derailed; Ineos unable to execute 1-2 attack strategy",
+        "rider": "Andrea Vendrame",
+        "signal": "Both sources favour him; proven on similar Italian terrain stages; excels on short punchy climbs",
         "strength": "strong"
       },
       {
         "direction": "down",
-        "rider": "Tobias Foss",
-        "signal": "Lost 8 minutes on Colle Maddelena; significant setback for Ineos GC strategy",
+        "rider": "Jonathan Milan",
+        "signal": "Underperformed on stage 1; TV2 rates him 1-star despite sprinter background; Feltet expects Lidl-Trek to pivot to Ciccone",
         "strength": "strong"
       },
       {
-        "direction": "down",
-        "rider": "Romain Bardet",
-        "signal": "Lost 1 minute on Colle Maddelena; GC bid affected but not eliminated",
-        "strength": "moderate"
-      },
-      {
-        "direction": "down",
-        "rider": "Luke Plapp",
-        "signal": "Lost 1 minute on Colle Maddelena; GC ambitions compromised",
+        "direction": "neutral",
+        "rider": "Antonio Morgado",
+        "signal": "TV2 4-star rating in competitive middle tier; credible puncheur option",
         "strength": "moderate"
       },
       {
         "direction": "neutral",
-        "rider": "Lilian Calmejane",
-        "signal": "Early breakaway participant; held solo long enough to secure mountains jersey",
+        "rider": "Filippo Ganna",
+        "signal": "TV2 4-star but primarily time-trial specialist; difficult stage for his profile",
+        "strength": "moderate"
+      },
+      {
+        "direction": "neutral",
+        "rider": "Ben Turner",
+        "signal": "TV2 3-star; mentioned as part of strong supporting cast",
         "strength": "weak"
+      },
+      {
+        "direction": "down",
+        "rider": "Tobias Lund",
+        "signal": "Feltet.dk questions if traditional sprinters can survive the final climb",
+        "strength": "moderate"
       }
     ],
     "source_ratings": [
       {
         "ratings": [
           {
-            "rider": "Tadej Pogačar",
+            "rider": "Corbin Strong",
             "stars": 5
           },
           {
-            "rider": "Jhonathan Narvaez",
-            "stars": 5
-          },
-          {
-            "rider": "Rafał Majka",
+            "rider": "Antonio Morgado",
             "stars": 4
           },
           {
-            "rider": "Max Schachmann",
+            "rider": "Filippo Ganna",
             "stars": 4
           },
           {
-            "rider": "Thymen Arensman",
+            "rider": "Andrea Vendrame",
+            "stars": 3
+          },
+          {
+            "rider": "Thomas Silva",
+            "stars": 3
+          },
+          {
+            "rider": "Jhonatan Narvaez",
+            "stars": 3
+          },
+          {
+            "rider": "Ben Turner",
+            "stars": 3
+          },
+          {
+            "rider": "Orluis Aular",
+            "stars": 3
+          },
+          {
+            "rider": "Alberto Bettiol",
             "stars": 2
           },
           {
-            "rider": "Tobias Foss",
+            "rider": "Fabio Christen",
             "stars": 2
           },
           {
-            "rider": "Romain Bardet",
-            "stars": 3
+            "rider": "Edoardo Zambanini",
+            "stars": 2
           },
           {
-            "rider": "Luke Plapp",
-            "stars": 3
+            "rider": "Giulio Ciccone",
+            "stars": 2
           },
           {
-            "rider": "Lilian Calmejane",
-            "stars": 3
+            "rider": "Jan Christen",
+            "stars": 2
+          },
+          {
+            "rider": "Tobias Lund",
+            "stars": 2
+          },
+          {
+            "rider": "Paul Magnier",
+            "stars": 2
+          },
+          {
+            "rider": "Kaden Groves",
+            "stars": 2
+          },
+          {
+            "rider": "Fredrik Dversnes",
+            "stars": 2
+          },
+          {
+            "rider": "Andrea Raccagni Noviero",
+            "stars": 2
+          },
+          {
+            "rider": "Christian Scaroni",
+            "stars": 2
+          },
+          {
+            "rider": "David Gonzalez",
+            "stars": 2
+          },
+          {
+            "rider": "Jasper Stuyven",
+            "stars": 2
+          },
+          {
+            "rider": "Lukas Kubis",
+            "stars": 2
+          },
+          {
+            "rider": "Simone Gualdi",
+            "stars": 2
+          },
+          {
+            "rider": "Lennert Van Eetvelt",
+            "stars": 2
+          },
+          {
+            "rider": "Thomas Pesenti",
+            "stars": 2
+          },
+          {
+            "rider": "Aleksandr Vlasov",
+            "stars": 2
+          },
+          {
+            "rider": "Ludovico Crescioli",
+            "stars": 2
+          },
+          {
+            "rider": "Toon Aerts",
+            "stars": 2
+          },
+          {
+            "rider": "Diego Ulissi",
+            "stars": 2
+          },
+          {
+            "rider": "Felix Engelhardt",
+            "stars": 2
+          },
+          {
+            "rider": "Samuele Battistella",
+            "stars": 2
+          },
+          {
+            "rider": "Gianmarco Garofoli",
+            "stars": 2
+          },
+          {
+            "rider": "Francesco Busatto",
+            "stars": 1
+          },
+          {
+            "rider": "Jonas Vingegaard",
+            "stars": 1
+          },
+          {
+            "rider": "Florian Stork",
+            "stars": 1
+          },
+          {
+            "rider": "Johannes Kulset",
+            "stars": 1
+          },
+          {
+            "rider": "Jonathan Milan",
+            "stars": 1
+          },
+          {
+            "rider": "Arnaud De Lie",
+            "stars": 1
+          },
+          {
+            "rider": "Javier Romo",
+            "stars": 1
+          },
+          {
+            "rider": "Damiano Caruso",
+            "stars": 1
+          },
+          {
+            "rider": "Frank van den Broek",
+            "stars": 1
+          },
+          {
+            "rider": "Davide Ballerini",
+            "stars": 1
+          },
+          {
+            "rider": "Niklas Larsen",
+            "stars": 1
+          },
+          {
+            "rider": "Chris Hamilton",
+            "stars": 1
+          },
+          {
+            "rider": "Matteo Sobrero",
+            "stars": 1
+          },
+          {
+            "rider": "Filippo Zana",
+            "stars": 1
+          },
+          {
+            "rider": "Jonas Geens",
+            "stars": 1
+          },
+          {
+            "rider": "Edward Planckaert",
+            "stars": 1
+          },
+          {
+            "rider": "Magnus Sheffield",
+            "stars": 1
+          },
+          {
+            "rider": "Egan Bernal",
+            "stars": 1
+          },
+          {
+            "rider": "Alessandro Pinarello",
+            "stars": 1
+          },
+          {
+            "rider": "Axel Huens",
+            "stars": 1
+          },
+          {
+            "rider": "Sakarias Løland",
+            "stars": 1
+          },
+          {
+            "rider": "Warren Barguil",
+            "stars": 1
+          },
+          {
+            "rider": "Ethan Vernon",
+            "stars": 1
+          },
+          {
+            "rider": "Timo Kielich",
+            "stars": 1
+          },
+          {
+            "rider": "Paul Penhoët",
+            "stars": 1
+          },
+          {
+            "rider": "Michael Valgren",
+            "stars": 1
           }
         ],
-        "source": "Inner Ring",
-        "weight": 0.8
-      }
-    ],
-    "source_retrieval_errors": [
-      {
-        "error": "net::ERR_NAME_NOT_RESOLVED at https://profil.tv2.dk/login",
         "source": "TV2/Axelgaard",
         "weight": 1.5
       },
       {
-        "error": "Timeout 30000ms exceeded waiting for email input field",
+        "ratings": [
+          {
+            "rider": "Giulio Ciccone",
+            "stars": 5
+          },
+          {
+            "rider": "Andrea Vendrame",
+            "stars": 5
+          }
+        ],
         "source": "Feltet.dk",
         "weight": 1
       }
     ],
     "sources_consulted": [
-      "Inner Ring"
-    ],
-    "sources_not_found": [
       "TV2/Axelgaard",
       "Feltet.dk"
     ],
-    "stage": 2,
-    "stage_notes": [
-      "Early breakaway with strong UAE team control behind",
-      "Colle Maddelena functioned as primary selector despite being short and regular",
-      "UAE pace ejected multiple GC contenders before summit finish",
-      "Final climb relatively selective; only 23 riders within 2 minutes of winner in 2017",
-      "Tactics may differ from 2017 visit to same region due to stage profile changes",
-      "Multiple late attacks swept up on San Vito climb before finish"
+    "sources_not_found": [
+      "Inner Ring"
     ],
-    "stage_profile": {
-      "distance": "100km",
-      "finish_characteristics": "Gentle start, flat cobbled middle section, steep launchpad section, flattens before line",
-      "finish_distance": "11.8km",
-      "finish_gradient": "6.2% average (steeper sections due to cobbled middle section)",
-      "finish_type": "Alpine summit finish",
-      "terrain": "Canavese plains (cornfields) transitioning to Alpine foothills with gentle climbing"
-    },
-    "summary": "Jhonathan Narvaez claimed Stage 2 with a sprint victory over Pogačar and Schachmann, taking the maglia rosa for Ineos after impressive team performance. UAE's pace on Colle Maddelena damaged GC contenders like Arensman and Foss, though Pogačar secured 14 seconds on rivals despite losing the stage sprint.",
-    "weather": "Mild conditions"
+    "stage": 2,
+    "stage_notes": "Long 221 km stage from Burgas to Veliko Tarnovo features two mid-stage Category 3 climbs, then a decisive 1km-from-finish climb on cobbles (800m at ~9%). Stage design heavily favours puncheurs and climbers with technical descending skills over pure sprinters; breakaway unlikely to hold given terrain and difficulty.",
+    "summary": "This demanding 221 km Bulgarian stage eliminates traditional sprinters in favour of climbing puncheurs, with Corbin Strong, Giulio Ciccone, and Andrea Vendrame emerging as primary contenders. Tactical advantage lies with teams capable of aggressive finale positioning rather than controlling the breakaway, particularly given the severe finishing climb on cobblestones.",
+    "weather": ""
   },
-  "gathered_at": "2026-05-08T22:32:41.576914"
+  "gathered_at": "2026-05-08T23:17:41.031642"
 }

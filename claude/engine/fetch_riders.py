@@ -507,24 +507,44 @@ def fetch_stage_results(stage: int) -> dict:
     bank_balance = 50_000_000
     player_rank  = None
 
+    cartridge = os.getenv("HOLDET_CARTRIDGE", "giro-d-italia-2026")
+
     if snap_path.exists():
         snap = json.loads(snap_path.read_text())
-        # New format: has team_composition, captain, bank_balance
-        if "team_composition" in snap and snap.get("team_composition"):
-            comp = snap["team_composition"]
+        comp = snap.get("team_composition") or []
+        if comp:
             captain_name = snap.get("captain", "")
             captain_id   = snap.get("captain_id")
             bank_balance = snap.get("bank_balance", 50_000_000)
             player_rank  = snap.get("player_rank")
-            # Match names to player ids
             name_map = {p["name"]: hid for hid, p in players.items()}
             for rname in comp:
                 hid = name_map.get(rname)
                 team_riders.append({"holdet_id": hid, "name": rname})
-        # Old format: full riders list (enrichment snapshot)
-        elif "riders" in snap:
-            for r in snap["riders"]:
-                team_riders.append({"holdet_id": r.get("holdet_id"), "name": r.get("name", "")})
+        else:
+            # No team_composition (empty or missing) — try live fetch
+            print(f"  No team_composition in snapshot — trying live fetch from holdet.dk")
+            live = fetch_team_as_dict(cartridge, fantasy_team_id, cookie)
+            comp = live.get("team_composition") or []
+            if comp:
+                captain_name = live.get("captain", "")
+                captain_id   = live.get("captain_id")
+                bank_balance = live.get("bank_balance") or 50_000_000
+                player_rank  = live.get("player_rank")
+                name_map = {p["name"]: hid for hid, p in players.items()}
+                for rname in comp:
+                    hid = name_map.get(rname)
+                    team_riders.append({"holdet_id": hid, "name": rname})
+                # Persist back so future calls don't need another live fetch
+                snap["team_composition"] = comp
+                snap["captain"]          = captain_name
+                snap["captain_id"]       = captain_id
+                snap["bank_balance"]     = bank_balance
+                snap["player_rank"]      = player_rank
+                snap_path.write_text(json.dumps(snap, indent=2, ensure_ascii=False))
+                print(f"  Saved team_composition ({len(comp)} riders) back to snapshot")
+            else:
+                print(f"  Live fetch returned no team (cookie expired?) — will show all scored riders")
     else:
         print(f"  No snapshot at {snap_path} — using all riders with points")
 
