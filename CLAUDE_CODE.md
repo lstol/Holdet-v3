@@ -177,6 +177,10 @@ HOLDET_COOKIE=...              # for fetch_riders.py
 
 ---
 
+## Critical rules (never violate these)
+
+- **NEVER use git worktrees.** Every change goes directly to main. If Claude Code creates a worktree, merge and delete it immediately before doing anything else.
+
 ## Key rules (never violate these)
 
 - Budget: 50,000,000 kr | Team: exactly 8 riders | Max 2 per real-world team

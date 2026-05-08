@@ -276,9 +276,19 @@ def get_valid_random_team(forced, pool, budget):
 
 # ── Step 5: Simulated Annealing ───────────────────────────────────────────────
 
+def _compute_objective(team, probs, objective):
+    """Return the SA objective score for a team.  'ev' → full EV; 'depth' → depth-weighted."""
+    if objective == 'depth':
+        finish_evs = [probs.get(r['name'], {}).get('finish_ev', 0.0) for r in team]
+        exp_top15  = sum(probs.get(r['name'], {}).get('top15', 0.0) for r in team)
+        # Triple depth bonus weight; half finish weight — pull SA toward top-15 coverage
+        return sum(finish_evs) * 0.5 + DEPTH_BONUS.get(min(8, round(exp_top15)), 0) * 3
+    return compute_team_ev(team, probs)
+
+
 def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
                          budget=BUDGET, n_iter=2_000_000, seed=42,
-                         max_seconds=9):
+                         max_seconds=9, objective='ev'):
     """
     Single SA chain.  Returns (best_team_list, best_ev).
 
@@ -286,6 +296,7 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
     No tier filtering — cheap riders with team-bonus value appear naturally.
 
     Temperature schedule: T₀ = 200,000, decay = 0.999993.
+    objective: 'ev' (default) or 'depth' (maximise expected top-15 count).
     Time-based safety stop: exits after max_seconds regardless of n_iter.
     """
     rng = random.Random(seed)
@@ -305,9 +316,9 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
         return None, 0.0
 
     # Mutable state
-    current_ev = compute_team_ev(team, probs)
-    best_team  = team[:]
-    best_ev    = current_ev
+    current_score = _compute_objective(team, probs, objective)
+    best_team     = team[:]
+    best_score    = current_score
 
     T        = 200_000.0
     cooling  = 0.999993
@@ -319,23 +330,20 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
         if time.time() - start > max_seconds:
             import logging
             logging.getLogger(__name__).info(
-                f"SA stopping at iter {i} after {max_seconds}s (seed={seed})"
+                f"SA stopping at iter {i} after {max_seconds}s (seed={seed}, obj={objective})"
             )
             break
 
-        # Pick a random swappable slot (never touch forced riders)
         if n_forced >= 8:
             break
-        out_pos    = rng.randrange(n_forced, 8)
-        new_rider  = pool[rng.randrange(pool_len)]
+        out_pos   = rng.randrange(n_forced, 8)
+        new_rider = pool[rng.randrange(pool_len)]
 
-        # Skip if rider already in team
         if any(new_rider['name'] == r['name'] for r in team):
             T *= cooling
             i += 1
             continue
 
-        # Propose swap
         new_team = team[:]
         new_team[out_pos] = new_rider
 
@@ -344,19 +352,21 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
             i += 1
             continue
 
-        new_ev = compute_team_ev(new_team, probs)
-        delta  = new_ev - current_ev
+        new_score = _compute_objective(new_team, probs, objective)
+        delta     = new_score - current_score
 
         if delta > 0 or rng.random() < math.exp(delta / max(T, 0.01)):
-            team       = new_team
-            current_ev = new_ev
-            if new_ev > best_ev:
-                best_ev   = new_ev
-                best_team = team[:]
+            team          = new_team
+            current_score = new_score
+            if new_score > best_score:
+                best_score = new_score
+                best_team  = team[:]
 
         T *= cooling
         i += 1
 
+    # Always return the true analytical EV (even for depth chains) for fair comparison
+    best_ev = compute_team_ev(best_team, probs)
     return best_team, best_ev
 
 
@@ -417,19 +427,20 @@ def estimate_forward_pressure(team):
 def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
                               budget=BUDGET):
     """
-    Run 5 strategy-differentiated SA chains.
+    Run 7 strategy-differentiated SA chains (target: ~60 s total, 9 s each).
 
-    Each chain has a structurally distinct constraint set guaranteeing diversity:
-      0. Unconstrained optimum (seed 42)
-      1. No top sprint anchor — forces a different lead rider (seed 123)
-      2. Budget-depth — pool capped at ≤9M per rider (seed 777)
-      3. GC-bridge — must include a climbing specialist (seed 2026)
-      4. Natural variation, different seed (seed 99)
+    Chains:
+      0. ev-maximal        — unconstrained EV (seed 42)
+      1. ev-maximal-v2     — unconstrained EV, different seed (seed 123)
+      2. team-bonus        — force best available real-world team pair (seed 777)
+      3. depth-maximiser   — depth-weighted objective, top-15 coverage (seed 2026)
+      4. budget-war-chest  — budget capped at 88% of available (seed 99)
+      5. no-favourite      — exclude highest-win-prob rider (seed 314)
+      6. gc-bridge         — force GC climbing specialist (seed 555)
 
-    After deduplication (>6 riders in common), run full Plackett-Luce Monte Carlo
-    on each distinct team for accurate CDF and breakdown.
+    Deduplication: drop teams sharing >6 riders with a higher-EV team.
+    Min-EV filter: drop teams below 50% of best analytical EV (degenerate solutions).
     """
-    # all_riders is the full roster — used for Monte Carlo (not filtered)
     full_roster     = all_riders
     user_forced_set = set(force_in_names  or [])
     user_excluded   = set(force_out_names or [])
@@ -445,14 +456,14 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
         if ftc[_norm_team(r.get('team', ''))] > 2:
             raise ValueError(f'Force-in has >2 riders from {r.get("team","?")}')
 
-    # Strategy 1: identify the top sprint anchor by win probability
-    top_anchor = None
+    # Top win rider (excluded in no-favourite chain)
+    top_win_rider = None
     for r in sorted(all_riders, key=lambda r: probs.get(r['name'], {}).get('win', 0), reverse=True):
         if r['name'] not in user_excluded and r['name'] not in user_forced_set:
-            top_anchor = r['name']
+            top_win_rider = r['name']
             break
 
-    # Strategy 3: identify best GC anchor (climbing > 0.65, meaningful odds)
+    # GC anchor: best climbing specialist with meaningful odds
     gc_anchor = None
     for r in sorted(all_riders, key=lambda r: probs.get(r['name'], {}).get('top10', 0), reverse=True):
         if (r['name'] not in user_excluded
@@ -462,74 +473,97 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
             gc_anchor = r['name']
             break
 
-    # Budget-depth pool: remove riders above 9M (except user-forced)
-    budget_depth_riders = [
-        r for r in all_riders
-        if r.get('price', 0) <= 9_000_000 or r['name'] in user_forced_set
-    ]
-
-    # Mid-price pool: riders between 6M and 14M (broad mid-tier focus)
-    mid_price_riders = [
-        r for r in all_riders
-        if 6_000_000 <= r.get('price', 0) <= 14_000_000 or r['name'] in user_forced_set
-    ]
+    # Team-bonus pair: best 2 riders from the same real-world team by combined finish_ev
+    team_bonus_pair = []
+    by_team = defaultdict(list)
+    for r in all_riders:
+        if r['name'] not in user_excluded and r['name'] not in user_forced_set:
+            by_team[_norm_team(r.get('team', ''))].append(r)
+    best_pair_ev, best_pair = -1, []
+    for members in by_team.values():
+        if len(members) < 2:
+            continue
+        top2 = sorted(members, key=lambda r: probs.get(r['name'], {}).get('finish_ev', 0), reverse=True)[:2]
+        pair_ev = sum(probs.get(r['name'], {}).get('finish_ev', 0) for r in top2)
+        if pair_ev > best_pair_ev:
+            best_pair_ev, best_pair = pair_ev, top2
+    if len(best_pair) == 2:
+        team_bonus_pair = [r['name'] for r in best_pair]
 
     strategies = [
-        # 0 — unconstrained optimum
-        {'seed': 42,   'riders': all_riders,
+        # 0 — unconstrained EV optimum
+        {'name': 'ev-maximal',       'seed': 42,   'objective': 'ev',
+         'riders': all_riders,
          'force_in':  list(user_forced_set),
-         'force_out': list(user_excluded)},
-        # 1 — no top sprint anchor
-        {'seed': 123,  'riders': all_riders,
+         'force_out': list(user_excluded),
+         'budget': budget},
+        # 1 — EV optimum, different starting point
+        {'name': 'ev-maximal-v2',    'seed': 123,  'objective': 'ev',
+         'riders': all_riders,
          'force_in':  list(user_forced_set),
-         'force_out': list(user_excluded) + ([top_anchor] if top_anchor else [])},
-        # 2 — budget-depth: pool capped at ≤9M per rider
-        {'seed': 777,  'riders': budget_depth_riders,
+         'force_out': list(user_excluded),
+         'budget': budget},
+        # 2 — force best available real-world team pair → maximise team bonuses
+        {'name': 'team-bonus',       'seed': 777,  'objective': 'ev',
+         'riders': all_riders,
+         'force_in':  list(user_forced_set) + team_bonus_pair,
+         'force_out': list(user_excluded),
+         'budget': budget},
+        # 3 — depth-weighted objective: maximise expected riders in top-15
+        {'name': 'depth-maximiser',  'seed': 2026, 'objective': 'depth',
+         'riders': all_riders,
          'force_in':  list(user_forced_set),
-         'force_out': list(user_excluded)},
-        # 3 — GC-bridge: force include a climbing specialist
-        {'seed': 2026, 'riders': all_riders,
+         'force_out': list(user_excluded),
+         'budget': budget},
+        # 4 — budget war chest: spend only 88% to preserve transfers
+        {'name': 'budget-war-chest', 'seed': 99,   'objective': 'ev',
+         'riders': all_riders,
+         'force_in':  list(user_forced_set),
+         'force_out': list(user_excluded),
+         'budget': int(budget * 0.88)},
+        # 5 — no-favourite: exclude highest win-probability rider
+        {'name': 'no-favourite',     'seed': 314,  'objective': 'ev',
+         'riders': all_riders,
+         'force_in':  list(user_forced_set),
+         'force_out': list(user_excluded) + ([top_win_rider] if top_win_rider else []),
+         'budget': budget},
+        # 6 — GC bridge: force in best climbing specialist
+        {'name': 'gc-bridge',        'seed': 555,  'objective': 'ev',
+         'riders': all_riders,
          'force_in':  list(user_forced_set) + ([gc_anchor] if gc_anchor else []),
-         'force_out': list(user_excluded)},
-        # 4 — natural variation
-        {'seed': 99,   'riders': all_riders,
-         'force_in':  list(user_forced_set),
-         'force_out': list(user_excluded)},
-        # 5 — mid-price focus: pool 6M–14M riders (avoid extremes)
-        {'seed': 314,  'riders': mid_price_riders,
-         'force_in':  list(user_forced_set),
-         'force_out': list(user_excluded)},
-        # 6 — no-anchor-no-gc: explore without either dominant archetype
-        {'seed': 555,  'riders': all_riders,
-         'force_in':  list(user_forced_set),
-         'force_out': list(user_excluded)
-                      + ([top_anchor] if top_anchor else [])
-                      + ([gc_anchor]  if gc_anchor  else [])},
+         'force_out': list(user_excluded),
+         'budget': budget},
     ]
 
     raw_results = []
     for strat in strategies:
         team, ev = simulated_annealing(
             strat['riders'], probs, strat['force_in'], strat['force_out'],
-            budget=budget, n_iter=2_000_000, seed=strat['seed'], max_seconds=9,
+            budget=strat['budget'], n_iter=2_000_000, seed=strat['seed'],
+            max_seconds=9, objective=strat['objective'],
         )
         if team is not None:
-            raw_results.append((ev, team))
+            raw_results.append((ev, team, strat['name']))
 
     if not raw_results:
         return []
 
-    # Deduplicate: discard any team that shares >6 riders with a higher-EV team
+    # Filter degenerate solutions: drop teams below 50% of best analytical EV
+    max_ev = max(ev for ev, _, _ in raw_results)
+    raw_results = [(ev, team, name) for ev, team, name in raw_results
+                   if ev > 0.5 * max_ev]
+
+    # Deduplicate: discard any team sharing >6 riders with a higher-EV team
     raw_results.sort(key=lambda x: x[0], reverse=True)
     distinct = []
-    for ev, team in raw_results:
+    for ev, team, name in raw_results:
         names = {r['name'] for r in team}
-        if not any(len(names & {r['name'] for r in t}) > 6 for _, t in distinct):
-            distinct.append((ev, team))
+        if not any(len(names & {r['name'] for r in t}) > 6 for _, t, _ in distinct):
+            distinct.append((ev, team, name))
 
     # Run full Monte Carlo on each distinct team
     candidates = []
-    for _, team in distinct[:5]:
+    for _, team, strat_name in distinct[:5]:
         total_price = sum(r.get('price', 0) for r in team)
         assert total_price <= budget, (
             f"Budget violation: team costs {total_price:,} > budget {budget:,} "
