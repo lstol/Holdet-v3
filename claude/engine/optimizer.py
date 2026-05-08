@@ -179,48 +179,53 @@ def build_probabilities(all_riders, odds, intel, sliders=None):
             'finish_probs': fp,
             'p2':    fp[1], 'p3': fp[2], 'p_top15': top15,
             'finish_ev':    finish_ev,
-            'team_bonus_ev': 0.0,          # filled in pass 2
             'team': _norm_team(r.get('team', '')),
             'name': name,
         }
-
-    # Pass 2: team_bonus_ev — expected bonus from real-world teammates finishing top 3
-    # This is independent of fantasy team composition, so precompute once.
-    by_team = defaultdict(list)
-    for name, p in result.items():
-        by_team[p['team']].append(name)
-
-    for name, p in result.items():
-        bonus = 0.0
-        for tname in by_team[p['team']]:
-            if tname == name:
-                continue
-            tp     = result[tname]
-            bonus += tp['win']  * 60_000
-            bonus += tp['p2']   * 30_000
-            bonus += tp['p3']   * 20_000
-        p['team_bonus_ev'] = bonus
 
     return result
 
 
 # ── Step 2: Analytical team EV (fast — used during SA search) ─────────────────
 
+def compute_team_bonus_ev(fantasy_team, probs):
+    """
+    Team bonus EV for the actual fantasy team composition.
+
+    Rule: a fantasy rider earns a bonus when their ONE real-world teammate
+    in the fantasy team finishes on the podium (P1=60k, P2=30k, P3=20k).
+    With the max-2-per-team constraint there is at most one pair per team.
+    """
+    by_team = defaultdict(list)
+    for r in fantasy_team:
+        by_team[_norm_team(r.get('team', ''))].append(r)
+
+    total = 0.0
+    for riders in by_team.values():
+        if len(riders) == 2:
+            # Each rider is a trigger for the other's bonus
+            for trigger in riders:
+                p = probs.get(trigger['name'], {})
+                total += p.get('win', 0) * 60_000
+                total += p.get('p2',  0) * 30_000
+                total += p.get('p3',  0) * 20_000
+    return total
+
+
 def compute_team_ev(team, probs):
     """
     Fast analytical expected value for a team of 8 rider dicts.
-    Uses precomputed finish_ev and team_bonus_ev from build_probabilities.
 
     Components:
       1. Stage finish EV per rider (precomputed)
       2. Captain bonus EV ≈ best rider's finish_ev (doubling positive outcomes)
-      3. Team bonus EV per rider (precomputed from teammates' top-3 probability)
+      3. Team bonus EV — only from actual fantasy pairs, not full roster teammates
       4. Depth bonus EV (expected riders in top-15 → depth bonus table)
     """
     finish_evs = [probs.get(r['name'], {}).get('finish_ev', 0.0) for r in team]
     total  = sum(finish_evs)
-    total += max(finish_evs) if finish_evs else 0.0          # captain bonus
-    total += sum(probs.get(r['name'], {}).get('team_bonus_ev', 0.0) for r in team)
+    total += max(finish_evs) if finish_evs else 0.0
+    total += compute_team_bonus_ev(team, probs)
     exp_top15 = sum(probs.get(r['name'], {}).get('top15', 0.0) for r in team)
     total += DEPTH_BONUS.get(min(8, round(exp_top15)), 0)
     return total
@@ -473,23 +478,6 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
             gc_anchor = r['name']
             break
 
-    # Team-bonus pair: best 2 riders from the same real-world team by combined finish_ev
-    team_bonus_pair = []
-    by_team = defaultdict(list)
-    for r in all_riders:
-        if r['name'] not in user_excluded and r['name'] not in user_forced_set:
-            by_team[_norm_team(r.get('team', ''))].append(r)
-    best_pair_ev, best_pair = -1, []
-    for members in by_team.values():
-        if len(members) < 2:
-            continue
-        top2 = sorted(members, key=lambda r: probs.get(r['name'], {}).get('finish_ev', 0), reverse=True)[:2]
-        pair_ev = sum(probs.get(r['name'], {}).get('finish_ev', 0) for r in top2)
-        if pair_ev > best_pair_ev:
-            best_pair_ev, best_pair = pair_ev, top2
-    if len(best_pair) == 2:
-        team_bonus_pair = [r['name'] for r in best_pair]
-
     strategies = [
         # 0 — unconstrained EV optimum
         {'name': 'ev-maximal',       'seed': 42,   'objective': 'ev',
@@ -503,10 +491,10 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
          'force_in':  list(user_forced_set),
          'force_out': list(user_excluded),
          'budget': budget},
-        # 2 — force best available real-world team pair → maximise team bonuses
+        # 2 — EV optimum, third seed — SA finds team-bonus pairs naturally
         {'name': 'team-bonus',       'seed': 777,  'objective': 'ev',
          'riders': all_riders,
-         'force_in':  list(user_forced_set) + team_bonus_pair,
+         'force_in':  list(user_forced_set),
          'force_out': list(user_excluded),
          'budget': budget},
         # 3 — depth-weighted objective: maximise expected riders in top-15
