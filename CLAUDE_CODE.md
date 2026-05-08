@@ -168,6 +168,9 @@ claude/tools/Holdet Refresh.app    → runs holdet-refresh.sh (fetch + reopen da
 **Setup requirements:**
 ```bash
 pip install flask anthropic pyyaml python-dotenv
+# Intel scraping
+pip install playwright --break-system-packages
+playwright install chromium
 ```
 `.env` must contain:
 ```
