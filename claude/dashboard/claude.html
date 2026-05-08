@@ -1610,55 +1610,64 @@ function buildTypePills() {
 }
 
 function renderTable() {
-  const q = S.search.toLowerCase();
-  let riders = S.riders.filter(r => {
-    if (q && !r.name.toLowerCase().includes(q) && !(r.team||'').toLowerCase().includes(q)) return false;
-    if (S.typeFilter !== 'All' && r._type !== S.typeFilter) return false;
-    return true;
-  });
-
-  if (S.sortCol) {
-    riders = [...riders].sort((a, b) => {
-      const av = getSortVal(a, S.sortCol), bv = getSortVal(b, S.sortCol);
-      if (av < bv) return S.sortDir === 'asc' ? -1 : 1;
-      if (av > bv) return S.sortDir === 'asc' ? 1 : -1;
-      return 0;
+  try {
+    const q = S.search.toLowerCase();
+    let riders = S.riders.filter(r => {
+      if (q && !r.name.toLowerCase().includes(q) && !(r.team||'').toLowerCase().includes(q)) return false;
+      if (S.typeFilter !== 'All' && r._type !== S.typeFilter) return false;
+      return true;
     });
+
+    if (S.sortCol) {
+      riders = [...riders].sort((a, b) => {
+        const av = getSortVal(a, S.sortCol), bv = getSortVal(b, S.sortCol);
+        if (av < bv) return S.sortDir === 'asc' ? -1 : 1;
+        if (av > bv) return S.sortDir === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    renderTableHeader();
+    const tbody = $('rider-tbody');
+    tbody.innerHTML = '';
+
+    riders.forEach(r => {
+      try {
+        const rid      = r.rider_id || r.holdet_id || r.name;
+        const rtype    = r._type || 'Lead-out';
+        const badgeKey = rtype.replace(/[\s\.]/g, '-').replace(/\//g, '');
+        const tier     = computeTier(r);
+        const pw       = pwin(r.name);
+        const isIn     = S.forceIn.has(rid);
+        const isOut    = S.forceOut.has(rid);
+        const isElim   = r.isEliminated || r.isOut || false;
+
+        const tr = document.createElement('tr');
+        tr.className = (isIn ? 'force-in' : isOut ? 'force-out' : '');
+        tr.innerHTML = `
+          <td>
+            <div class="rider-name">${esc(r.name || '')}</div>
+            <div class="rider-team">${esc(r.team || '')}</div>
+          </td>
+          <td><span class="type-badge badge-${badgeKey}">${esc(rtype)}</span></td>
+          <td class="num">${fmt_price(r.price || r.startPrice || 0)}</td>
+          <td><span class="${tier === 'A' ? 'tier-a' : 'tier-b'}">${tier}</span></td>
+          <td class="num">${fmt_pct(pw)}</td>
+          <td><button class="force-btn${isIn ? ' active-in' : ''}" onclick="toggleForce('${rid}','in')">IN</button></td>
+          <td><button class="force-btn${isOut ? ' active-out' : ''}" onclick="toggleForce('${rid}','out')">OUT</button></td>
+          <td><span class="${isElim ? 'status-out' : 'status-active'}">${isElim ? 'OUT' : 'Active'}</span></td>
+        `;
+        tbody.appendChild(tr);
+      } catch(rowErr) {
+        console.warn('[renderTable] skipped row:', r?.name, rowErr);
+      }
+    });
+
+    $('rider-count').textContent = `${riders.length} riders`;
+    console.log('[renderTable] rendered', riders.length, 'rows');
+  } catch(err) {
+    console.error('[renderTable] crashed:', err);
   }
-
-  renderTableHeader();
-  const tbody = $('rider-tbody');
-  tbody.innerHTML = '';
-
-  riders.forEach(r => {
-    const rid = r.rider_id || r.holdet_id;
-    const tier = computeTier(r);
-    const pw   = pwin(r.name);
-    const isIn  = S.forceIn.has(rid);
-    const isOut = S.forceOut.has(rid);
-    const isElim = r.isEliminated || r.isOut || false;
-    const rtype    = r._type || 'Lead-out';
-    const badgeKey = rtype.replace(/[\s\.]/g, '-').replace(/\//g, '');
-
-    const tr = document.createElement('tr');
-    tr.className = (isIn ? 'force-in' : isOut ? 'force-out' : '');
-    tr.innerHTML = `
-      <td>
-        <div class="rider-name">${esc(r.name)}</div>
-        <div class="rider-team">${esc(r.team||'')}</div>
-      </td>
-      <td><span class="type-badge badge-${badgeKey}">${esc(rtype)}</span></td>
-      <td class="num">${fmt_price(r.price||r.startPrice||0)}</td>
-      <td><span class="${tier === 'A' ? 'tier-a' : 'tier-b'}">${tier}</span></td>
-      <td class="num">${fmt_pct(pw)}</td>
-      <td><button class="force-btn${isIn ? ' active-in' : ''}" onclick="toggleForce('${rid}','in')">IN</button></td>
-      <td><button class="force-btn${isOut ? ' active-out' : ''}" onclick="toggleForce('${rid}','out')">OUT</button></td>
-      <td><span class="${isElim ? 'status-out' : 'status-active'}">${isElim ? 'OUT' : 'Active'}</span></td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  $('rider-count').textContent = `${riders.length} riders`;
 }
 
 /* ── Optimizer prompt ────────────────────────────────────────────────── */
@@ -2010,10 +2019,13 @@ async function loadRiders() {
     const res = await fetch(`${SERVER}/riders?stage=${targetStage}`);
     if (!res.ok) throw new Error('no riders');
     const data = await res.json();
+    console.log('[loadRiders] raw response:', data.source, 'riders:', (data.riders||[]).length);
     S.riders = (data.riders || []).map(r => ({ ...r, _type: deriveType(r) }));
+    console.log('[loadRiders] S.riders set:', S.riders.length, 'first:', S.riders[0]?.name, S.riders[0]?._type);
     S.dataTimestamp = data.timestamp || null;
     S.mockMode = false;
-  } catch(_) {
+  } catch(e) {
+    console.error('[loadRiders] failed:', e);
     S.riders = [];
     S.mockMode = true;
   }
