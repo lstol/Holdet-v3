@@ -1193,7 +1193,12 @@ async function loadSavedIntel() {
 async function loadSavedOutput() {
   const stage = (S.stages[S.activeStageIndex] || {}).stage_number || 1;
   try {
-    const res = await fetch(`${SERVER}/load-output?stage=${stage}`);
+    const metaRes = await fetch(`${SERVER}/load-last-optimizer?stage=${stage}`);
+    const meta = await metaRes.json();
+    const endpoint = meta.last === 'py'
+      ? `${SERVER}/load-output-py?stage=${stage}`
+      : `${SERVER}/load-output?stage=${stage}`;
+    const res = await fetch(endpoint);
     const data = await res.json();
     if (data && data.teams) renderOptimizerOutput(data);
   } catch(_) {}

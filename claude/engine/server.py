@@ -330,6 +330,9 @@ Generate 3-5 structurally distinct teams. Each exactly 8 riders, budget ≤50,00
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
         with open(out_path, 'w') as f:
             json.dump(result, f, indent=2, ensure_ascii=False)
+        meta_path = os.path.join(BASE_DIR, 'claude', 'output', f'stage_{stage}_last_optimizer.json')
+        with open(meta_path, 'w') as f:
+            json.dump({'last': 'api'}, f)
         return jsonify(result)
     except json.JSONDecodeError as e:
         _log(f"run-optimizer JSON error: {e}")
@@ -438,6 +441,9 @@ def run_optimizer_py():
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
         with open(out_path, 'w') as f:
             json.dump(result, f, indent=2, ensure_ascii=False)
+        meta_path = os.path.join(BASE_DIR, 'claude', 'output', f'stage_{stage}_last_optimizer.json')
+        with open(meta_path, 'w') as f:
+            json.dump({'last': 'py'}, f)
 
         _log(f"run-optimizer-py stage={stage} teams={len(teams_out)}")
         return jsonify(result)
@@ -485,6 +491,26 @@ def load_output():
         with open(path) as f:
             return jsonify(json.load(f))
     return jsonify({})
+
+
+@app.route('/load-output-py', methods=['GET'])
+def load_output_py():
+    stage = request.args.get('stage')
+    path = os.path.join(BASE_DIR, 'claude', 'output', f'stage_{stage}_claude_py.json')
+    if os.path.exists(path):
+        with open(path) as f:
+            return jsonify(json.load(f))
+    return jsonify({})
+
+
+@app.route('/load-last-optimizer', methods=['GET'])
+def load_last_optimizer():
+    stage = request.args.get('stage')
+    path = os.path.join(BASE_DIR, 'claude', 'output', f'stage_{stage}_last_optimizer.json')
+    if os.path.exists(path):
+        with open(path) as f:
+            return jsonify(json.load(f))
+    return jsonify({'last': 'api'})
 
 
 # ── Save / load odds ─────────────────────────────────────────────────────────
