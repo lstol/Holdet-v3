@@ -1729,7 +1729,8 @@ function renderTable() {
       }
     });
 
-    $('rider-count').textContent = `${riders.length} riders`;
+    const countEl = $('rider-count');
+    if (countEl) countEl.textContent = `${riders.length} riders`;
     console.log('[renderTable] rendered', riders.length, 'rows');
   } catch(err) {
     console.error('[renderTable] crashed:', err);
