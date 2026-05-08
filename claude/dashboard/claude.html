@@ -462,18 +462,15 @@ input[type=range]::-webkit-slider-thumb {
   <header id="header">
     <div id="header-left">
       <div class="race-label">Holdet v3 · Giro d'Italia 2026</div>
-      <div style="display:flex;align-items:center;gap:8px;margin:3px 0;">
-        <span style="font-size:11px;color:var(--color-text-2);">Preparing for</span>
-        <input id="target-stage-select" type="number" min="1" max="21"
-               onchange="setTargetStage(Math.min(21,Math.max(1,parseInt(this.value)||1)))"
-               style="font-size:13px;font-weight:600;padding:3px 6px;width:52px;
-                      border-radius:var(--radius-md);text-align:center;
-                      background:var(--color-surface-2);
-                      border:1px solid var(--color-border);
-                      color:var(--color-text);">
-        <span style="font-size:11px;color:var(--color-text-2);">
-          · Next stage: <span id="current-stage-label">—</span>
-        </span>
+      <div style="display:flex;align-items:center;gap:6px;margin:3px 0;">
+        <span style="font-size:11px;font-weight:600;color:var(--color-text);">Next stage</span>
+        <select id="target-stage-select" onchange="setTargetStage(parseInt(this.value))"
+                style="font-size:13px;font-weight:600;padding:4px 10px;
+                       border-radius:var(--radius-md);
+                       background:#2a3050;
+                       border:1px solid #4a5490;
+                       color:#ffffff;">
+        </select>
       </div>
       <div class="stage-meta" id="h-stage-meta">—</div>
     </div>
@@ -748,20 +745,38 @@ window.INGEMANN_DATA = null;
 window.OPTIMIZER_DATA = null;
 
 function initStageSelect() {
-  const saved = localStorage.getItem('holdet_target_stage');
-  const upcomingIdx = S.stages.findIndex(st => st.date >= TODAY);
-  targetStage = saved ? parseInt(saved) : (upcomingIdx >= 0 ? upcomingIdx + 1 : 1);
-  $('target-stage-select').value = targetStage;
-  updateStageLabel();
+  const sel = $('target-stage-select');
+  for (let i = 1; i <= 21; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `Stage ${i}`;
+    sel.appendChild(opt);
+  }
+
+  const saved = parseInt(localStorage.getItem('holdet_target_stage'));
+  if (saved >= 1 && saved <= 21) {
+    targetStage = saved;
+  } else {
+    const nextIdx = S.stages.findIndex(st => st.date > TODAY);
+    targetStage = nextIdx >= 0 ? nextIdx + 1 : 21;
+  }
+
+  sel.value = targetStage;
+  S.activeStageIndex = Math.max(0, targetStage - 1);
+  S.carouselOffset   = Math.max(0, S.activeStageIndex - 1);
+  renderCarousel();
 }
 
 function setTargetStage(n) {
+  n = parseInt(n);
+  if (!n || n < 1 || n > 21) return;
   targetStage = n;
-  localStorage.setItem('holdet_target_stage', n);
+  localStorage.setItem('holdet_target_stage', String(n));
   S.activeStageIndex = Math.max(0, n - 1);
   S.carouselOffset   = Math.max(0, S.activeStageIndex - 1);
   renderCarousel();
-  updateStageLabel();
+  updateHeader();
+  renderSliders();
   loadSnapshot();
   loadSavedOdds();
   loadSavedIntel();
@@ -779,10 +794,6 @@ async function loadSnapshot() {
       updateHeader();
     }
   } catch(_) {}
-}
-
-function updateStageLabel() {
-  $('current-stage-label').textContent = String(targetStage);
 }
 
 /* ── Stage results panel ─────────────────────────────────────────────── */
@@ -1540,7 +1551,8 @@ function renderTable() {
     const isIn  = S.forceIn.has(rid);
     const isOut = S.forceOut.has(rid);
     const isElim = r.isEliminated || r.isOut || false;
-    const badgeKey = r._type.replace(/[\s\.]/g, '-').replace(/\//g,'');
+    const rtype    = r._type || 'Lead-out';
+    const badgeKey = rtype.replace(/[\s\.]/g, '-').replace(/\//g, '');
 
     const tr = document.createElement('tr');
     tr.className = (isIn ? 'force-in' : isOut ? 'force-out' : '');
@@ -1549,7 +1561,7 @@ function renderTable() {
         <div class="rider-name">${esc(r.name)}</div>
         <div class="rider-team">${esc(r.team||'')}</div>
       </td>
-      <td><span class="type-badge badge-${badgeKey}">${esc(r._type)}</span></td>
+      <td><span class="type-badge badge-${badgeKey}">${esc(rtype)}</span></td>
       <td class="num">${fmt_price(r.price||r.startPrice||0)}</td>
       <td><span class="${tier === 'A' ? 'tier-a' : 'tier-b'}">${tier}</span></td>
       <td class="num">${fmt_pct(pw)}</td>
