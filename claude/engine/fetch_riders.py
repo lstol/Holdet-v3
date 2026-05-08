@@ -371,6 +371,113 @@ def fetch_team_state(cartridge: str, fantasy_team_id: str, cookie: str, dry_run:
 
 
 # ---------------------------------------------------------------------------
+# Step 6 — fetch_team_as_dict (returns dict, does not write files)
+# ---------------------------------------------------------------------------
+
+def fetch_team_as_dict(cartridge: str, fantasy_team_id: str, cookie: str) -> dict:
+    """
+    Scrape user's Holdet team page and return bank_balance, team_composition,
+    captain holdet_id, player_rank, player_points as a plain dict.
+    Falls back gracefully if the page structure has changed.
+    """
+    url = f"{BASE_URL}/da/{cartridge}/me/fantasyteams/{fantasy_team_id}"
+    print(f"\n[fetch_team_as_dict] Fetching: {url}")
+    result = {
+        'bank_balance': None,
+        'team_composition': [],
+        'captain': None,
+        'player_rank': None,
+        'player_points': None,
+    }
+
+    resp = requests.get(url, headers={"Cookie": cookie}, timeout=20)
+    if resp.status_code in (401, 403):
+        print(f"  [fetch_team_as_dict] HTTP {resp.status_code} — cookie issue")
+        return result
+    resp.raise_for_status()
+
+    html = resp.text
+    chunks = re.findall(r'self\.__next_f\.push\(\[1,\s*"(.*?)"\]\)', html, re.DOTALL)
+
+    for chunk in chunks:
+        if "initialLineup" not in chunk:
+            continue
+        try:
+            raw = chunk.encode().decode("unicode_escape")
+        except (UnicodeDecodeError, ValueError):
+            raw = chunk
+        match = re.search(r'\{"fantasyTeamId":\d+.*\}', raw, re.DOTALL)
+        if not match:
+            continue
+        try:
+            team_data = json.loads(match.group())
+        except json.JSONDecodeError:
+            continue
+
+        lineup      = team_data.get("initialLineup", [])
+        captain_id  = team_data.get("initialCaptain")
+        bank        = team_data.get("initialBank", 0)
+        rank        = team_data.get("rank") or team_data.get("globalRank")
+        points      = team_data.get("points") or team_data.get("totalPoints")
+
+        # Resolve captain name from lineup
+        captain_name = ""
+        for r in lineup:
+            if r.get("id") == captain_id:
+                captain_name = f"{r.get('firstName', '')} {r.get('lastName', '')}".strip()
+                break
+
+        result.update({
+            'bank_balance':     bank,
+            'team_composition': [
+                f"{r.get('firstName', '')} {r.get('lastName', '')}".strip()
+                for r in lineup
+            ],
+            'captain':      captain_name,
+            'captain_id':   captain_id,
+            'player_rank':  rank,
+            'player_points': points,
+        })
+        print(f"  [fetch_team_as_dict] bank={bank:,}  captain={captain_name!r}  riders={len(result['team_composition'])}  rank={rank}")
+        break
+
+    if not result['team_composition']:
+        print("  [fetch_team_as_dict] No team data found — Next.js payload structure may have changed")
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Step 7 — fetch_all (riders + team, returns combined dict for /refresh)
+# ---------------------------------------------------------------------------
+
+def fetch_all(stage: int) -> dict:
+    """
+    Full Holdet scrape: all rider market data + user team snapshot.
+    Returns { riders_data: {...}, snapshot: {...}, timestamp: '...' }
+    Used by /refresh endpoint in server.py.
+    """
+    load_dotenv(ROOT / ".env")
+    game_id         = os.getenv("HOLDET_GAME_ID_GIRO", "612")
+    cartridge       = os.getenv("HOLDET_CARTRIDGE", "giro-d-italia-2026")
+    fantasy_team_id = os.getenv("HOLDET_FANTASY_TEAM_ID", "6796783")
+    cookie          = _cookie()
+
+    print(f"[fetch_all] stage={stage}  game={game_id}")
+    api_riders   = fetch_riders_api(game_id, cookie)
+    enriched     = enrich_riders(api_riders)
+    team_snapshot = fetch_team_as_dict(cartridge, fantasy_team_id, cookie)
+    team_snapshot['stage'] = stage
+    team_snapshot['timestamp'] = datetime.now(timezone.utc).isoformat()
+
+    return {
+        'riders_data': enriched,
+        'snapshot':    team_snapshot,
+        'timestamp':   datetime.now(timezone.utc).isoformat(),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 

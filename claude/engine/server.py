@@ -148,31 +148,84 @@ def riders():
 
 # ── Refresh ───────────────────────────────────────────────────────────────────
 
+def _latest_stage():
+    """Return the most recently active stage number based on today's date."""
+    stages_path = os.path.join(BASE_DIR, 'shared', 'data', 'stages', 'giro_2026', 'stages_giro2026.json')
+    if not os.path.exists(stages_path):
+        return 1
+    stages = json.load(open(stages_path)).get('stages', [])
+    import datetime as _dt
+    today = _dt.date.today().isoformat()
+    upcoming = [s for s in stages if s['date'] >= today]
+    if upcoming:
+        return upcoming[0]['stage_number']
+    return stages[-1]['stage_number'] if stages else 1
+
+
 @app.route('/refresh', methods=['POST', 'OPTIONS'])
 def refresh():
     if request.method == 'OPTIONS':
         return '', 204
     try:
-        result = subprocess.run(
-            [sys.executable, FETCH_RIDERS],
-            capture_output=True, text=True, timeout=60,
-            cwd=BASE_DIR,
-        )
-        if result.returncode != 0:
-            return jsonify({'status': 'error', 'message': result.stderr}), 500
+        sys.path.insert(0, os.path.dirname(FETCH_RIDERS))
+        from fetch_riders import fetch_all
 
-        snapshots = sorted([f for f in os.listdir(SNAPSHOT_DIR) if f.endswith('_holdet.json')])
-        rider_count = 0
-        if snapshots:
-            with open(os.path.join(SNAPSHOT_DIR, snapshots[-1])) as f:
-                rider_count = len(json.load(f).get('riders', []))
+        body  = request.get_json(silent=True) or {}
+        stage = int(body.get('stage') or _latest_stage())
+
+        result       = fetch_all(stage)
+        riders_data  = result['riders_data']
+        snapshot     = result.get('snapshot', {})
+        riders       = riders_data.get('riders', [])
+
+        # 1. Merge into stage snapshot — preserve odds/intel fields, overwrite Holdet fields
+        snapshot_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_holdet.json')
+        existing = {}
+        if os.path.exists(snapshot_path):
+            with open(snapshot_path) as f:
+                existing = json.load(f)
+
+        existing.update({
+            'bank_balance':     snapshot.get('bank_balance') if snapshot.get('bank_balance') is not None else existing.get('bank_balance', 50_000_000),
+            'team_composition': snapshot.get('team_composition') or existing.get('team_composition', []),
+            'captain':          snapshot.get('captain') or existing.get('captain', ''),
+            'captain_id':       snapshot.get('captain_id') or existing.get('captain_id'),
+            'player_rank':      snapshot.get('player_rank') or existing.get('player_rank'),
+            'player_points':    snapshot.get('player_points') or existing.get('player_points'),
+            'refreshed_at':     result['timestamp'],
+            'stage':            stage,
+        })
+        # Always refresh the rider list inside the snapshot
+        existing['riders'] = [
+            {
+                'holdet_id':       r.get('holdet_id'),
+                'name':            r['name'],
+                'team':            r.get('team', ''),
+                'price':           r.get('price', 0),
+                'startPrice':      r.get('startPrice', 0),
+                'isOut':           r.get('isEliminated', False) or r.get('status') == 'dns',
+                'isInjured':       r.get('isInjured', False),
+                'terrain_affinity': r.get('terrain_affinity', {}),
+            }
+            for r in riders
+        ]
+
+        with open(snapshot_path, 'w') as f:
+            json.dump(existing, f, indent=2, ensure_ascii=False)
+
+        app.logger.info(f"Refresh complete: {len(riders)} riders, bank={existing.get('bank_balance')}, team={existing.get('team_composition')}")
 
         return jsonify({
-            'status': 'ok',
-            'timestamp': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-            'rider_count': rider_count,
+            'status':       'ok',
+            'rider_count':  len(riders),
+            'bank_balance': existing.get('bank_balance'),
+            'team_size':    len(existing.get('team_composition', [])),
+            'stage':        stage,
+            'timestamp':    result['timestamp'],
         })
+
     except Exception as e:
+        app.logger.error(f'Refresh error: {e}', exc_info=True)
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
@@ -1025,6 +1078,22 @@ def save_weights():
 @app.route('/snapshot', methods=['GET'])
 def snapshot():
     try:
+        stage = request.args.get('stage', type=int)
+        if stage:
+            path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_holdet.json')
+            if not os.path.exists(path):
+                return jsonify({'found': False, 'bank_balance': 50_000_000, 'team_composition': [], 'captain': ''})
+            data = json.load(open(path))
+            return jsonify({
+                'found':            True,
+                'bank_balance':     data.get('bank_balance', 50_000_000),
+                'team_composition': data.get('team_composition', []),
+                'captain':          data.get('captain', ''),
+                'player_rank':      data.get('player_rank'),
+                'player_points':    data.get('player_points'),
+                'refreshed_at':     data.get('refreshed_at'),
+            })
+        # No stage param — return latest snapshot (legacy behaviour)
         snapshots = sorted([f for f in os.listdir(SNAPSHOT_DIR) if f.endswith('_holdet.json')])
         if not snapshots:
             return jsonify({'status': 'no_snapshot'}), 404

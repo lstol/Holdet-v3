@@ -762,12 +762,23 @@ function setTargetStage(n) {
   S.carouselOffset   = Math.max(0, S.activeStageIndex - 1);
   renderCarousel();
   updateStageLabel();
-  updateHeader();
+  loadSnapshot();
   loadSavedOdds();
   loadSavedIntel();
   loadSavedOutput();
   loadSavedIngemann();
   loadStageResults();
+}
+
+async function loadSnapshot() {
+  try {
+    const res  = await fetch(`${SERVER}/snapshot?stage=${targetStage}`);
+    const data = await res.json();
+    if (data.found) {
+      S.bankBalance = data.bank_balance || 50_000_000;
+      updateHeader();
+    }
+  } catch(_) {}
 }
 
 function updateStageLabel() {
@@ -1870,22 +1881,28 @@ async function refreshData() {
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-refresh spinner"></i> Refreshing…';
   msg.style.display = 'block';
-  msg.textContent = 'Fetching latest data from Holdet…';
+  msg.textContent = 'Scraping Holdet.dk — riders, team, bank balance…';
   try {
-    const res = await fetch(`${SERVER}/refresh`, {method: 'POST'});
+    const res = await fetch(`${SERVER}/refresh`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ stage: targetStage }),
+    });
     const data = await res.json();
     if (data.status === 'ok') {
-      msg.textContent = `✓ ${data.rider_count} riders loaded — reloading…`;
-      setTimeout(() => location.reload(), 1500);
+      const teamNote = data.team_size === 8 ? `· team ${data.team_size}/8` : `· team ${data.team_size}/8 (check selectors if 0)`;
+      const bankNote = data.bank_balance ? `· bank ${(data.bank_balance/1e6).toFixed(2)}M` : '';
+      msg.textContent = `✓ ${data.rider_count} riders ${bankNote} ${teamNote} — reloading…`;
+      setTimeout(() => location.reload(), 1800);
     } else {
       msg.textContent = `Error: ${data.message}`;
       btn.disabled = false;
-      btn.innerHTML = '<i class="ti ti-refresh"></i> Refresh data';
+      btn.innerHTML = '<i class="ti ti-refresh"></i> Refresh';
     }
   } catch(e) {
     msg.textContent = `Server error: ${e.message}`;
     btn.disabled = false;
-    btn.innerHTML = '<i class="ti ti-refresh"></i> Refresh data';
+    btn.innerHTML = '<i class="ti ti-refresh"></i> Refresh';
   }
 }
 
@@ -1936,6 +1953,7 @@ async function init() {
   initStageSelect();
 
   await loadRiders();
+  await loadSnapshot();
   await loadSavedOdds();
   await loadSavedIntel();
   await loadSavedOutput();
