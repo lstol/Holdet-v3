@@ -425,13 +425,212 @@ def _compute_objective(team, probs, objective):
     return compute_team_ev(team, probs)
 
 
+# ── Transfer cost model ───────────────────────────────────────────────────────
+
+TRANSFER_COST_RATE = 0.01   # 1% of buy price
+LOOKAHEAD_DISCOUNT = 0.7
+
+rider_ev_cache = {}  # populated per-run in generate_candidate_teams
+
+
+def compute_transfer_cost(current_team, target_team, probs_next=None):
+    """
+    Cost to move from current_team to target_team.
+    No cap — sprint to mountain can mean 8 transfers.
+    GC penalty adds implicit cost for sprinters facing mountain stages.
+    """
+    current_names = {r['name'] for r in current_team}
+    buys = [r for r in target_team if r['name'] not in current_names]
+    cost = sum(r.get('price', 0) * TRANSFER_COST_RATE for r in buys)
+    if probs_next:
+        for r in current_team:
+            if probs_next.get(r['name'], {}).get('gc_penalty'):
+                cost += 50_000
+    return cost
+
+
+def build_forward_probabilities(riders, sliders):
+    """
+    Approximate probability distribution for a future stage where no odds exist.
+    Uses stage type sliders × rider type weights.
+    """
+    sprint = sliders.get('sprint', 0) / 100
+    hilly  = sliders.get('hilly',  0) / 100
+    gc     = sliders.get('gc', sliders.get('hardgc', 0)) / 100
+    mixed  = sliders.get('mixed',  0) / 100
+
+    TYPE_WIN_WEIGHT = {
+        'Sprinter':    sprint * 1.0 + hilly * 0.15 + mixed * 0.1,
+        'Puncheur':    hilly  * 0.8 + sprint * 0.2  + mixed * 0.3,
+        'GC-Climber':  gc     * 1.0 + hilly  * 0.5  + mixed * 0.4,
+        'All-rounder': mixed  * 0.6 + sprint * 0.2  + hilly * 0.3 + gc * 0.2,
+        'TTT Spec.':   mixed  * 0.5,
+        'Lead-out':    sprint * 0.1,
+    }
+
+    raw = {}
+    for r in riders:
+        rtype = r.get('type', 'All-rounder')
+        raw[r['name']] = max(0.001, TYPE_WIN_WEIGHT.get(rtype, 0.1))
+
+    total = sum(raw.values())
+    probs = {}
+    for r in riders:
+        w = raw[r['name']] / total
+        gc_penalty = gc > 0.5 and r.get('type') == 'Sprinter'
+        p_top3  = min(0.95, w * 3.5)
+        p_top10 = min(0.95, w * 8.0)
+        p_top15 = min(0.95, w * 12.0)
+        fp = [0.0] * 15
+        fp[0] = w
+        d23   = max(0.0, p_top3 - w) / 2
+        d410  = max(0.0, p_top10 - p_top3) / 7
+        d1115 = max(0.0, p_top15 - p_top10) / 5
+        for i in range(1, 3):   fp[i] = d23
+        for i in range(3, 10):  fp[i] = d410
+        for i in range(10, 15): fp[i] = d1115
+        finish_ev = (
+            w * _FP_W1 + d23 * 2 * _FP_W23
+            + d410 * 7 * _FP_W4_10 + d1115 * 5 * _FP_W11_15
+        )
+        probs[r['name']] = {
+            'name':         r['name'],
+            'team':         _norm_team(r.get('team', '')),
+            'win':          w,
+            'top3':         p_top3,
+            'top10':        p_top10,
+            'top15':        p_top15,
+            'p2':           fp[1],
+            'p3':           fp[2],
+            'p_top15':      p_top15,
+            'finish_probs': fp,
+            'finish_ev':    finish_ev,
+            'total_ev':     finish_ev,
+            'gc_penalty':   gc_penalty,
+        }
+    return probs
+
+
+def fast_optimize(candidates, probabilities, all_riders, force_in, force_out, budget, seed=0):
+    """Quick 10k-iteration approximation. Used for forward cost estimation only."""
+    rng = random.Random(seed)
+    forced_set   = set(force_in or [])
+    excluded_set = set(force_out or [])
+    forced = [r for r in candidates if r['name'] in forced_set]
+    pool   = [r for r in candidates
+              if r['name'] not in excluded_set and r['name'] not in forced_set]
+
+    team = get_valid_random_team(forced, pool, budget)
+    if not team:
+        return None
+
+    ev_cache_local = {r['name']: probabilities.get(r['name'], {}).get('total_ev', 0.0) for r in candidates}
+    sorted_pool    = sorted(pool, key=lambda r: ev_cache_local.get(r['name'], 0), reverse=True)
+    top_n          = sorted_pool[:min(50, len(sorted_pool))]
+
+    best_team  = team[:]
+    best_ev    = compute_team_ev(team, probabilities)
+    current_ev = best_ev
+    T          = 50_000.0
+    cooling    = 0.9995
+    start      = time.time()
+    n_forced   = len(forced)
+
+    for _ in range(10_000):
+        if time.time() - start > 1.0:
+            break
+        # biased swap inline
+        if rng.random() < 0.7 and top_n:
+            out_pos   = min(range(n_forced, 8), key=lambda idx: ev_cache_local.get(team[idx]['name'], 0))
+            new_rider = top_n[rng.randrange(len(top_n))]
+        else:
+            out_pos   = rng.randrange(n_forced, 8)
+            new_rider = pool[rng.randrange(len(pool))] if pool else team[out_pos]
+
+        if any(new_rider['name'] == r['name'] for r in team):
+            T *= cooling; continue
+        new_team = team[:]
+        new_team[out_pos] = new_rider
+        if not is_valid(new_team, budget):
+            T *= cooling; continue
+        new_ev = compute_team_ev(new_team, probabilities)
+        delta  = new_ev - current_ev
+        if delta > 0 or rng.random() < math.exp(delta / max(T, 1)):
+            team = new_team; current_ev = new_ev
+            if new_ev > best_ev:
+                best_ev = new_ev; best_team = team[:]
+        T *= cooling
+
+    return best_team
+
+
+def estimate_forward_costs(current_team, candidates, all_riders,
+                            probs_n1, probs_n2, force_in, force_out, budget):
+    """Two-step transfer cost estimation using fast SA."""
+    team_n1 = fast_optimize(candidates, probs_n1, all_riders, force_in, force_out, budget, seed=42)
+    team_n2 = fast_optimize(candidates, probs_n2, all_riders, force_in, force_out, budget, seed=42)
+
+    cost_n1 = compute_transfer_cost(current_team, team_n1 or [], probs_n1) if team_n1 else 0
+    cost_n2 = compute_transfer_cost(team_n1 or [], team_n2 or [], probs_n2) if team_n1 and team_n2 else 0
+
+    n_tr_n1 = len([r for r in (team_n1 or [])
+                   if r['name'] not in {x['name'] for x in current_team}])
+    n_tr_n2 = len([r for r in (team_n2 or [])
+                   if r['name'] not in {x['name'] for x in (team_n1 or [])}])
+
+    return cost_n1, cost_n2, n_tr_n1, n_tr_n2, team_n1, team_n2
+
+
+def topup_team(team, candidates, probabilities, all_riders, budget):
+    """Fill any gaps (team < 8) after SA. Should not normally be needed."""
+    if len(team) >= 8:
+        return team
+    used = {r['name'] for r in team}
+    pool = [r for r in candidates if r['name'] not in used]
+    pool.sort(key=lambda r: probabilities.get(r['name'], {}).get('total_ev', 0), reverse=True)
+    for r in pool:
+        if len(team) >= 8:
+            break
+        cand = team + [r]
+        if is_valid(cand, budget):
+            team = cand
+    return team
+
+
+def compute_objective(team, probabilities, all_riders, objective='ev',
+                      cost_n1=0, cost_n2=0, team_n1=None, team_n2=None):
+    """Multi-strategy objective for SA search."""
+    base_ev = compute_team_ev(team, probabilities)
+
+    if objective == 'ev':
+        return base_ev
+
+    elif objective == 'depth':
+        expected_top15 = sum(
+            probabilities.get(r['name'], {}).get('top15', 0.05) for r in team
+        )
+        return base_ev + DEPTH_BONUS.get(min(8, round(expected_top15)), 0) * 2
+
+    elif objective == 'low_transfer':
+        tc = compute_transfer_cost(team, team_n1 or []) if team_n1 else 0
+        return base_ev - tc * 3
+
+    elif objective == 'lookahead':
+        tc_n1 = compute_transfer_cost(team, team_n1 or []) if team_n1 else 0
+        tc_n2 = compute_transfer_cost(team_n1 or [], team_n2 or []) if team_n1 and team_n2 else 0
+        return base_ev - tc_n1 - (LOOKAHEAD_DISCOUNT * tc_n2)
+
+    return base_ev
+
+
 _SA_LOG_ITERS = {0, 50_000, 100_000, 500_000, 1_000_000, 2_000_000}
 _sa_logger = logging.getLogger(__name__)
 
 
 def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
                          budget=BUDGET, n_iter=200_000, seed=42,
-                         max_seconds=3, objective='ev', verbose=False):
+                         max_seconds=3, objective='ev', verbose=False,
+                         cost_n1=0, cost_n2=0, team_n1=None, team_n2=None):
     """
     Single SA chain.  Returns (best_team_list, best_ev).
 
@@ -473,7 +672,8 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
         return None, 0.0
 
     # Mutable state
-    current_score = _compute_objective(team, probs, objective)
+    current_score = compute_objective(team, probs, all_riders, objective,
+                                      cost_n1, cost_n2, team_n1, team_n2)
     best_team     = team[:]
     best_score    = current_score
 
@@ -526,7 +726,8 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
             i += 1
             continue
 
-        new_score = _compute_objective(new_team, probs, objective)
+        new_score = compute_objective(new_team, probs, all_riders, objective,
+                                      cost_n1, cost_n2, team_n1, team_n2)
         delta     = new_score - current_score
 
         if delta > 0 or rng.random() < math.exp(delta / max(T, 0.01)):
@@ -596,190 +797,116 @@ def estimate_forward_pressure(team):
     return {'n2': 'medium', 'n3': 'medium'}
 
 
-# ── Step 7: Main entry point ──────────────────────────────────────────────────
+# ── Step 7: Main entry point — four-strategy optimizer ───────────────────────
 
-def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
-                              budget=BUDGET, stage_config=None, scoring=None):
+def generate_candidate_teams(candidates, probabilities,
+                              probs_n1, probs_n2,
+                              force_in, force_out, budget,
+                              stage_config, scoring, all_riders,
+                              current_team=None):
     """
-    Run 10 strategy-differentiated SA chains (target: ~20-25s total, 3s each).
+    Run four strategy-differentiated SA chains and return all four results.
+    No deduplication — each strategy has a distinct objective.
 
-    Chains:
-      0. ev-maximal        — unconstrained EV (seed 42)
-      1. ev-maximal-v2     — unconstrained EV, different seed (seed 123)
-      2. team-bonus        — EV, third seed for team-bonus pair discovery (seed 777)
-      3. depth-maximiser   — depth-weighted objective, top-15 coverage (seed 2026)
-      4. budget-war-chest  — budget capped at 88% of available (seed 99)
-      5. no-favourite      — exclude highest-win-prob rider (seed 314)
-      6. gc-bridge         — force GC climbing specialist (seed 555)
-      7. sprint-only       — exclude low-odds GC/TTT specialists (seed 888)
-      8. high-price-anchor — force top-2-EV riders (seed 999)
-      9. random-explore    — unconstrained, fresh random seed (seed 1337)
-
-    Deduplication: drop teams sharing >4 riders with a higher-EV team.
-    Min-EV filter: drop teams below 50% of best analytical EV (degenerate solutions).
+    Strategies:
+      optimal      — maximise stage EV
+      depth        — maximise expected riders in top-15
+      low-transfer — minimise transfer cost to n+1
+      lookahead    — EV minus discounted two-stage transfer costs
     """
-    full_roster     = all_riders
-    user_forced_set = set(force_in_names  or [])
-    user_excluded   = set(force_out_names or [])
+    global rider_ev_cache
+    rider_ev_cache = {
+        r['name']: probabilities.get(r['name'], {}).get('total_ev', 0.0)
+        for r in candidates
+    }
 
-    # Validate user-forced riders
-    user_forced       = [r for r in all_riders if r['name'] in user_forced_set]
-    user_forced_price = sum(r.get('price', 0) for r in user_forced)
-    if user_forced_price > budget:
-        raise ValueError(f'Force-in riders cost {user_forced_price:,} > budget {budget:,}')
-    ftc = defaultdict(int)
-    for r in user_forced:
-        ftc[_norm_team(r.get('team', ''))] += 1
-        if ftc[_norm_team(r.get('team', ''))] > 2:
-            raise ValueError(f'Force-in has >2 riders from {r.get("team","?")}')
-
-    # Top win rider (excluded in no-favourite chain)
-    top_win_rider = None
-    for r in sorted(all_riders, key=lambda r: probs.get(r['name'], {}).get('win', 0), reverse=True):
-        if r['name'] not in user_excluded and r['name'] not in user_forced_set:
-            top_win_rider = r['name']
-            break
-
-    # GC anchor: best climbing specialist with meaningful odds
-    gc_anchor = None
-    for r in sorted(all_riders, key=lambda r: probs.get(r['name'], {}).get('top10', 0), reverse=True):
-        if (r['name'] not in user_excluded
-                and r['name'] not in user_forced_set
-                and r.get('terrain_affinity', {}).get('climbing', 0) > 0.65
-                and probs.get(r['name'], {}).get('top10', 0) > 0.10):
-            gc_anchor = r['name']
-            break
-
-    # Sprint-only: exclude low-odds GC climbers and TTT specialists
-    non_sprint_excl = list(user_excluded) + [
-        r['name'] for r in all_riders
-        if r.get('terrain_affinity', {}).get('climbing', 0) > 0.65
-        and probs.get(r['name'], {}).get('win', 0) < 0.01
-        and r['name'] not in user_forced_set
-    ]
-
-    # High-price-anchor: force top-2 EV riders
-    top2_ev = sorted(
-        [r for r in all_riders if r['name'] not in user_excluded],
-        key=lambda r: probs.get(r['name'], {}).get('total_ev', 0),
-        reverse=True
-    )[:2]
-    top2_ev_names = [r['name'] for r in top2_ev if r['name'] not in user_forced_set]
+    # Forward cost estimation — use current team or fast-optimised proxy
+    proxy = current_team or fast_optimize(
+        candidates, probabilities, all_riders, force_in, force_out, budget, seed=0
+    )
+    cost_n1, cost_n2, n_tr_n1, n_tr_n2, team_n1, team_n2 = estimate_forward_costs(
+        proxy or [], candidates, all_riders,
+        probs_n1, probs_n2, force_in, force_out, budget
+    )
 
     strategies = [
-        # 0 — unconstrained EV optimum
-        {'name': 'ev-maximal',       'seed': 42,   'objective': 'ev',
-         'riders': all_riders,
-         'force_in':  list(user_forced_set),
-         'force_out': list(user_excluded),
-         'budget': budget},
-        # 1 — EV optimum, different starting point
-        {'name': 'ev-maximal-v2',    'seed': 123,  'objective': 'ev',
-         'riders': all_riders,
-         'force_in':  list(user_forced_set),
-         'force_out': list(user_excluded),
-         'budget': budget},
-        # 2 — EV optimum, third seed — SA finds team-bonus pairs naturally
-        {'name': 'team-bonus',       'seed': 777,  'objective': 'ev',
-         'riders': all_riders,
-         'force_in':  list(user_forced_set),
-         'force_out': list(user_excluded),
-         'budget': budget},
-        # 3 — depth-weighted objective: maximise expected riders in top-15
-        {'name': 'depth-maximiser',  'seed': 2026, 'objective': 'depth',
-         'riders': all_riders,
-         'force_in':  list(user_forced_set),
-         'force_out': list(user_excluded),
-         'budget': budget},
-        # 4 — budget war chest: spend only 88% to preserve transfers
-        {'name': 'budget-war-chest', 'seed': 99,   'objective': 'ev',
-         'riders': all_riders,
-         'force_in':  list(user_forced_set),
-         'force_out': list(user_excluded),
-         'budget': int(budget * 0.88)},
-        # 5 — no-favourite: exclude highest win-probability rider
-        {'name': 'no-favourite',     'seed': 314,  'objective': 'ev',
-         'riders': all_riders,
-         'force_in':  list(user_forced_set),
-         'force_out': list(user_excluded) + ([top_win_rider] if top_win_rider else []),
-         'budget': budget},
-        # 6 — GC bridge: force in best climbing specialist
-        {'name': 'gc-bridge',        'seed': 555,  'objective': 'ev',
-         'riders': all_riders,
-         'force_in':  list(user_forced_set) + ([gc_anchor] if gc_anchor else []),
-         'force_out': list(user_excluded),
-         'budget': budget},
-        # 7 — sprint-only: exclude low-odds climbers and TTT specialists
-        {'name': 'sprint-only',      'seed': 888,  'objective': 'ev',
-         'riders': all_riders,
-         'force_in':  list(user_forced_set),
-         'force_out': non_sprint_excl,
-         'budget': budget},
-        # 8 — high-price-anchor: force top-2 EV riders, fill around them
-        {'name': 'high-price-anchor','seed': 999,  'objective': 'ev',
-         'riders': all_riders,
-         'force_in':  list(user_forced_set) + top2_ev_names,
-         'force_out': list(user_excluded),
-         'budget': budget},
-        # 9 — random-explore: unconstrained, fresh seed for diversity
-        {'name': 'random-explore',   'seed': 1337, 'objective': 'ev',
-         'riders': all_riders,
-         'force_in':  list(user_forced_set),
-         'force_out': list(user_excluded),
-         'budget': budget},
+        {
+            'name': 'optimal', 'label': 'Optimal',
+            'description': 'Maximise stage EV — best team for today',
+            'seed': 42, 'objective': 'ev', 'max_budget': budget,
+            'n_iter': 200_000, 'max_seconds': 5,
+        },
+        {
+            'name': 'depth', 'label': 'Depth maximiser',
+            'description': 'Maximise riders in top 15 — targets non-linear depth bonus',
+            'seed': 123, 'objective': 'depth', 'max_budget': budget,
+            'n_iter': 200_000, 'max_seconds': 5,
+        },
+        {
+            'name': 'low-transfer', 'label': 'Low transfer cost',
+            'description': f'Minimise transfers needed for stage n+1 ({n_tr_n1} expected from optimal)',
+            'seed': 777, 'objective': 'low_transfer', 'max_budget': budget,
+            'n_iter': 200_000, 'max_seconds': 5,
+        },
+        {
+            'name': 'lookahead', 'label': 'Two-stage lookahead',
+            'description': f'EV minus transfer costs n+1 ({n_tr_n1}) and n+2 ({n_tr_n2})',
+            'seed': 2026, 'objective': 'lookahead', 'max_budget': budget,
+            'n_iter': 200_000, 'max_seconds': 5,
+        },
     ]
 
-    raw_results = []
-    for si, strat in enumerate(strategies):
-        team, ev = simulated_annealing(
-            strat['riders'], probs, strat['force_in'], strat['force_out'],
-            budget=strat['budget'], n_iter=200_000, seed=strat['seed'],
-            max_seconds=3, objective=strat['objective'], verbose=(si == 0),
+    results = []
+    for strategy in strategies:
+        team, _ = simulated_annealing(
+            candidates, probabilities, force_in, force_out,
+            budget=strategy['max_budget'],
+            n_iter=strategy['n_iter'],
+            max_seconds=strategy['max_seconds'],
+            seed=strategy['seed'],
+            objective=strategy['objective'],
+            verbose=(strategy['name'] == 'optimal'),
+            cost_n1=cost_n1,
+            cost_n2=cost_n2,
+            team_n1=team_n1,
+            team_n2=team_n2,
         )
-        if team is not None:
-            raw_results.append((ev, team, strat['name']))
-
-    if not raw_results:
-        return []
-
-    # Filter degenerate solutions: drop teams below 50% of best analytical EV
-    max_ev = max(ev for ev, _, _ in raw_results)
-    raw_results = [(ev, team, name) for ev, team, name in raw_results
-                   if ev > 0.5 * max_ev]
-
-    # Deduplicate: discard any team sharing >4 riders with a higher-EV team
-    raw_results.sort(key=lambda x: x[0], reverse=True)
-    distinct = []
-    for ev, team, name in raw_results:
-        names = {r['name'] for r in team}
-        if not any(len(names & {r['name'] for r in t}) > 4 for _, t, _ in distinct):
-            distinct.append((ev, team, name))
-
-    # Run full Monte Carlo on each distinct team
-    candidates = []
-    for _, team, strat_name in distinct[:5]:
-        total_price = sum(r.get('price', 0) for r in team)
-        assert total_price <= budget, (
-            f"Budget violation: team costs {total_price:,} > budget {budget:,} "
-            f"(riders: {[r['name'] for r in team]})"
-        )
-        cap = select_captain(team, probs)
-        sim = simulate_stage(team, probs, cap['name'], all_riders=full_roster,
+        if team is None:
+            continue
+        team = topup_team(team, candidates, probabilities, all_riders, strategy['max_budget'])
+        captain = select_captain(team, probabilities)
+        sim = simulate_stage(team, probabilities, captain['name'],
+                             all_riders=all_riders,
                              stage_config=stage_config, scoring=scoring)
-        lbl = label_team(team, probs, budget)
-        candidates.append({
-            'label':            lbl,
-            'riders':           team,
-            'total_price':      total_price,
-            'ev_estimate':      int(sim['mean']),
-            'ev_breakdown':     sim['breakdown'],
-            'cdf':              sim['cdf'],
-            'forward_pressure': estimate_forward_pressure(team),
-            'rationale':        generate_rationale(team, probs, lbl),
-            'captain':          cap,
+
+        actual_cost_n1 = compute_transfer_cost(team, team_n1 or []) if team_n1 else 0
+        actual_cost_n2 = compute_transfer_cost(team_n1 or [], team_n2 or []) if team_n1 and team_n2 else 0
+        actual_n_tr_n1 = len([r for r in (team_n1 or [])
+                               if r['name'] not in {x['name'] for x in team}])
+        actual_n_tr_n2 = len([r for r in (team_n2 or [])
+                               if r['name'] not in {x['name'] for x in (team_n1 or [])}])
+
+        results.append({
+            'label':       strategy['label'],
+            'strategy':    strategy['name'],
+            'description': strategy['description'],
+            'riders':      team,
+            'total_price': sum(r.get('price', 0) for r in team),
+            'ev_estimate': int(sim['mean']),
+            'ev_breakdown': sim['breakdown'],
+            'cdf':         sim['cdf'],
+            'captain':     captain,
+            'forward': {
+                'transfers_n1': actual_n_tr_n1,
+                'cost_n1':      int(actual_cost_n1),
+                'transfers_n2': actual_n_tr_n2,
+                'cost_n2':      int(actual_cost_n2),
+                'total_forward_cost': int(actual_cost_n1 + actual_cost_n2 * LOOKAHEAD_DISCOUNT),
+            },
+            'rationale': strategy['description'],
         })
 
-    return sorted(candidates, key=lambda x: x['ev_estimate'], reverse=True)
+    return results  # always return all four
 
 
 # ── Captain selection ─────────────────────────────────────────────────────────

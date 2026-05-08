@@ -351,13 +351,12 @@ def run_optimizer_py():
     if not HAS_OPTIMIZER:
         return jsonify({'status': 'error', 'message': 'optimizer.py not importable (numpy missing?)'}), 500
 
-    data       = request.json or {}
-    stage      = data.get('stage', 1)
-    sliders    = data.get('sliders', {})
-    force_in   = data.get('force_in', [])
-    force_out  = data.get('force_out', [])
+    data      = request.json or {}
+    stage     = data.get('stage', 1)
+    sliders   = data.get('sliders', {})
+    force_in  = data.get('force_in', [])
+    force_out = data.get('force_out', [])
 
-    # Load data files
     odds_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
     if os.path.exists(odds_path):
         raw_odds = json.load(open(odds_path))
@@ -371,85 +370,71 @@ def run_optimizer_py():
     intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
     intel_data = json.load(open(intel_path)) if os.path.exists(intel_path) else {}
 
-    # Read actual budget from Holdet snapshot; fall back to 50M
     snapshot_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_holdet.json')
     snapshot = json.load(open(snapshot_path)) if os.path.exists(snapshot_path) else {}
     budget = int(snapshot.get('bank_balance', 50_000_000))
+    current_team_names = set(snapshot.get('team_composition', []))
+    current_team = [r for r in active_riders if r['name'] in current_team_names]
+
     app.logger.info(f"run-optimizer-py stage={stage} budget={budget:,}")
     _log(f"run-optimizer-py stage={stage} budget={budget:,}")
 
     try:
-        # Load stage scoring config
-        scoring      = _load_stage_scoring()
-        stage_config = scoring.get('stages', {}).get(str(stage), {})
-        sprint_type  = stage_config.get('sprint_type', 'A')
-        app.logger.info(
-            f"run-optimizer-py stage={stage} sprint_type={sprint_type} "
-            f"n_inter={stage_config.get('n_intermediate_sprints','?')} "
-            f"climbs={len(stage_config.get('climbs',[]))}"
+        from optimizer import (build_probabilities, build_forward_probabilities,
+                               generate_candidate_teams, load_stage_scoring, get_stage_config,
+                               select_captain)
+
+        scoring      = load_stage_scoring()
+        stage_config = get_stage_config(stage, scoring)
+
+        # Current stage: real odds + intel
+        probs_current = build_probabilities(
+            active_riders, odds, intel_data, sliders.get('n1', {}),
+            stage_config=stage_config, scoring=scoring
         )
 
-        # Build probability distributions (annotates with sprint/jersey/gc/kom EVs)
-        probs = build_probabilities(active_riders, odds, intel_data, sliders,
-                                    stage_config=stage_config, scoring=scoring)
+        # Forward stages: slider-based inference only (no odds)
+        probs_n1 = build_forward_probabilities(active_riders, sliders.get('n2', {}))
+        probs_n2 = build_forward_probabilities(active_riders, sliders.get('n3', {}))
 
-        # Generate candidate teams using actual budget
-        candidates = generate_candidate_teams(active_riders, probs, force_in, force_out,
-                                              budget=budget, stage_config=stage_config,
-                                              scoring=scoring)
+        teams = generate_candidate_teams(
+            active_riders, probs_current,
+            probs_n1, probs_n2,
+            force_in, force_out, budget,
+            stage_config, scoring, active_riders,
+            current_team=current_team if current_team else None,
+        )
 
-        if not candidates:
+        if not teams:
             return jsonify({'status': 'error', 'message': 'No valid teams found — check budget/constraints'}), 500
 
-        # Simulate each team and build output
-        teams_out = []
-        for cand in candidates:
-            team_riders = cand['riders']
-            cap         = select_captain(team_riders, probs)
-            sim         = simulate_stage(team_riders, probs, cap['name'],
-                                         all_riders=active_riders,
-                                         stage_config=stage_config, scoring=scoring)
-
-            total_price = sum(r['price'] for r in team_riders)
-            teams_out.append({
-                'label':            cand['label'],
-                'riders':           [r['name'] for r in team_riders],
-                'total_price':      total_price,
-                'ev_estimate':      int(sim['mean']),
-                'ev_breakdown':     sim['breakdown'],
-                'cdf':              sim['cdf'],
-                'forward_pressure': cand['forward_pressure'],
-                'rationale':        cand['rationale'],
-            })
-
-        # Sort by EV descending
-        teams_out.sort(key=lambda t: t['ev_estimate'], reverse=True)
-
-        # Overall best captain (from highest-EV team)
-        best_team_riders = candidates[0]['riders']
-        overall_captain  = select_captain(best_team_riders, probs)
-
-        result = {
-            'teams':        teams_out,
-            'captain':      overall_captain,
-            'tier_a':       [t['riders'][0] for t in teams_out[:2]],
-            'budget':       budget,
-            'stage_config': stage_config,
+        output = {
+            'teams': [{
+                **t,
+                'riders': [{'name': r['name'], 'team': r.get('team', ''),
+                             'price': r['price'], 'type': r.get('type', '')}
+                           for r in t['riders']],
+            } for t in teams],
+            'captain': teams[0]['captain'] if teams else {},
+            'budget':  budget,
+            'stage':   stage,
         }
 
         out_path = os.path.join(BASE_DIR, 'claude', 'output', f'stage_{stage}_claude_py.json')
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
         with open(out_path, 'w') as f:
-            json.dump(result, f, indent=2, ensure_ascii=False)
+            json.dump(output, f, indent=2, ensure_ascii=False)
         meta_path = os.path.join(BASE_DIR, 'claude', 'output', f'stage_{stage}_last_optimizer.json')
         with open(meta_path, 'w') as f:
             json.dump({'last': 'py'}, f)
 
-        _log(f"run-optimizer-py stage={stage} teams={len(teams_out)}")
-        return jsonify(result)
+        _log(f"run-optimizer-py stage={stage} teams={len(teams)}")
+        return jsonify(output)
 
     except Exception as e:
         _log(f"run-optimizer-py error: {e}")
+        import traceback
+        app.logger.error(traceback.format_exc())
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
