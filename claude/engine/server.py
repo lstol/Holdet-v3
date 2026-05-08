@@ -758,62 +758,46 @@ def gather_intel():
     stage = request.json.get('stage', '?')
     raw = ''
     try:
-        client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+        # Step 1: scrape all three sources with Playwright (zero API tokens)
+        app.logger.info(f"Scraping intel for Stage {stage}...")
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from scraper import scrape_all_intel
+        raw_sources = scrape_all_intel(int(stage))
+        app.logger.info(
+            f"TV2: {len(raw_sources['tv2'])} chars | "
+            f"Feltet: {len(raw_sources['feltet'])} chars | "
+            f"Inner Ring: {len(raw_sources['inner_ring'])} chars"
+        )
+        _log(f"gather-intel stage={stage} scraped tv2={len(raw_sources['tv2'])} feltet={len(raw_sources['feltet'])} inrng={len(raw_sources['inner_ring'])}")
 
-        # Load sources from yaml, sorted by weight descending
+        # Step 2: structure with single Haiku call (no web_search tool)
         sources = yaml.safe_load(open(EXPERT_SOURCES))['sources']
-        sources_sorted = sorted(sources, key=lambda x: x['weight'], reverse=True)
+        source_weights = {s['name']: s['weight'] for s in sources}
 
-        source_instructions = '\n'.join([
-            f"{i+1}. {s['name']} (weight {s['weight']}): "
-            f"Search \"{s['name'].split('/')[0].strip()} Giro 2026 stage {stage}\" "
-            f"and read whatever you find from this source."
-            for i, s in enumerate(sources_sorted)
-        ])
-
-        # Step 1 — gather raw intel via web search, one query per source
-        search_message = call_with_retry(lambda: client.messages.create(
-            model='claude-sonnet-4-6',
-            max_tokens=3000,
-            tools=[{'type': 'web_search_20250305', 'name': 'web_search'}],
-            messages=[{'role': 'user', 'content': f"""Search for Stage {stage} Giro d'Italia 2026 expert analysis.
-
-You MUST search for each of these sources separately and in order:
-{source_instructions}
-
-Special instructions:
-- Emil Axelgaard / TV2: search in Danish. URL pattern: sport.tv2.dk/cykling/YYYY-MM-DD-axelgaards-optakt-til-{stage}-etape-af-giro-ditalia. Read and summarize in English.
-- The Inner Ring: search "inrng.com giro 2026 stage {stage}"
-- VeloNews: search "velonews.com giro 2026 stage {stage} preview"
-- CyclingNews: search "cyclingnews.com giro 2026 stage {stage} preview"
-- ProCyclingStats: search "procyclingstats giro 2026 stage {stage}"
-- FirstCycling: search "firstcycling giro 2026 stage {stage}"
-
-For each source found, note which source it came from.
-If a source is unavailable or paywalled, note it as "not found" and continue.
-Collect ALL rider mentions, team tactics, weather, and finish analysis from ALL sources.
-Return detailed prose — do not summarize yet, collect everything."""}],
-        ))
-        raw_intel = ' '.join(b.text for b in search_message.content if b.type == 'text')
-        _log(f"gather-intel stage={stage} raw_intel={raw_intel[:300]}")
-
-        sources_list_str = ', '.join([f"{s['name']} ({s['weight']})" for s in sources_sorted])
-
-        # Step 2 — structure into JSON (Haiku: small input, no search tool)
+        client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
         structure_message = call_with_retry(lambda: client.messages.create(
             model='claude-haiku-4-5-20251001',
             max_tokens=4000,
-            messages=[{'role': 'user', 'content': f"""Convert this raw cycling analysis into structured JSON.
+            messages=[{'role': 'user', 'content': f"""Structure this cycling expert analysis for Stage {stage} Giro d'Italia 2026 into JSON.
 
-Sources searched (by weight): {sources_list_str}
+SOURCE WEIGHTS:
+- TV2/Axelgaard: {source_weights.get('Emil Axelgaard / TV2 Sport', 1.5)} (highest priority, content in Danish)
+- Feltet.dk: {source_weights.get('Feltet.dk', 1.3)}
+- Inner Ring: {source_weights.get('Inner Ring', 1.2)}
 
-Raw analysis:
-{raw_intel}
+TV2/AXELGAARD (Danish — summarise in English):
+{raw_sources['tv2'][:3000]}
+
+FELTET.DK:
+{raw_sources['feltet'][:3000]}
+
+INNER RING:
+{raw_sources['inner_ring'][:3000]}
 
 Return ONLY this JSON, no markdown:
 {{
-  "sources_consulted": ["source name", ...],
-  "sources_not_found": ["source name", ...],
+  "sources_consulted": ["TV2/Axelgaard", "Feltet.dk", "Inner Ring"],
+  "sources_not_found": [],
   "source_ratings": [
     {{
       "source": "TV2/Axelgaard",
@@ -828,22 +812,23 @@ Return ONLY this JSON, no markdown:
     {{"rider": "Name", "signal": "what was said", "direction": "up/down/neutral", "strength": "strong/moderate/weak"}}
   ],
   "weather": "weather summary",
-  "stage_notes": "tactical notes",
+  "stage_notes": "key tactical notes",
   "summary": "two sentence summary"
 }}
 
+direction: up = favoured beyond raw odds, down = risk not in odds, neutral = in line with odds.
+strength: strong / moderate / weak.
 Include every rider mentioned by any source.
-Attribute star ratings per source — if a source did not mention a rider, omit them from that source's ratings.
-Star scale: favourite=5, strong contender=4, contender=3, outside chance=2, mention only=1.
-direction: up = favoured beyond raw odds, down = risk not in odds, neutral = in line with odds."""}],
+TV2/Axelgaard content is in Danish — translate and summarise in English."""}]
         ))
         raw = structure_message.content[0].text.strip()
-        _log(f"gather-intel stage={stage} structured={raw[:200]}")
         if raw.startswith('```'):
             raw = re.sub(r'^```[a-z]*\n?', '', raw)
             raw = re.sub(r'\n?```$', '', raw)
             raw = raw.strip()
         result = json.loads(raw)
+        result['gathered_at'] = _dt.now().isoformat()
+        result['stage'] = stage
         intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
         with open(intel_path, 'w') as f:
             json.dump({'stage': stage, 'intel': result,
@@ -852,7 +837,7 @@ direction: up = favoured beyond raw odds, down = risk not in odds, neutral = in 
         result['_gathered_at'] = _dt.now().isoformat()
         return jsonify(result)
     except json.JSONDecodeError as e:
-        _log(f"gather-intel JSON error: {e}")
+        _log(f"gather-intel JSON error: {e} | raw: {raw[:200]}")
         return jsonify({'status': 'error', 'message': str(e), 'raw': raw}), 500
     except Exception as e:
         _log(f"gather-intel error: {e}")
