@@ -217,6 +217,7 @@ input[type=range]::-webkit-slider-thumb {
 .parse-ok  { color: var(--color-success); }
 .parse-err { color: var(--color-warning); }
 #odds-table-wrap { overflow-x: auto; max-height: 320px; overflow-y: auto; }
+#odds-paste-zone:focus { outline: none; border-color: var(--color-border-primary); color: var(--color-text-secondary); }
 #odds-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 #odds-table th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-3); padding: 4px 6px; text-align: left; border-bottom: 1px solid var(--color-border); }
 #odds-table td { padding: 4px 6px; border-bottom: 1px solid rgba(43,48,88,.5); vertical-align: middle; }
@@ -438,7 +439,13 @@ input[type=range]::-webkit-slider-thumb {
         <div class="intel-panel-title">
           <span>Bookmaker odds</span>
         </div>
-        <div id="odds-parse-status" style="font-size:10px;color:var(--color-text-3);margin-bottom:6px;min-height:14px;">📷 Screenshot Oddschecker → Cmd+V here to load odds</div>
+        <div id="odds-paste-zone"
+             tabindex="0"
+             style="border:1px dashed var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-tertiary);cursor:pointer;margin-bottom:8px;text-align:center;"
+             onclick="this.focus()">
+          📷 Click here, then Cmd+V to paste Oddschecker screenshot
+        </div>
+        <div id="odds-parse-status" style="font-size:10px;color:var(--color-text-3);margin-bottom:6px;min-height:14px;"></div>
         <div id="odds-table-wrap">
           <table id="odds-table">
             <thead>
@@ -849,8 +856,9 @@ async function loadSavedOdds() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  const panel = document.getElementById('odds-panel');
+  const panel = document.getElementById('odds-paste-zone');
   if (!panel) return;
+  panel.addEventListener('click', function() { this.focus(); });
   panel.addEventListener('paste', async function(e) {
     const items = e.clipboardData.items;
     for (const item of items) {
