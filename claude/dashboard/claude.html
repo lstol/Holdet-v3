@@ -2083,10 +2083,10 @@ async function refreshData() {
 /* ── Data loading ────────────────────────────────────────────────────── */
 async function loadRiders() {
   try {
-    const res = await fetch(`${SERVER}/riders?stage=${targetStage}`);
-    if (!res.ok) throw new Error('no riders');
+    const res = await fetch(`${SERVER}/snapshot`);
+    if (!res.ok) throw new Error('no snapshot');
     const data = await res.json();
-    console.log('[loadRiders] raw response:', data.source, 'riders:', (data.riders||[]).length);
+    console.log('[loadRiders] source: snapshot, riders:', (data.riders||[]).length);
     S.riders = (data.riders || []).map(r => ({ ...r, _type: deriveType(r) }));
     console.log('[loadRiders] S.riders set:', S.riders.length, 'first:', S.riders[0]?.name, S.riders[0]?._type);
     S.dataTimestamp = data.timestamp || null;
