@@ -2038,6 +2038,13 @@ function renderOptimizerOutput(data) {
   // Ingemann leftmost
   if (window.INGEMANN_DATA) {
     html += buildCard(window.INGEMANN_DATA, 0, true);
+  } else {
+    html += `<div class="team-card" style="border:1px dashed var(--color-border);opacity:.5;min-width:200px;">
+      <div class="tc-head"><div class="tc-label">Ingemann's Benchmark</div><div class="tc-ev">—</div></div>
+      <div style="padding:20px 12px;text-align:center;font-size:12px;color:var(--color-text-2);">
+        Click <strong>Ingemann</strong> to load expert pick
+      </div>
+    </div>`;
   }
 
   // Optimizer teams (preserve strategy order)

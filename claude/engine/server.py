@@ -922,9 +922,34 @@ def score_ingemann():
         stage_config = get_stage_config(stage, scoring)
         probs = build_probabilities(active, odds, intel, {}, stage_config=stage_config, scoring=scoring)
 
+        def match_rider_name(query: str, roster: list) -> dict | None:
+            q = query.strip()
+            # 1. Exact match (case-insensitive)
+            exact = next((r for r in roster if r['name'].lower() == q.lower()), None)
+            if exact:
+                return exact
+            # 2. Initial+lastname: "J. Milan" → first token is "X." initial, rest is last name
+            parts = q.split()
+            if len(parts) >= 2 and len(parts[0]) <= 3 and parts[0].endswith('.'):
+                initial = parts[0][0].lower()
+                lastname = ' '.join(parts[1:]).lower()
+                candidates = [
+                    r for r in roster
+                    if r['name'].lower().endswith(lastname)
+                    and r['name'].split()[0][0].lower() == initial
+                ]
+                if len(candidates) == 1:
+                    return candidates[0]
+            # 3. Lastname-only fallback
+            lastname_q = q.lower()
+            candidates = [r for r in roster if r['name'].lower().split()[-1] == lastname_q]
+            if len(candidates) == 1:
+                return candidates[0]
+            return None
+
         team = []
         for name in rider_names:
-            match = next((r for r in active if r['name'].lower() == name.lower()), None)
+            match = match_rider_name(name, active)
             if match:
                 team.append(match)
 

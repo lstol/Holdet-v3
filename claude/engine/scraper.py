@@ -198,12 +198,22 @@ async def fetch_feltet_ingemann_team(stage: int) -> str:
             return f'[Feltet Ingemann: Stage {stage} team not found]'
 
         await page.goto(article_url, wait_until='load', timeout=30000)
+
+        # Log full body text so we can see page structure in server log
+        body_text = await page.inner_text('body')
+        print(f"[fetch_feltet_ingemann_team] article_url={article_url}")
+        print(f"[fetch_feltet_ingemann_team] BODY TEXT ({len(body_text)} chars):\n{body_text[:3000]}")
+
         content = ''
-        for selector in ['article', '.article-body', '.content', 'main']:
+        for selector in ['article', '.article-body', '.entry-content', '.post-content',
+                         '.article-content', '.content-body', '.content', 'main', 'body']:
             el = await page.query_selector(selector)
             if el:
-                content = await el.inner_text()
-                break
+                text = await el.inner_text()
+                if text and len(text.strip()) > 50:
+                    content = text
+                    print(f"[fetch_feltet_ingemann_team] matched selector: {selector!r} ({len(text)} chars)")
+                    break
 
         await browser.close()
         return content.strip() or f'[Feltet Ingemann: Could not extract content from {article_url}]'
