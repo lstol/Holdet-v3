@@ -464,11 +464,11 @@ input[type=range]::-webkit-slider-thumb {
       <div class="race-label">Holdet v3 · Giro d'Italia 2026</div>
       <div style="display:flex;align-items:center;gap:6px;margin:3px 0;">
         <span style="font-size:11px;font-weight:600;color:var(--color-text);">Next stage</span>
-        <input id="target-stage-select" type="number" min="1" max="21"
-               onchange="setTargetStage(parseInt(this.value))"
-               style="font-size:13px;font-weight:600;padding:3px 8px;width:60px;
-                      border-radius:var(--radius-md);text-align:center;
-                      background:#2a3050;border:1px solid #4a5490;color:#ffffff;">
+        <select id="target-stage-select" onchange="setTargetStage(parseInt(this.value))"
+                style="font-size:13px;font-weight:600;padding:4px 10px;
+                       border-radius:var(--radius-md);cursor:pointer;
+                       background:#2a3050;border:1px solid #4a5490;color:#ffffff;">
+        </select>
       </div>
       <div class="stage-meta" id="h-stage-meta">—</div>
     </div>
@@ -743,6 +743,16 @@ window.INGEMANN_DATA = null;
 window.OPTIMIZER_DATA = null;
 
 function initStageSelect() {
+  const sel = $('target-stage-select');
+
+  // Populate options first — required before setting .value
+  for (let i = 1; i <= 21; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `Stage ${i}`;
+    sel.appendChild(opt);
+  }
+
   const saved = parseInt(localStorage.getItem('holdet_target_stage'));
   if (saved >= 1 && saved <= 21) {
     targetStage = saved;
@@ -751,7 +761,7 @@ function initStageSelect() {
     targetStage = nextIdx >= 0 ? nextIdx + 1 : 21;
   }
 
-  $('target-stage-select').value = targetStage;
+  sel.value = targetStage;
   S.activeStageIndex = Math.max(0, targetStage - 1);
   S.carouselOffset   = Math.max(0, S.activeStageIndex - 1);
   renderCarousel();
