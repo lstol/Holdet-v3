@@ -465,8 +465,9 @@ input[type=range]::-webkit-slider-thumb {
       <div style="display:flex;align-items:center;gap:6px;margin:3px 0;">
         <span style="font-size:11px;font-weight:600;color:var(--color-text);">Next stage</span>
         <select id="target-stage-select" onchange="setTargetStage(parseInt(this.value))"
-                style="font-size:13px;font-weight:600;padding:4px 10px;
+                style="font-size:13px;font-weight:600;padding:4px 28px 4px 10px;
                        border-radius:var(--radius-md);cursor:pointer;
+                       appearance:auto;-webkit-appearance:menulist;
                        background:#2a3050;border:1px solid #4a5490;color:#ffffff;">
         </select>
       </div>
