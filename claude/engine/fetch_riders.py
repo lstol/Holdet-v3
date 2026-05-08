@@ -300,7 +300,7 @@ def write_stage_snapshot(enriched_data: dict, dry_run: bool = False) -> None:
 # ---------------------------------------------------------------------------
 
 def fetch_team_state(cartridge: str, fantasy_team_id: str, cookie: str, dry_run: bool = False) -> None:
-    url = f"{BASE_URL}/da/{cartridge}/me/fantasyteams/{fantasy_team_id}"
+    url = f"https://holdet.dk/da/{cartridge}/me/fantasyteams/{fantasy_team_id}"
     print(f"\nFetching team page: {url}")
     resp = requests.get(url, headers={"Cookie": cookie}, timeout=20)
     if resp.status_code in (401, 403):
@@ -380,7 +380,9 @@ def fetch_team_as_dict(cartridge: str, fantasy_team_id: str, cookie: str) -> dic
     captain holdet_id, player_rank, player_points as a plain dict.
     Falls back gracefully if the page structure has changed.
     """
-    url = f"{BASE_URL}/da/{cartridge}/me/fantasyteams/{fantasy_team_id}"
+    # HTML page lives on holdet.dk (not the API backend)
+    HOLDET_WEB = "https://holdet.dk"
+    url = f"{HOLDET_WEB}/da/{cartridge}/me/fantasyteams/{fantasy_team_id}"
     print(f"\n[fetch_team_as_dict] Fetching: {url}")
     result = {
         'bank_balance': None,
@@ -442,7 +444,11 @@ def fetch_team_as_dict(cartridge: str, fantasy_team_id: str, cookie: str) -> dic
         break
 
     if not result['team_composition']:
-        print("  [fetch_team_as_dict] No team data found — Next.js payload structure may have changed")
+        print("  [fetch_team_as_dict] No team data found.")
+        print(f"  URL fetched: {url}")
+        print(f"  HTTP status: {resp.status_code}")
+        print(f"  Response preview: {html[:500]!r}")
+        print("  Hint: check that HOLDET_COOKIE is valid and the URL resolves to your team page")
 
     return result
 
