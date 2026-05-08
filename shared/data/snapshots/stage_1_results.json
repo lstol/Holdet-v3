@@ -1,0 +1,100 @@
+{
+  "rider_results": [
+    {
+      "name": "Paul Magnier",
+      "finish": "—",
+      "stage_pts": 575000,
+      "sprint_pts": 0,
+      "jersey_bonus": 0,
+      "gc_bonus": 0,
+      "team_bonus": 0,
+      "captain_bonus": 0,
+      "total": 575000
+    },
+    {
+      "name": "Jonathan Milan",
+      "finish": "—",
+      "stage_pts": 229000,
+      "sprint_pts": 0,
+      "jersey_bonus": 0,
+      "gc_bonus": 0,
+      "team_bonus": 0,
+      "captain_bonus": 229000,
+      "total": 458000
+    },
+    {
+      "name": "Tobias Lund Andresen",
+      "finish": "—",
+      "stage_pts": 375000,
+      "sprint_pts": 0,
+      "jersey_bonus": 0,
+      "gc_bonus": 0,
+      "team_bonus": 0,
+      "captain_bonus": 0,
+      "total": 375000
+    },
+    {
+      "name": "Dries van Gestel",
+      "finish": "—",
+      "stage_pts": 158000,
+      "sprint_pts": 0,
+      "jersey_bonus": 0,
+      "gc_bonus": 0,
+      "team_bonus": 0,
+      "captain_bonus": 0,
+      "total": 158000
+    },
+    {
+      "name": "Giovanni Lonardi",
+      "finish": "—",
+      "stage_pts": 156000,
+      "sprint_pts": 0,
+      "jersey_bonus": 0,
+      "gc_bonus": 0,
+      "team_bonus": 0,
+      "captain_bonus": 0,
+      "total": 156000
+    },
+    {
+      "name": "Amanuel Ghebreigzabhier",
+      "finish": "—",
+      "stage_pts": 0,
+      "sprint_pts": 0,
+      "jersey_bonus": 0,
+      "gc_bonus": 0,
+      "team_bonus": 0,
+      "captain_bonus": 0,
+      "total": 0
+    },
+    {
+      "name": "Erlend Blikra",
+      "finish": "—",
+      "stage_pts": 0,
+      "sprint_pts": 0,
+      "jersey_bonus": 0,
+      "gc_bonus": 0,
+      "team_bonus": 0,
+      "captain_bonus": 0,
+      "total": 0
+    },
+    {
+      "name": "Matteo Malucelli",
+      "finish": "—",
+      "stage_pts": 0,
+      "sprint_pts": 0,
+      "jersey_bonus": 0,
+      "gc_bonus": 0,
+      "team_bonus": 0,
+      "captain_bonus": 0,
+      "total": 0
+    }
+  ],
+  "bank_balance": 51787000,
+  "stage_total": 1787000,
+  "player_rank": null,
+  "captain_name": "Jonathan Milan",
+  "depth_bonus": 65000,
+  "captain_bonus": 229000,
+  "riders_in_top15": 0,
+  "scored": true
+}
