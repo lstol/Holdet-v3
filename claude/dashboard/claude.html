@@ -218,7 +218,8 @@ input[type=range]::-webkit-slider-thumb {
 #odds-parse-status { font-size: 10px; margin-bottom: 6px; min-height: 14px; }
 .parse-ok  { color: var(--color-success); }
 .parse-err { color: var(--color-warning); }
-#odds-table-wrap { overflow-x: auto; max-height: 320px; overflow-y: auto; }
+#odds-table-wrap { overflow-x: auto; max-height: 220px; overflow-y: auto; }
+#intel-display { font-size: 12px; max-height: 220px; overflow-y: auto; }
 #odds-paste-zone:focus { outline: none; border-color: var(--color-border-primary); color: var(--color-text-secondary); }
 #odds-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 #odds-table th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-3); padding: 4px 6px; text-align: left; border-bottom: 1px solid var(--color-border); }
@@ -226,7 +227,6 @@ input[type=range]::-webkit-slider-thumb {
 #odds-table input[type=number] { width: 54px; padding: 3px 6px; text-align: right; }
 
 /* Intel structured display */
-#intel-display { font-size: 12px; }
 .intel-meta { padding: 8px; background: var(--color-surface-2); border-radius: var(--radius-sm); margin-bottom: 8px; }
 .intel-meta-row { display: flex; gap: 6px; margin-bottom: 4px; font-size: 11px; color: var(--color-text-2); line-height: 1.4; }
 .intel-meta-row:last-child { margin-bottom: 0; }
@@ -262,18 +262,6 @@ input[type=range]::-webkit-slider-thumb {
 /* ── Candidates ─────────────────────────────────────────────────── */
 #candidates-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; }
 #candidates-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-#optimizer-output {
-  min-height: 80px;
-  padding: 12px;
-  background: var(--color-surface-2);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 12px; color: var(--color-text-2);
-  white-space: pre-wrap;
-  font-family: var(--font-mono);
-  line-height: 1.6;
-}
-#optimizer-output.placeholder { text-align: center; padding-top: 24px; color: var(--color-text-3); font-family: var(--font-sans); }
 #prompt-copy-area { margin-top: 8px; display: none; }
 #prompt-copy-area textarea { width: 100%; height: 120px; font-size: 11px; padding: 6px; resize: vertical; }
 
@@ -350,20 +338,97 @@ input[type=range]::-webkit-slider-thumb {
 .force-btn.active-in  { border-color: var(--color-success); color: var(--color-success); background: rgba(62,207,142,.1); }
 .force-btn.active-out { border-color: var(--color-danger); color: var(--color-danger); background: rgba(240,77,94,.1); }
 
-/* ── Team card table ────────────────────────────────────────────── */
-.tbadge { display:inline-block; font-size:10px; font-weight:700; padding:1px 6px; border-radius:3px; font-family:var(--font-mono); }
-.tbadge.tA { background:rgba(240,168,50,.15); color:var(--color-warning); }
-.tbadge.tB { background:rgba(123,130,168,.1);  color:var(--color-text-3); }
-.tcard-table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:0; }
-.tcard-table th { text-align:left; padding:2px 5px; font-size:10px; color:var(--color-text-3); font-weight:600; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid var(--color-border); }
-.tcard-table th.num { text-align:right; }
-.tcard-table td { padding:2px 5px; border-bottom:1px solid rgba(43,48,88,.25); line-height:1.4; }
-.tcard-table td.num { text-align:right; font-family:var(--font-mono); }
-.tcard-table tr:last-child td { border-bottom:none; }
-.ev-line { font-size:11px; color:var(--color-text-2); padding:4px 0 2px; border-top:1px solid var(--color-border); font-family:var(--font-mono); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.ev-line .ev-total { color:var(--color-success); font-weight:600; }
-.meta-line { font-size:11px; color:var(--color-text-2); padding:1px 0 2px; font-family:var(--font-mono); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.captain-card { background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:9px 12px; margin-top:4px; }
+/* ── Tier badges (used in both rider table and team cards) ──────── */
+.tbadge { display:inline-block; font-size:10px; font-weight:700; padding:1px 5px; border-radius:3px; font-family:var(--font-mono); letter-spacing:.03em; }
+.tbadge.tA { background:#2a4a80; color:#7ab4f8; }
+.tbadge.tB { background:none; border:1px solid var(--color-border); color:var(--color-text-3); }
+
+/* ── Team cards — horizontal scroll layout ──────────────────────── */
+#optimizer-output {
+  display: flex; flex-direction: row; gap: 10px;
+  overflow-x: auto; overflow-y: visible;
+  padding: 2px 2px 10px;
+  scroll-snap-type: x mandatory;
+  min-height: 80px;
+  /* override old mono/pre styles */
+  white-space: normal; font-family: var(--font-sans); font-size: 13px;
+  color: var(--color-text); background: none; border: none;
+}
+#optimizer-output.placeholder {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 80px; color: var(--color-text-3);
+  font-family: var(--font-sans); font-size: 12px;
+  border: 1px dashed var(--color-border); border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+}
+.team-card {
+  flex: 0 0 300px; scroll-snap-align: start;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden; cursor: pointer;
+  transition: border-color .15s;
+  display: flex; flex-direction: column;
+}
+.team-card:hover { border-color: var(--color-text-3); }
+.team-card.selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+.tc-head {
+  padding: 8px 10px 6px;
+  border-bottom: 1px solid var(--color-border);
+}
+.tc-label { font-weight: 700; font-size: 12px; color: var(--color-text); }
+.tc-ev { font-size: 13px; font-weight: 600; color: var(--color-success); margin-top: 1px; }
+.tc-price { font-size: 11px; color: var(--color-text-3); font-weight: 400; margin-left: 5px; }
+.tc-riders { padding: 0; }
+.tc-rider-row {
+  display: flex; align-items: center;
+  padding: 3px 10px; gap: 6px;
+  border-bottom: 1px solid rgba(43,48,88,.2);
+  font-size: 12px;
+}
+.tc-rider-row:last-child { border-bottom: none; }
+.tc-rname { flex: 1; font-weight: 500; color: var(--color-text); min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tc-rprice { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-2); white-space: nowrap; }
+.tc-ev-section {
+  padding: 8px 10px 6px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+}
+.tc-ev-title { font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--color-text-3); margin-bottom: 5px; }
+.ev-bar-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 11px; }
+.ev-bar-label { width: 88px; color: var(--color-text-2); flex-shrink: 0; }
+.ev-bar-track { flex: 1; height: 6px; background: rgba(255,255,255,.06); border-radius: 3px; overflow: hidden; }
+.ev-bar-fill { height: 100%; border-radius: 3px; }
+.ev-bar-val { font-family: var(--font-mono); font-size: 11px; color: var(--color-text); width: 36px; text-align: right; flex-shrink: 0; }
+.ev-bar-pct { font-size: 10px; color: var(--color-text-3); width: 28px; text-align: right; flex-shrink: 0; }
+.ev-total-row { display: flex; justify-content: space-between; margin-top: 3px; padding-top: 4px;
+  border-top: 1px solid var(--color-border); font-size: 12px; font-weight: 600; }
+.ev-total-row .ev-total-val { color: var(--color-success); font-family: var(--font-mono); }
+.tc-meta {
+  padding: 6px 10px;
+  border-top: 1px solid var(--color-border);
+  font-size: 11px; color: var(--color-text-3);
+  line-height: 1.5;
+}
+.tc-cdf { font-family: var(--font-mono); color: var(--color-text-2); margin-bottom: 2px; }
+.tc-fwd { color: var(--color-text-3); margin-bottom: 2px; }
+.tc-rationale { font-style: italic; color: var(--color-text-3); font-size: 10px; }
+.tc-depth-note { font-size: 10px; color: var(--color-text-3); margin-top: 3px; border-top: 1px solid rgba(43,48,88,.3); padding-top: 3px; }
+
+/* Captain strip — below scroll, full width */
+#captain-strip {
+  margin-top: 8px; padding: 8px 12px;
+  background: var(--color-surface-2); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 12px; display: none; align-items: baseline; gap: 8px;
+}
+#captain-strip .cap-name { font-weight: 700; color: var(--color-warning); }
+#captain-strip .cap-rationale { color: var(--color-text-2); }
 
 /* ── Misc ────────────────────────────────────────────────────────── */
 .spinner { display: inline-block; animation: spin .7s linear infinite; }
@@ -491,6 +556,11 @@ input[type=range]::-webkit-slider-thumb {
       </div>
       <div id="optimizer-output" class="placeholder">
         Load data and run optimizer to generate candidate teams
+      </div>
+      <div id="captain-strip">
+        <span>⚡ Captain:</span>
+        <span class="cap-name" id="captain-name">—</span>
+        <span class="cap-rationale" id="captain-rationale"></span>
       </div>
       <div id="prompt-copy-area">
         <p style="font-size:11px;color:var(--color-text-2);margin-bottom:4px;">Copy prompt → paste to Claude chat:</p>
@@ -1323,55 +1393,102 @@ async function runPyOptimizer() {
 }
 
 function renderOptimizerOutput(data) {
-  const area = $('optimizer-output');
-  const sorted = [...(data.teams || [])].sort((a, b) => (b.ev_estimate || 0) - (a.ev_estimate || 0));
+  const area        = $('optimizer-output');
+  const strip       = $('captain-strip');
+  const sorted      = [...(data.teams || [])].sort((a, b) => (b.ev_estimate || 0) - (a.ev_estimate || 0));
   const actualBudget = data.budget || 50_000_000;
 
-  function riderRow(name) {
-    const rd  = S.riders.find(x => x.name === name) || {};
-    const odd = S.oddsRows.find(x => x.name === name) || {};
-    const tier = (parseFloat(odd.win) || 0) >= 1 ? 'A' : 'B';
-    const price = rd.price || rd.startPrice || 0;
-    const type  = rd._type || '—';
-    return `<tr>
-      <td style="padding:4px 6px;font-weight:500;">${esc(name)}</td>
-      <td style="padding:4px 6px;font-size:11px;color:var(--color-text-2);">${esc(rd.team || '—')}</td>
-      <td style="padding:4px 6px;text-align:right;font-family:var(--font-mono);">${price ? (price/1e6).toFixed(2)+'M' : '—'}</td>
-      <td style="padding:4px 6px;text-align:center;"><span class="tbadge t${tier}">${tier}</span></td>
-      <td style="padding:4px 6px;font-size:11px;color:var(--color-text-2);">${esc(type)}</td>
-    </tr>`;
-  }
+  const EV_COMPONENTS = [
+    { key: 'stage_finish',  label: 'Stage finish',   color: '#4a90d9' },
+    { key: 'captain_bonus', label: 'Captain bonus',  color: '#f0c040' },
+    { key: 'team_bonus',    label: 'Team bonus',     color: '#5ab55a' },
+    { key: 'depth_bonus',   label: 'Depth bonus¹',   color: '#9b6fd4' },
+    { key: 'gc_bonus',      label: 'GC bonus',       color: '#e08030' },
+  ];
 
   function fmt(v) { return ((v||0)/1000).toFixed(0)+'k'; }
 
-  area.className = '';
-  area.innerHTML = sorted.map((team, i) => {
-    const bd  = team.ev_breakdown || {};
-    const cdf = team.cdf || {};
-    const fp  = team.forward_pressure || {};
-    const evLine = `Stage ${fmt(bd.stage_finish)} · Capt ${fmt(bd.captain_bonus)} · Team ${fmt(bd.team_bonus)} · Depth ${fmt(bd.depth_bonus)}${bd.gc_bonus ? ' · GC '+fmt(bd.gc_bonus) : ''} · <span class="ev-total">Total ${fmt(team.ev_estimate)}</span>`;
-    const metaLine = `CDF p25:${fmt(cdf.p25)} · p50:${fmt(cdf.p50)} · p75:${fmt(cdf.p75)} · p90:${fmt(cdf.p90)} · Fwd n+2:${fp.n2||'—'} · n+3:${fp.n3||'—'}`;
-    return `
-    <div style="border:1px solid var(--color-border);border-radius:var(--radius-md);padding:8px 10px;margin-bottom:6px;">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:5px;border-bottom:1px solid var(--color-border);margin-bottom:4px;">
-        <span style="font-weight:600;font-size:12px;">#${i+1} ${esc(team.label)}</span>
-        <span style="font-size:12px;font-weight:500;color:var(--color-success);">EV ${fmt(team.ev_estimate)} <span style="color:var(--color-text-3);font-weight:400;font-size:11px;">${((team.total_price||0)/1e6).toFixed(2)}M of ${(actualBudget/1e6).toFixed(2)}M</span></span>
-      </div>
-      <table class="tcard-table">
-        <thead><tr>
-          <th>Rider</th><th>Team</th><th class="num">Price</th><th style="text-align:center;">Tier</th><th>Role</th>
-        </tr></thead>
-        <tbody>${(team.riders || []).map(riderRow).join('')}</tbody>
-      </table>
-      <div class="ev-line">${evLine}</div>
-      <div class="meta-line">${metaLine}</div>
-      <div style="font-size:11px;color:var(--color-text-3);font-style:italic;padding-top:1px;">${esc(team.rationale || '')}</div>
+  function riderHtml(name) {
+    const rd   = S.riders.find(x => x.name === name) || {};
+    const odd  = S.oddsRows.find(x => x.name === name) || {};
+    const tier = (parseFloat(odd.win) || 0) >= 1 ? 'A' : 'B';
+    const price = rd.price || rd.startPrice || 0;
+    // Shorten long names to fit 300px card
+    const shortName = name.length > 22 ? name.slice(0, 21) + '…' : name;
+    return `<div class="tc-rider-row">
+      <span class="tc-rname" title="${esc(name)}">${esc(shortName)}</span>
+      <span class="tc-rprice">${price ? (price/1e6).toFixed(2)+'M' : '—'}</span>
+      <span class="tbadge t${tier}">${tier}</span>
     </div>`;
-  }).join('') + (data.captain ? `
-    <div class="captain-card" style="margin-top:4px;">
-      <span style="font-size:12px;font-weight:600;">⚡ Captain: ${esc(data.captain.name || '—')}</span>
-      <span style="font-size:11px;color:var(--color-text-2);margin-left:8px;">${esc(data.captain.rationale || '')}</span>
-    </div>` : '');
+  }
+
+  function evBarsHtml(bd, total) {
+    return EV_COMPONENTS
+      .filter(c => (bd[c.key] || 0) > 0)
+      .map(c => {
+        const val = bd[c.key] || 0;
+        const pct = total > 0 ? Math.round(val / total * 100) : 0;
+        const barW = Math.max(2, pct);
+        return `<div class="ev-bar-row">
+          <span class="ev-bar-label">${c.label}</span>
+          <div class="ev-bar-track"><div class="ev-bar-fill" style="width:${barW}%;background:${c.color};"></div></div>
+          <span class="ev-bar-val">${fmt(val)}</span>
+          <span class="ev-bar-pct">${pct}%</span>
+        </div>`;
+      }).join('');
+  }
+
+  area.className = '';
+  let selectedIdx = 0;
+
+  const cards = sorted.map((team, i) => {
+    const bd   = team.ev_breakdown || {};
+    const cdf  = team.cdf || {};
+    const fp   = team.forward_pressure || {};
+    const total = team.ev_estimate || 1;
+    const priceStr = `${((team.total_price||0)/1e6).toFixed(2)}M of ${(actualBudget/1e6).toFixed(2)}M`;
+
+    return `<div class="team-card${i === 0 ? ' selected' : ''}" data-idx="${i}">
+      <div class="tc-head">
+        <div class="tc-label">#${i+1} ${esc(team.label)}</div>
+        <div class="tc-ev">EV ${fmt(team.ev_estimate)}<span class="tc-price">${priceStr}</span></div>
+      </div>
+      <div class="tc-riders">${(team.riders || []).map(riderHtml).join('')}</div>
+      <div class="tc-ev-section">
+        <div class="tc-ev-title">EV breakdown</div>
+        ${evBarsHtml(bd, total)}
+        <div class="ev-total-row">
+          <span>Total</span>
+          <span class="ev-total-val">${fmt(team.ev_estimate)}</span>
+        </div>
+      </div>
+      <div class="tc-meta">
+        <div class="tc-cdf">p25:${fmt(cdf.p25)} p50:${fmt(cdf.p50)} p75:${fmt(cdf.p75)} p90:${fmt(cdf.p90)}</div>
+        <div class="tc-fwd">Fwd n+2:${fp.n2||'—'} · n+3:${fp.n3||'—'}</div>
+        <div class="tc-rationale">${esc(team.rationale || '')}</div>
+        <div class="tc-depth-note">¹ Non-linear bonus for riders finishing top-15 (0–8 riders: 0/0/20/50/90/140/200/270/350k)</div>
+      </div>
+    </div>`;
+  });
+
+  area.innerHTML = cards.join('');
+
+  // Click to select
+  area.querySelectorAll('.team-card').forEach(card => {
+    card.addEventListener('click', () => {
+      area.querySelectorAll('.team-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+  });
+
+  // Captain strip
+  if (data.captain) {
+    $('captain-name').textContent    = data.captain.name || '—';
+    $('captain-rationale').textContent = data.captain.rationale || '';
+    strip.style.display = 'flex';
+  } else {
+    strip.style.display = 'none';
+  }
 }
 
 function copyPrompt() {
