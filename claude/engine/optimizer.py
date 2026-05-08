@@ -886,16 +886,30 @@ def generate_candidate_teams(candidates, probabilities,
         actual_n_tr_n2 = len([r for r in (team_n2 or [])
                                if r['name'] not in {x['name'] for x in (team_n1 or [])}])
 
+        # Cost and transfers from user's current team → this candidate
+        cur_names = {r['name'] for r in (current_team or [])}
+        transfer_cost = int(compute_transfer_cost(current_team or [], team))
+        n_transfers   = len([r for r in team if r['name'] not in cur_names])
+        ev_net        = int(sim['mean']) - transfer_cost
+
+        # Inject transfer_cost as a negative component into the breakdown
+        breakdown = dict(sim['breakdown'])
+        if transfer_cost > 0:
+            breakdown['transfer_cost'] = -transfer_cost
+
         results.append({
-            'label':       strategy['label'],
-            'strategy':    strategy['name'],
-            'description': strategy['description'],
-            'riders':      team,
-            'total_price': sum(r.get('price', 0) for r in team),
-            'ev_estimate': int(sim['mean']),
-            'ev_breakdown': sim['breakdown'],
-            'cdf':         sim['cdf'],
-            'captain':     captain,
+            'label':         strategy['label'],
+            'strategy':      strategy['name'],
+            'description':   strategy['description'],
+            'riders':        team,
+            'total_price':   sum(r.get('price', 0) for r in team),
+            'ev_estimate':   int(sim['mean']),
+            'ev_net':        ev_net,
+            'ev_breakdown':  breakdown,
+            'transfer_cost': transfer_cost,
+            'n_transfers':   n_transfers,
+            'cdf':           sim['cdf'],
+            'captain':       captain,
             'forward': {
                 'transfers_n1': actual_n_tr_n1,
                 'cost_n1':      int(actual_cost_n1),

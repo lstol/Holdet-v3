@@ -1931,6 +1931,7 @@ function renderOptimizerOutput(data) {
     { key: 'captain_bonus', label: 'Captain bonus',  color: '#f0c040' },
     { key: 'team_bonus',    label: 'Team bonus',     color: '#5ab55a' },
     { key: 'depth_bonus',   label: 'Depth bonus¹',   color: '#9b6fd4' },
+    { key: 'transfer_cost', label: 'Transfer cost',  color: '#e05050' },
   ];
 
   function fmt(v) { return ((v||0)/1000).toFixed(0)+'k'; }
@@ -1951,15 +1952,17 @@ function renderOptimizerOutput(data) {
 
   function evBarsHtml(bd, total) {
     return EV_COMPONENTS
-      .filter(c => (bd[c.key] || 0) > 0)
+      .filter(c => c.key === 'transfer_cost' ? (bd[c.key] || 0) < 0 : (bd[c.key] || 0) > 0)
       .map(c => {
-        const val = bd[c.key] || 0;
-        const pct = total > 0 ? Math.round(val / total * 100) : 0;
+        const raw  = bd[c.key] || 0;
+        const abs  = Math.abs(raw);
+        const pct  = total > 0 ? Math.round(abs / total * 100) : 0;
         const barW = Math.max(2, pct);
+        const valStr = c.key === 'transfer_cost' ? `−${fmt(abs)}` : fmt(raw);
         return `<div class="ev-bar-row">
           <span class="ev-bar-label">${c.label}</span>
           <div class="ev-bar-track"><div class="ev-bar-fill" style="width:${barW}%;background:${c.color};"></div></div>
-          <span class="ev-bar-val">${fmt(val)}</span>
+          <span class="ev-bar-val" style="${c.key==='transfer_cost'?'color:#e05050;':''}">${valStr}</span>
           <span class="ev-bar-pct">${pct}%</span>
         </div>`;
       }).join('');
@@ -2009,10 +2012,19 @@ function renderOptimizerOutput(data) {
       </div>`;
     }).join('');
 
+    const tc   = team.transfer_cost || 0;
+    const nTr  = team.n_transfers  || 0;
+    const netEV = team.ev_net !== undefined ? team.ev_net : team.ev_estimate;
+    const evHtml = tc > 0
+      ? `<span style="color:var(--color-text-2);">${fmt(team.ev_estimate)}</span>`
+        + ` <span style="color:#e05050;font-size:11px;">−${fmt(tc)} (${nTr}tr)</span>`
+        + ` <span style="color:var(--color-success);">${fmt(netEV)}</span>`
+      : `<span style="color:var(--color-success);">${fmt(team.ev_estimate)}</span>`;
+
     return `<div class="team-card${idx===0&&!isIngemann?' selected':''}" data-idx="${idx}" style="${borderStyle}">
       <div class="tc-head">
         <div class="tc-label">${labelPrefix}${esc(team.label || team.strategy || '')}</div>
-        <div class="tc-ev">EV ${fmt(team.ev_estimate)}<span class="tc-price">${priceStr}</span></div>
+        <div class="tc-ev">${evHtml}<span class="tc-price">${priceStr}</span></div>
       </div>
       <div class="tc-riders">${ridersHtml}</div>
       <div class="tc-ev-section">
