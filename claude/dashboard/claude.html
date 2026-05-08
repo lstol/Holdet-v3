@@ -1509,7 +1509,6 @@ async function runPyOptimizer() {
     const data = await res.json();
     if (data.status === 'error') throw new Error(data.message);
     renderOptimizerOutput(data);
-    await saveOutput(data);
   } catch(e) {
     clearTimeout(abortTimeout);
     clearInterval(timer);
