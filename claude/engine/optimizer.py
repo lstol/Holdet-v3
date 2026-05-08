@@ -11,6 +11,7 @@ Hard constraints (enforced throughout):
   - Max 2 riders from the same real-world team
 """
 
+import logging
 import math
 import re
 import random
@@ -424,9 +425,13 @@ def _compute_objective(team, probs, objective):
     return compute_team_ev(team, probs)
 
 
+_SA_LOG_ITERS = {0, 50_000, 100_000, 500_000, 1_000_000, 2_000_000}
+_sa_logger = logging.getLogger(__name__)
+
+
 def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
                          budget=BUDGET, n_iter=2_000_000, seed=42,
-                         max_seconds=9, objective='ev'):
+                         max_seconds=9, objective='ev', verbose=False):
     """
     Single SA chain.  Returns (best_team_list, best_ev).
 
@@ -436,17 +441,31 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
     Temperature schedule: T₀ = 200,000, decay = 0.999993.
     objective: 'ev' (default) or 'depth' (maximise expected top-15 count).
     Time-based safety stop: exits after max_seconds regardless of n_iter.
+    verbose: log team snapshot at key iterations (used for first chain only).
+
+    Biased swap (70%): swap lowest-EV non-forced slot for a top-50-EV candidate.
+    Random swap (30%): pure exploration across full pool.
     """
     rng = random.Random(seed)
 
-    forced_set  = set(force_in_names  or [])
-    excluded_set= set(force_out_names or [])
+    forced_set   = set(force_in_names  or [])
+    excluded_set = set(force_out_names or [])
 
     forced = [r for r in all_riders if r['name'] in forced_set]
     pool   = [r for r in all_riders
               if r['name'] not in excluded_set and r['name'] not in forced_set]
 
     n_forced = len(forced)
+
+    # Pre-compute EV cache from probs (total_ev already set by add_stage_evs)
+    ev_cache = {r['name']: probs.get(r['name'], {}).get('total_ev', 0.0) for r in pool}
+    ev_cache.update({r['name']: probs.get(r['name'], {}).get('total_ev', 0.0) for r in forced})
+
+    # Pre-sort pool for biased swaps: top-50 by EV
+    sorted_pool  = sorted(pool, key=lambda r: ev_cache[r['name']], reverse=True)
+    top_n_pool   = sorted_pool[:min(50, len(sorted_pool))]
+    top_n_len    = len(top_n_pool)
+    pool_len     = len(pool)
 
     # Initial solution
     team = get_valid_random_team(forced, pool, budget)
@@ -458,24 +477,41 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
     best_team     = team[:]
     best_score    = current_score
 
-    T        = 200_000.0
-    cooling  = 0.999993
-    pool_len = len(pool)
+    T       = 200_000.0
+    cooling = 0.999993
 
     start = time.time()
     i = 0
     while i < n_iter:
         if time.time() - start > max_seconds:
-            import logging
-            logging.getLogger(__name__).info(
+            _sa_logger.info(
                 f"SA stopping at iter {i} after {max_seconds}s (seed={seed}, obj={objective})"
             )
             break
 
+        if verbose and i in _SA_LOG_ITERS:
+            team_evs = sorted(
+                [(r['name'], r.get('price', 0), ev_cache.get(r['name'], 0)) for r in team],
+                key=lambda x: x[2], reverse=True
+            )
+            _sa_logger.info(
+                f"SA[seed={seed}] iter={i:,} best_ev={best_score/1000:.0f}k "
+                f"current_ev={current_score/1000:.0f}k T={T:.0f}"
+            )
+            for n, p, e in team_evs:
+                _sa_logger.info(f"  {n:<35} {p/1e6:.2f}M  ev={e/1000:.0f}k")
+
         if n_forced >= 8:
             break
-        out_pos   = rng.randrange(n_forced, 8)
-        new_rider = pool[rng.randrange(pool_len)]
+
+        # Biased swap: 70% exploit (worst-for-top50), 30% explore (random)
+        if rng.random() < 0.7:
+            out_pos   = min(range(n_forced, 8),
+                            key=lambda idx: ev_cache.get(team[idx]['name'], 0))
+            new_rider = top_n_pool[rng.randrange(top_n_len)]
+        else:
+            out_pos   = rng.randrange(n_forced, 8)
+            new_rider = pool[rng.randrange(pool_len)]
 
         if any(new_rider['name'] == r['name'] for r in team):
             T *= cooling
@@ -657,11 +693,11 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
     ]
 
     raw_results = []
-    for strat in strategies:
+    for si, strat in enumerate(strategies):
         team, ev = simulated_annealing(
             strat['riders'], probs, strat['force_in'], strat['force_out'],
             budget=strat['budget'], n_iter=2_000_000, seed=strat['seed'],
-            max_seconds=9, objective=strat['objective'],
+            max_seconds=9, objective=strat['objective'], verbose=(si == 0),
         )
         if team is not None:
             raw_results.append((ev, team, strat['name']))
