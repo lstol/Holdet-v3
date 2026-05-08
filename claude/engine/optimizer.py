@@ -97,11 +97,20 @@ def build_probabilities(all_riders, odds, intel, sliders=None):
     the simulation has realistic variance (peloton riders occasionally infiltrate
     the top 15, giving depth-bonus uncertainty).
     """
-    # Odds lookup
-    odds_map = {
-        o['name']: o.get('win_pct', 0) / 100.0
-        for o in odds if o.get('name')
-    }
+    # Odds lookup — support market top3/top10 where available
+    odds_map      = {}   # name → win prob (fraction)
+    top3_map      = {}   # name → market top-3 prob (fraction), if pasted
+    top10_map     = {}   # name → market top-10 prob (fraction), if pasted
+    for o in odds:
+        name = o.get('name')
+        if not name:
+            continue
+        odds_map[name]  = o.get('win_pct', 0) / 100.0
+        if o.get('top3_pct') is not None:
+            top3_map[name]  = o['top3_pct']  / 100.0
+        if o.get('top10_pct') is not None:
+            top10_map[name] = o['top10_pct'] / 100.0
+
     in_odds = set(n for n, p in odds_map.items() if p > 0)
 
     # Dynamic EPS: EPS = 0.25 * raw_odds_total / n_non_odds → renorms to ~20%
@@ -140,13 +149,14 @@ def build_probabilities(all_riders, odds, intel, sliders=None):
         pw   = raw.get(name, EPS)
 
         if name in in_odds:
-            top3  = min(0.95, pw * 3.5)
-            top10 = min(0.95, pw * 8.0)
-            top15 = min(0.95, pw * 12.0)
+            # Prefer market-derived top3/top10 over win-scaled estimates
+            top3  = top3_map.get(name,  min(0.95, pw * 3.5))
+            top10 = top10_map.get(name, min(0.95, pw * 8.0))
+            top15 = min(0.95, top10 + top10 * 0.15)   # ~15% of top-10 riders also land 11-15
         else:
             top3 = 0.02; top10 = 0.04; top15 = 0.05
 
-        # Per-position finish probabilities (used by simulate_stage directly)
+        # Per-position finish probabilities anchored to the three market levels
         fp    = [0.0] * 15
         fp[0] = pw
         d23   = max(0.0, top3  - pw)  / 2

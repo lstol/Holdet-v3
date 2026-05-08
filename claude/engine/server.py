@@ -174,7 +174,11 @@ def run_optimizer():
     force_out = data.get('force_out', [])
 
     odds_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
-    odds = json.load(open(odds_path)) if os.path.exists(odds_path) else []
+    if os.path.exists(odds_path):
+        raw_odds = json.load(open(odds_path))
+        odds = raw_odds.get('odds', raw_odds) if isinstance(raw_odds, dict) else raw_odds
+    else:
+        odds = []
 
     rider_data = json.load(open(RIDERS_FILE))
     active_riders = [r for r in rider_data['riders'] if not r.get('isOut') and r.get('status') != 'dns']
@@ -335,7 +339,11 @@ def run_optimizer_py():
 
     # Load data files
     odds_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
-    odds = json.load(open(odds_path)) if os.path.exists(odds_path) else []
+    if os.path.exists(odds_path):
+        raw_odds = json.load(open(odds_path))
+        odds = raw_odds.get('odds', raw_odds) if isinstance(raw_odds, dict) else raw_odds
+    else:
+        odds = []
 
     rider_data    = json.load(open(RIDERS_FILE))
     active_riders = [r for r in rider_data['riders'] if not r.get('isOut') and r.get('status') != 'dns']
@@ -416,7 +424,8 @@ def save_intel():
     intel = request.json.get('intel', {})
     path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
     with open(path, 'w') as f:
-        json.dump({'stage': stage, 'intel': intel}, f, indent=2, ensure_ascii=False)
+        json.dump({'stage': stage, 'intel': intel,
+                   'gathered_at': datetime.now().isoformat()}, f, indent=2, ensure_ascii=False)
     return jsonify({'status': 'ok'})
 
 
@@ -427,7 +436,9 @@ def load_intel():
     if os.path.exists(path):
         with open(path) as f:
             data = json.load(f)
-        return jsonify(data.get('intel', {}))
+        intel = data.get('intel', {})
+        intel['_gathered_at'] = data.get('gathered_at')
+        return jsonify(intel)
     return jsonify({})
 
 
@@ -450,10 +461,11 @@ def save_odds():
     if request.method == 'OPTIONS':
         return '', 204
     stage = request.json.get('stage')
-    odds = request.json.get('odds')
+    odds  = request.json.get('odds')
     path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
     with open(path, 'w') as f:
-        json.dump(odds, f, indent=2)
+        json.dump({'odds': odds, 'stage': stage,
+                   'gathered_at': datetime.now().isoformat()}, f, indent=2)
     return jsonify({'status': 'ok'})
 
 
@@ -463,8 +475,12 @@ def load_odds():
     path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
     if os.path.exists(path):
         with open(path) as f:
-            return jsonify(json.load(f))
-    return jsonify([])
+            data = json.load(f)
+        # Support both old format (bare array) and new envelope {odds, gathered_at}
+        if isinstance(data, list):
+            return jsonify({'odds': data, 'gathered_at': None})
+        return jsonify(data)
+    return jsonify({'odds': [], 'gathered_at': None})
 
 
 # ── Parse odds image ─────────────────────────────────────────────────────────
@@ -475,39 +491,38 @@ def parse_odds_image():
         return '', 204
     if not HAS_ANTHROPIC:
         return jsonify({'status': 'error', 'message': 'anthropic package not installed'}), 500
-    stage = request.json.get('stage', '?')
-    image_data = request.json.get('image')
-    media_type = request.json.get('media_type', 'image/png')
+    body       = request.json
+    stage      = body.get('stage', '?')
+    image_data = body.get('image')
+    media_type = body.get('media_type', 'image/png')
+    odds_type  = body.get('type', 'win')   # 'win' | 'top3' | 'top10'
+
+    type_map  = {'win': 'win probability', 'top3': 'top-3 finish probability', 'top10': 'top-10 finish probability'}
+    field_map = {'win': 'win_pct',         'top3': 'top3_pct',                 'top10': 'top10_pct'}
+    prob_label = type_map.get(odds_type, 'win probability')
+    field_name = field_map.get(odds_type, 'win_pct')
+
     raw = ''
     try:
         client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
         message = client.messages.create(
             model='claude-haiku-4-5-20251001',
             max_tokens=2000,
-            messages=[{
-                'role': 'user',
-                'content': [
-                    {
-                        'type': 'image',
-                        'source': {'type': 'base64', 'media_type': media_type, 'data': image_data},
-                    },
-                    {
-                        'type': 'text',
-                        'text': (
-                            f"These are Oddschecker odds for Stage {stage} Giro d'Italia 2026. "
-                            'Each row is a rider. Columns are different bookmakers showing decimal odds. '
-                            'For each rider: calculate the average of all visible decimal odds across all bookmakers, '
-                            'then convert to implied win probability: win_pct = 100 / avg_odds. '
-                            'Return ONLY a JSON array, no preamble, no markdown, no code fences: '
-                            '[{"name": "Rider Name", "win_pct": 5.2, "top3_pct": null}] '
-                            'sorted by win_pct descending. Include only riders where win_pct >= 1.0.'
-                        ),
-                    },
-                ],
-            }],
+            messages=[{'role': 'user', 'content': [
+                {'type': 'image', 'source': {'type': 'base64', 'media_type': media_type, 'data': image_data}},
+                {'type': 'text',  'text': (
+                    f"These are Oddschecker odds for Stage {stage} Giro d'Italia 2026. "
+                    f"Extract the {prob_label} for every rider shown. "
+                    "Each row is a rider. Columns are different bookmakers showing decimal odds. "
+                    "For each rider: calculate the average of all visible decimal odds across all bookmakers, "
+                    f"then convert to implied probability percentage: pct = 100 / avg_odds. "
+                    "Return ONLY a JSON array, no preamble, no markdown, no code fences: "
+                    f'[{{"name": "Rider Name", "pct": 5.2}}] sorted by pct descending.'
+                )},
+            ]}],
         )
         raw = message.content[0].text.strip()
-        _log(f"parse-odds-image stage={stage} raw={raw[:300]}")
+        _log(f"parse-odds-image stage={stage} type={odds_type} raw={raw[:200]}")
         if raw.startswith('```'):
             raw = re.sub(r'^```[a-z]*\n?', '', raw)
             raw = re.sub(r'\n?```$', '', raw)
@@ -515,7 +530,38 @@ def parse_odds_image():
         m = re.search(r'\[.*\]', raw, re.DOTALL)
         if m:
             raw = m.group(0)
-        return jsonify(json.loads(raw))
+        parsed = json.loads(raw)  # [{name, pct}, ...]
+
+        # Load existing odds to merge into
+        odds_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
+        if os.path.exists(odds_path):
+            existing_file = json.load(open(odds_path))
+            existing = existing_file.get('odds', existing_file) if isinstance(existing_file, dict) else existing_file
+        else:
+            existing = []
+
+        # Build name→row index map for merge
+        existing_map = {r['name']: r for r in existing}
+
+        for item in parsed:
+            name = item.get('name', '')
+            pct  = item.get('pct', 0)
+            if not name:
+                continue
+            if name in existing_map:
+                existing_map[name][field_name] = pct
+            else:
+                # New rider — create row with only the pasted field populated
+                existing_map[name] = {'name': name, field_name: pct}
+
+        merged = sorted(existing_map.values(), key=lambda r: r.get('win_pct', 0), reverse=True)
+
+        # Save merged result with timestamp
+        with open(odds_path, 'w') as f:
+            json.dump({'odds': merged, 'stage': stage,
+                       'gathered_at': datetime.now().isoformat()}, f, indent=2)
+
+        return jsonify(merged)
     except json.JSONDecodeError as e:
         _log(f"parse-odds-image JSON error: {e}")
         return jsonify({'status': 'error', 'message': str(e), 'raw': raw}), 500
@@ -623,8 +669,10 @@ direction: up = favoured beyond raw odds, down = risk not in odds, neutral = in 
         result = json.loads(raw)
         intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
         with open(intel_path, 'w') as f:
-            json.dump({'stage': stage, 'intel': result}, f, indent=2, ensure_ascii=False)
+            json.dump({'stage': stage, 'intel': result,
+                       'gathered_at': datetime.now().isoformat()}, f, indent=2, ensure_ascii=False)
         _log(f"gather-intel saved to {intel_path}")
+        result['_gathered_at'] = datetime.now().isoformat()
         return jsonify(result)
     except json.JSONDecodeError as e:
         _log(f"gather-intel JSON error: {e}")

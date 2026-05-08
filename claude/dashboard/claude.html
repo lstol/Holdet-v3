@@ -218,9 +218,24 @@ input[type=range]::-webkit-slider-thumb {
 #odds-parse-status { font-size: 10px; margin-bottom: 6px; min-height: 14px; }
 .parse-ok  { color: var(--color-success); }
 .parse-err { color: var(--color-warning); }
-#odds-table-wrap { overflow-x: auto; max-height: 220px; overflow-y: auto; }
-#intel-display { font-size: 12px; max-height: 220px; overflow-y: auto; }
-#odds-paste-zone:focus { outline: none; border-color: var(--color-border-primary); color: var(--color-text-secondary); }
+#odds-table-wrap { overflow-x: auto; max-height: 200px; overflow-y: auto; }
+#intel-display { font-size: 12px; max-height: 200px; overflow-y: auto; }
+/* Paste zones row */
+.odds-paste-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 6px; }
+.odds-paste-zone {
+  border: 1px dashed var(--color-border); border-radius: var(--radius-sm);
+  padding: 7px 4px; font-size: 10px; color: var(--color-text-3);
+  cursor: pointer; text-align: center; line-height: 1.4; user-select: none;
+}
+.odds-paste-zone:focus { outline: none; border-color: var(--color-primary); color: var(--color-text-2); }
+.odds-paste-zone:hover { border-color: var(--color-text-3); color: var(--color-text-2); }
+/* Panel header (timestamp bar) */
+.panel-header-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--color-text-3); margin-bottom: 8px;
+}
+.panel-header-ts { font-weight: 400; letter-spacing: 0; text-transform: none; font-family: var(--font-mono); }
 #odds-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 #odds-table th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-3); padding: 4px 6px; text-align: left; border-bottom: 1px solid var(--color-border); }
 #odds-table td { padding: 4px 6px; border-bottom: 1px solid rgba(43,48,88,.5); vertical-align: middle; }
@@ -499,28 +514,27 @@ input[type=range]::-webkit-slider-thumb {
     <div id="intel-grid">
 
       <!-- Bookmaker odds -->
-      <div id="odds-panel" class="intel-panel" tabindex="0">
-        <div class="intel-panel-title">
+      <div id="odds-panel" class="intel-panel">
+        <div class="panel-header-bar">
           <span>Bookmaker odds</span>
+          <span class="panel-header-ts" id="odds-header-ts">Stage — · Not yet gathered</span>
         </div>
-        <div id="odds-paste-zone"
-             tabindex="0"
-             style="border:1px dashed var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-tertiary);cursor:pointer;margin-bottom:8px;text-align:center;"
-             onclick="this.focus()">
-          📷 Click here, then Cmd+V to paste Oddschecker screenshot
+        <div class="odds-paste-row">
+          <div class="odds-paste-zone" id="win-paste-zone"   tabindex="0">📷 Win odds<br>click → Cmd+V</div>
+          <div class="odds-paste-zone" id="top3-paste-zone"  tabindex="0">📷 Top3 odds<br>click → Cmd+V</div>
+          <div class="odds-paste-zone" id="top10-paste-zone" tabindex="0">📷 Top10 odds<br>click → Cmd+V</div>
         </div>
-        <div id="odds-parse-status" style="font-size:10px;color:var(--color-text-3);margin-bottom:6px;min-height:14px;"></div>
+        <div id="odds-parse-status" style="font-size:10px;color:var(--color-text-3);min-height:14px;margin-bottom:4px;"></div>
         <div id="odds-table-wrap">
           <table id="odds-table">
-            <thead>
-              <tr>
-                <th>Rider</th>
-                <th class="num">Win%</th>
-                <th class="num">Top3%</th>
-                <th>Tier</th>
-                <th>Intel</th>
-              </tr>
-            </thead>
+            <thead><tr>
+              <th>Rider</th>
+              <th class="num">Win%</th>
+              <th class="num">Top3%</th>
+              <th class="num">Top10%</th>
+              <th>Tier</th>
+              <th>Intel</th>
+            </tr></thead>
             <tbody id="odds-tbody"></tbody>
           </table>
         </div>
@@ -528,12 +542,13 @@ input[type=range]::-webkit-slider-thumb {
 
       <!-- Intel display -->
       <div class="intel-panel">
-        <div class="intel-panel-title">
+        <div class="panel-header-bar">
           <span>Intelligence</span>
-          <button id="gather-intel-btn" class="btn btn-sm btn-ghost" onclick="gatherIntel()"><i class="ti ti-antenna"></i> Gather Intel</button>
+          <span class="panel-header-ts" id="intel-header-ts">Stage — · Not yet gathered</span>
+          <button id="gather-intel-btn" class="btn btn-sm btn-ghost" onclick="gatherIntel()"><i class="ti ti-antenna"></i> Gather</button>
         </div>
         <div id="intel-display">
-          <div class="intel-empty">No intel gathered yet — click Gather Intel</div>
+          <div class="intel-empty">No intel gathered yet — click Gather</div>
         </div>
       </div>
 
@@ -890,13 +905,31 @@ async function saveWeights() {
 }
 
 /* ── Odds table ──────────────────────────────────────────────────────── */
-function populateOddsTable(arr) {
+function fmtTs(iso) {
+  if (!iso) return 'Not yet gathered';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  } catch(_) { return 'Not yet gathered'; }
+}
+
+function populateOddsTable(arr, gatheredAt) {
   S.oddsRows = arr
     .sort((a, b) => (b.win_pct ?? 0) - (a.win_pct ?? 0))
-    .map((entry, i) => ({id: i, name: entry.name || '', win: entry.win_pct ?? '', top3: entry.top3_pct ?? ''}));
+    .map((entry, i) => ({
+      id: i, name: entry.name || '',
+      win:   entry.win_pct   ?? '',
+      top3:  entry.top3_pct  ?? '',
+      top10: entry.top10_pct ?? '',
+    }));
   renderOdds();
   renderTable();
-  saveOdds(arr);
+  // Update header timestamp
+  const st = S.stages[S.activeStageIndex] || {};
+  const stageN = st.stage_number || '—';
+  const ts = gatheredAt ? `Stage ${stageN} · ${fmtTs(gatheredAt)}` : `Stage ${stageN} · Not yet gathered`;
+  const el = $('odds-header-ts');
+  if (el) el.textContent = ts;
 }
 
 async function saveOdds(data) {
@@ -913,59 +946,65 @@ async function saveOdds(data) {
 async function loadSavedOdds() {
   const stage = (S.stages[S.activeStageIndex] || {}).stage_number || 1;
   try {
-    const res = await fetch(`${SERVER}/load-odds?stage=${stage}`);
-    const data = await res.json();
-    if (Array.isArray(data) && data.length > 0) {
-      populateOddsTable(data);
+    const res  = await fetch(`${SERVER}/load-odds?stage=${stage}`);
+    const env  = await res.json();
+    const arr  = Array.isArray(env) ? env : (env.odds || []);
+    const ts   = env.gathered_at || null;
+    if (arr.length > 0) {
+      populateOddsTable(arr, ts);
       const statusEl = $('odds-parse-status');
       statusEl.className = 'parse-ok';
-      statusEl.textContent = `✓ ${data.length} riders loaded`;
+      statusEl.textContent = `✓ ${arr.length} riders loaded`;
     }
   } catch(_) {}
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  const panel = document.getElementById('odds-paste-zone');
-  if (!panel) return;
-  panel.addEventListener('click', function() { this.focus(); });
-  panel.addEventListener('paste', async function(e) {
+function attachPasteZone(zoneId, oddsType) {
+  const zone = document.getElementById(zoneId);
+  if (!zone) return;
+  zone.addEventListener('click', function() { this.focus(); });
+  zone.addEventListener('paste', async function(e) {
     const items = e.clipboardData.items;
     for (const item of items) {
-      if (item.type.startsWith('image/')) {
-        e.preventDefault();
-        const file = item.getAsFile();
-        const reader = new FileReader();
-        reader.onload = async function(ev) {
-          const base64 = ev.target.result.split(',')[1];
-          const statusEl = $('odds-parse-status');
-          statusEl.className = '';
-          statusEl.textContent = 'Reading odds from screenshot…';
-          const st = S.stages[S.activeStageIndex] || {};
-          const stage = st.stage_number || 1;
-          try {
-            const res = await fetch(`${SERVER}/parse-odds-image`, {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({stage, image: base64, media_type: item.type}),
-            });
-            const data = await res.json();
-            if (data.status === 'error') throw new Error(data.message);
-            // Clear existing odds before populating so paste always replaces, never appends
-            S.oddsRows = [];
-            $('odds-tbody').innerHTML = '';
-            populateOddsTable(data);
-            statusEl.className = 'parse-ok';
-            statusEl.textContent = `✓ ${data.length} riders loaded`;
-          } catch(err) {
-            statusEl.className = 'parse-err';
-            statusEl.textContent = `Error: ${err.message}`;
-          }
-        };
-        reader.readAsDataURL(file);
-        break;
-      }
+      if (!item.type.startsWith('image/')) continue;
+      e.preventDefault();
+      const file = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = async function(ev) {
+        const base64    = ev.target.result.split(',')[1];
+        const statusEl  = $('odds-parse-status');
+        const st        = S.stages[S.activeStageIndex] || {};
+        const stage     = st.stage_number || 1;
+        statusEl.className = '';
+        statusEl.textContent = `Reading ${oddsType} odds…`;
+        try {
+          const res  = await fetch(`${SERVER}/parse-odds-image`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({stage, image: base64, media_type: item.type, type: oddsType}),
+          });
+          const data = await res.json();
+          if (data.status === 'error') throw new Error(data.message);
+          // data is the merged array returned by server
+          populateOddsTable(data, new Date().toISOString());
+          statusEl.className = 'parse-ok';
+          const col = {win:'Win%', top3:'Top3%', top10:'Top10%'}[oddsType] || oddsType;
+          statusEl.textContent = `✓ ${col} updated · ${data.length} riders`;
+        } catch(err) {
+          statusEl.className = 'parse-err';
+          statusEl.textContent = `Error: ${err.message}`;
+        }
+      };
+      reader.readAsDataURL(file);
+      break;
     }
   });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  attachPasteZone('win-paste-zone',   'win');
+  attachPasteZone('top3-paste-zone',  'top3');
+  attachPasteZone('top10-paste-zone', 'top10');
 });
 
 function renderStars(n) {
@@ -1054,6 +1093,7 @@ async function gatherIntel() {
     S.intelData = data;
     renderIntel();
     renderOdds();
+    updateIntelHeader(n, data._gathered_at || new Date().toISOString());
     fetch(`${SERVER}/save-intel`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -1063,19 +1103,25 @@ async function gatherIntel() {
     alert(`Gather Intel error: ${e.message}`);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<i class="ti ti-antenna"></i> Gather Intel';
+    btn.innerHTML = '<i class="ti ti-antenna"></i> Gather';
   }
+}
+
+function updateIntelHeader(stageN, isoTs) {
+  const el = $('intel-header-ts');
+  if (el) el.textContent = isoTs ? `Stage ${stageN} · ${fmtTs(isoTs)}` : `Stage ${stageN} · Not yet gathered`;
 }
 
 async function loadSavedIntel() {
   const stage = (S.stages[S.activeStageIndex] || {}).stage_number || 1;
   try {
-    const res = await fetch(`${SERVER}/load-intel?stage=${stage}`);
+    const res  = await fetch(`${SERVER}/load-intel?stage=${stage}`);
     const data = await res.json();
     if (data && data.key_signals) {
       S.intelData = data;
       renderIntel();
       renderOdds();
+      updateIntelHeader(stage, data._gathered_at);
     }
   } catch(_) {}
 }
@@ -1113,10 +1159,12 @@ function renderOdds() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><span class="rider-name">${esc(row.name)}</span></td>
-      <td><input type="number" value="${row.win}" min="0" max="100" step="0.1" placeholder="—"
+      <td><input type="number" value="${row.win}"   min="0" max="100" step="0.1" placeholder="—"
         onchange="updateOdds(${row.id},'win',+this.value);renderOdds();renderTable()"></td>
-      <td><input type="number" value="${row.top3}" min="0" max="100" step="0.1" placeholder="—"
+      <td><input type="number" value="${row.top3}"  min="0" max="100" step="0.1" placeholder="—"
         onchange="updateOdds(${row.id},'top3',+this.value)"></td>
+      <td><input type="number" value="${row.top10}" min="0" max="100" step="0.1" placeholder="—"
+        onchange="updateOdds(${row.id},'top10',+this.value)"></td>
       <td><span class="${tierCls}">${winVal >= 1 ? 'A' : 'B'}</span></td>
       <td>${intelCell}</td>
     `;
