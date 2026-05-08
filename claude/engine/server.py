@@ -556,7 +556,7 @@ Return detailed prose — do not summarize yet, collect everything."""}],
         # Step 2 — structure into JSON (Haiku: small input, no search tool)
         structure_message = call_with_retry(lambda: client.messages.create(
             model='claude-haiku-4-5-20251001',
-            max_tokens=2000,
+            max_tokens=4000,
             messages=[{'role': 'user', 'content': f"""Convert this raw cycling analysis into structured JSON.
 
 Sources searched (by weight): {sources_list_str}
