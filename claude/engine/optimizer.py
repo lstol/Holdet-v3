@@ -53,6 +53,27 @@ INTEL_MULT = {
     ('down',    'weak'):     0.95,
 }
 
+# Sprint points → fantasy kr (each point = 3,000 kr)
+POINT_VALUE = 3_000
+SPRINT_POINTS_FINAL        = [50, 30, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2]
+SPRINT_POINTS_INTERMEDIATE = [20, 12, 8, 6, 4, 2]
+SPRINT_KR_FINAL        = [p * POINT_VALUE for p in SPRINT_POINTS_FINAL]
+SPRINT_KR_INTERMEDIATE = [p * POINT_VALUE for p in SPRINT_POINTS_INTERMEDIATE]
+
+# Jersey bonus (paid to current holder after each stage)
+JERSEY_BONUS = {
+    'gc':     25_000,
+    'points': 25_000,
+    'kom':    25_000,
+    'youth':  25_000,
+}
+
+# GC bonus paid after each stage based on overall standings position (1-indexed)
+GC_BONUS = {
+    1: 100_000, 2: 90_000, 3: 80_000, 4: 70_000, 5: 60_000,
+    6:  50_000, 7: 40_000, 8: 30_000, 9: 20_000, 10: 10_000,
+}
+
 _FP_W1    = FINISH_POINTS[0]
 _FP_W23   = (FINISH_POINTS[1] + FINISH_POINTS[2]) / 2
 _FP_W4_10 = sum(FINISH_POINTS[3:10]) / 7
@@ -80,9 +101,52 @@ def _norm_team(name):
     return re.sub(r'\s+', ' ', n).strip()
 
 
+# ── Stage-type EV annotation ──────────────────────────────────────────────────
+
+def add_stage_evs(probs, stage_type='sprint', n_intermediates=1):
+    """
+    Annotate each rider's probs entry with stage-type-specific EV fields (in-place).
+    Adds: sprint_ev, jersey_ev, gc_ev, total_ev.
+
+    stage_type: 'sprint' | 'hilly' | 'mountain'
+    n_intermediates: number of intermediate sprint locations
+    """
+    for p in probs.values():
+        fp = p.get('finish_probs', [0.0] * 15)
+        pw = p.get('win', 0.0)
+
+        # Sprint EV — only on sprint/hilly stages; zero on mountain
+        if stage_type in ('sprint', 'hilly'):
+            sprint_ev = sum(
+                fp[i] * SPRINT_KR_FINAL[i]
+                for i in range(min(len(fp), len(SPRINT_KR_FINAL)))
+            )
+            sprint_ev += n_intermediates * sum(
+                fp[i] * SPRINT_KR_INTERMEDIATE[i]
+                for i in range(min(len(fp), len(SPRINT_KR_INTERMEDIATE)))
+            )
+        else:
+            sprint_ev = 0.0
+
+        # Jersey EV — stage winner takes GC jersey always; points jersey on sprint stages
+        if stage_type == 'sprint':
+            jersey_ev = pw * (JERSEY_BONUS['gc'] + JERSEY_BONUS['points'])
+        else:
+            jersey_ev = pw * JERSEY_BONUS['gc']
+
+        # GC EV — after Stage 1 GC standings mirror finish order; reasonable for early stages
+        gc_ev = sum(fp[i] * GC_BONUS.get(i + 1, 0) for i in range(min(len(fp), 10)))
+
+        p['sprint_ev'] = sprint_ev
+        p['jersey_ev'] = jersey_ev
+        p['gc_ev']     = gc_ev
+        p['total_ev']  = p['finish_ev'] + sprint_ev + jersey_ev + gc_ev
+
+
 # ── Step 1: Build probabilities ───────────────────────────────────────────────
 
-def build_probabilities(all_riders, odds, intel, sliders=None):
+def build_probabilities(all_riders, odds, intel, sliders=None,
+                        stage_type='sprint', n_intermediates=1):
     """
     Returns dict: {rider_name: {win, top3, top10, top15, finish_probs,
                                 finish_ev, team_bonus_ev, p2, p3, p_top15,
@@ -183,6 +247,7 @@ def build_probabilities(all_riders, odds, intel, sliders=None):
             'name': name,
         }
 
+    add_stage_evs(result, stage_type=stage_type, n_intermediates=n_intermediates)
     return result
 
 
@@ -217,14 +282,15 @@ def compute_team_ev(team, probs):
     Fast analytical expected value for a team of 8 rider dicts.
 
     Components:
-      1. Stage finish EV per rider (precomputed)
-      2. Captain bonus EV ≈ best rider's finish_ev (doubling positive outcomes)
-      3. Team bonus EV — only from actual fantasy pairs, not full roster teammates
-      4. Depth bonus EV (expected riders in top-15 → depth bonus table)
+      1. Stage finish + sprint + jersey + GC EV per rider (all precomputed in total_ev)
+      2. Captain bonus ≈ best rider's total_ev (doubling all positive outcomes)
+      3. Team bonus EV — pairs only, composition-aware
+      4. Depth bonus EV
     """
-    finish_evs = [probs.get(r['name'], {}).get('finish_ev', 0.0) for r in team]
-    total  = sum(finish_evs)
-    total += max(finish_evs) if finish_evs else 0.0
+    total_evs = [probs.get(r['name'], {}).get('total_ev',
+                 probs.get(r['name'], {}).get('finish_ev', 0.0)) for r in team]
+    total  = sum(total_evs)
+    total += max(total_evs) if total_evs else 0.0   # captain bonus
     total += compute_team_bonus_ev(team, probs)
     exp_top15 = sum(probs.get(r['name'], {}).get('top15', 0.0) for r in team)
     total += DEPTH_BONUS.get(min(8, round(exp_top15)), 0)
@@ -430,7 +496,7 @@ def estimate_forward_pressure(team):
 # ── Step 7: Main entry point ──────────────────────────────────────────────────
 
 def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
-                              budget=BUDGET):
+                              budget=BUDGET, stage_type='sprint', n_intermediates=1):
     """
     Run 7 strategy-differentiated SA chains (target: ~60 s total, 9 s each).
 
@@ -558,7 +624,8 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
             f"(riders: {[r['name'] for r in team]})"
         )
         cap = select_captain(team, probs)
-        sim = simulate_stage(team, probs, cap['name'], all_riders=full_roster)
+        sim = simulate_stage(team, probs, cap['name'], all_riders=full_roster,
+                             stage_type=stage_type, n_intermediates=n_intermediates)
         lbl = label_team(team, probs, budget)
         candidates.append({
             'label':            lbl,
@@ -578,22 +645,13 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
 # ── Captain selection ─────────────────────────────────────────────────────────
 
 def _ev_single(name, probs):
-    """Single-rider finish EV (used by select_captain)."""
-    p    = probs.get(name, {})
-    pw   = p.get('win',   0.0)
-    pt3  = p.get('top3',  0.0)
-    pt10 = p.get('top10', 0.0)
-    pt15 = p.get('top15', 0.0)
-    return max(0.0,
-        pw                    * FINISH_POINTS[0]
-        + max(0, pt3  - pw)   * (FINISH_POINTS[1] + FINISH_POINTS[2]) / 2
-        + max(0, pt10 - pt3)  * sum(FINISH_POINTS[3:10]) / 7
-        + max(0, pt15 - pt10) * sum(FINISH_POINTS[10:15]) / 5
-    )
+    """Single-rider total EV — finish + sprint + jersey + GC (used by select_captain)."""
+    p = probs.get(name, {})
+    return p.get('total_ev', p.get('finish_ev', 0.0))
 
 
 def select_captain(team_riders, all_probs):
-    """Select captain as rider with highest single-rider stage-finish EV."""
+    """Select captain as rider with highest total single-rider EV (all scoring components)."""
     best_name, best_ev = None, -1.0
     for r in team_riders:
         name = r['name'] if isinstance(r, dict) else r
@@ -606,18 +664,29 @@ def select_captain(team_riders, all_probs):
     return {
         'name': best_name,
         'rationale': (
-            f'{best_name} has the highest stage-finish EV in the team '
-            f'(~{int(best_ev / 1000)}k captain bonus, {top3pct:.0f}% top-3 probability). '
-            f'Doubling positive outcomes captures maximum right-tail upside.'
+            f'{best_name} has the highest total EV in the team '
+            f'(~{int(best_ev / 1000)}k doubled as captain, {top3pct:.0f}% top-3). '
+            f'Includes sprint points, jersey, and GC bonus upside.'
         ),
     }
 
 
 # ── Monte Carlo simulation (Plackett-Luce) ────────────────────────────────────
 
-def simulate_stage(team_riders, all_probs, captain_name, all_riders=None, n_sims=10_000):
+def simulate_stage(team_riders, all_probs, captain_name, all_riders=None,
+                   n_sims=10_000, stage_type='sprint', n_intermediates=1):
     """
     Simulate n_sims stage outcomes using Plackett-Luce sampling.
+
+    Scoring components per rider:
+      - Stage finish points (top-15 pay table)
+      - Sprint points: final sprint + n_intermediates intermediate sprints
+      - Jersey bonus: winner takes GC jersey; also points jersey on sprint stages
+      - GC bonus: paid to top-10 in overall standings (Stage 1 = finish order)
+      - Team bonus: real-world teammate in fantasy team podiums
+      - Depth bonus: number of fantasy riders in top-15
+      - Captain: ALL of the above doubled for the designated captain
+
     Returns {'mean', 'cdf': {p25,p50,p75,p90}, 'breakdown': {...}}.
     """
     rng = np.random.default_rng()
@@ -650,19 +719,56 @@ def simulate_stage(team_riders, all_probs, captain_name, all_riders=None, n_sims
     order  = np.argsort(scores, axis=1)
     rank   = np.argsort(order,  axis=1)
 
-    team_pos = rank[:, team_idxs]                         # (n_sims, 8)
+    team_pos = rank[:, team_idxs]   # (n_sims, 8), 0-indexed finish positions
 
+    # ── Stage finish ──────────────────────────────────────────────────────────
     fp_lookup  = np.array(FINISH_POINTS, dtype=np.float64)
     finish_pts = np.where(team_pos < 15, fp_lookup[np.minimum(team_pos, 14)], 0.0)
 
-    cap_pts       = finish_pts[:, capt_ti]
-    captain_bonus = np.maximum(cap_pts, 0.0)
+    # ── Sprint points ─────────────────────────────────────────────────────────
+    if stage_type in ('sprint', 'hilly'):
+        sp_final_lookup = np.zeros(n_field, dtype=np.float64)
+        for i, kr in enumerate(SPRINT_KR_FINAL):
+            if i < n_field:
+                sp_final_lookup[i] = kr
+        sprint_pts = sp_final_lookup[np.minimum(team_pos, n_field - 1)]
+        sprint_pts = np.where(team_pos < len(SPRINT_KR_FINAL), sprint_pts, 0.0)
 
+        if n_intermediates > 0:
+            sp_inter_lookup = np.zeros(n_field, dtype=np.float64)
+            for i, kr in enumerate(SPRINT_KR_INTERMEDIATE):
+                if i < n_field:
+                    sp_inter_lookup[i] = kr
+            inter_pts = np.where(
+                team_pos < len(SPRINT_KR_INTERMEDIATE),
+                sp_inter_lookup[np.minimum(team_pos, n_field - 1)],
+                0.0,
+            )
+            sprint_pts = sprint_pts + inter_pts * n_intermediates
+    else:
+        sprint_pts = np.zeros_like(finish_pts)
+
+    # ── Jersey bonus ──────────────────────────────────────────────────────────
+    if stage_type == 'sprint':
+        winner_jersey = float(JERSEY_BONUS['gc'] + JERSEY_BONUS['points'])
+    else:
+        winner_jersey = float(JERSEY_BONUS['gc'])
+    jersey_pts = np.where(team_pos == 0, winner_jersey, 0.0)
+
+    # ── GC bonus ─────────────────────────────────────────────────────────────
+    gc_lookup = np.zeros(n_field, dtype=np.float64)
+    for pos_1idx, bonus in GC_BONUS.items():
+        if pos_1idx - 1 < n_field:
+            gc_lookup[pos_1idx - 1] = float(bonus)
+    gc_pts = np.where(team_pos < 10, gc_lookup[np.minimum(team_pos, n_field - 1)], 0.0)
+
+    # ── Depth bonus ───────────────────────────────────────────────────────────
     depth_cnt = (team_pos < 15).sum(axis=1)
     depth_pts = np.array(
         [DEPTH_BONUS[min(int(d), 8)] for d in depth_cnt], dtype=np.float64
     )
 
+    # ── Team bonus ────────────────────────────────────────────────────────────
     team_bonus = np.zeros(n_sims, dtype=np.float64)
     for pos_off, bval in TEAM_BONUS_MAP.items():
         top_fidx  = order[:, pos_off]
@@ -671,8 +777,16 @@ def simulate_stage(team_riders, all_probs, captain_name, all_riders=None, n_sims
             if rteam:
                 team_bonus += (top_rteam == rteam).astype(np.float64) * bval
 
-    stage_totals = finish_pts.sum(axis=1)
-    totals       = stage_totals + captain_bonus + depth_pts + team_bonus
+    # ── Captain doubling — applies to ALL per-rider components ────────────────
+    rider_totals  = finish_pts + sprint_pts + jersey_pts + gc_pts  # (n_sims, 8)
+    cap_total     = rider_totals[:, capt_ti]
+    captain_bonus = np.maximum(cap_total, 0.0)
+
+    stage_totals  = finish_pts.sum(axis=1)
+    sprint_totals = sprint_pts.sum(axis=1)
+    jersey_totals = jersey_pts.sum(axis=1)
+    gc_totals     = gc_pts.sum(axis=1)
+    totals        = rider_totals.sum(axis=1) + captain_bonus + depth_pts + team_bonus
 
     s = np.sort(totals)
     return {
@@ -685,9 +799,11 @@ def simulate_stage(team_riders, all_probs, captain_name, all_riders=None, n_sims
         },
         'breakdown': {
             'stage_finish':  int(stage_totals.mean()),
+            'sprint_points': int(sprint_totals.mean()),
+            'jersey_bonus':  int(jersey_totals.mean()),
+            'gc_bonus':      int(gc_totals.mean()),
             'captain_bonus': int(captain_bonus.mean()),
             'team_bonus':    int(team_bonus.mean()),
             'depth_bonus':   int(depth_pts.mean()),
-            'gc_bonus':      0,
         },
     }

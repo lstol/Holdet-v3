@@ -360,11 +360,29 @@ def run_optimizer_py():
     _log(f"run-optimizer-py stage={stage} budget={budget:,}")
 
     try:
-        # Build probability distributions
-        probs = build_probabilities(active_riders, odds, intel_data, sliders)
+        # Derive stage type from sprint/gc sliders
+        n1 = sliders.get('n1', sliders)  # support both nested and flat slider shapes
+        sprint_pct = n1.get('sprint', 0) if isinstance(n1, dict) else 0
+        gc_pct     = n1.get('gc',     0) if isinstance(n1, dict) else 0
+        if sprint_pct >= 60:
+            stage_type     = 'sprint'
+            n_intermediates = 1
+        elif gc_pct >= 50:
+            stage_type     = 'mountain'
+            n_intermediates = 0
+        else:
+            stage_type     = 'hilly'
+            n_intermediates = 1
+        app.logger.info(f"run-optimizer-py stage_type={stage_type} n_inter={n_intermediates}")
+
+        # Build probability distributions (annotates with sprint/jersey/gc EVs)
+        probs = build_probabilities(active_riders, odds, intel_data, sliders,
+                                    stage_type=stage_type, n_intermediates=n_intermediates)
 
         # Generate candidate teams using actual budget
-        candidates = generate_candidate_teams(active_riders, probs, force_in, force_out, budget=budget)
+        candidates = generate_candidate_teams(active_riders, probs, force_in, force_out,
+                                              budget=budget, stage_type=stage_type,
+                                              n_intermediates=n_intermediates)
 
         if not candidates:
             return jsonify({'status': 'error', 'message': 'No valid teams found — check budget/constraints'}), 500
@@ -374,7 +392,10 @@ def run_optimizer_py():
         for cand in candidates:
             team_riders = cand['riders']
             cap         = select_captain(team_riders, probs)
-            sim         = simulate_stage(team_riders, probs, cap['name'], all_riders=active_riders)
+            sim         = simulate_stage(team_riders, probs, cap['name'],
+                                         all_riders=active_riders,
+                                         stage_type=stage_type,
+                                         n_intermediates=n_intermediates)
 
             total_price = sum(r['price'] for r in team_riders)
             teams_out.append({
