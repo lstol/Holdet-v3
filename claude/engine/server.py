@@ -514,42 +514,60 @@ def gather_intel():
     try:
         client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
 
-        # Step 1 — gather raw intel via web search (Sonnet: higher rate limit, better search)
+        # Load sources from yaml, sorted by weight descending
+        sources = yaml.safe_load(open(EXPERT_SOURCES))['sources']
+        sources_sorted = sorted(sources, key=lambda x: x['weight'], reverse=True)
+
+        source_instructions = '\n'.join([
+            f"{i+1}. {s['name']} (weight {s['weight']}): "
+            f"Search \"{s['name'].split('/')[0].strip()} Giro 2026 stage {stage}\" "
+            f"and read whatever you find from this source."
+            for i, s in enumerate(sources_sorted)
+        ])
+
+        # Step 1 — gather raw intel via web search, one query per source
         search_message = call_with_retry(lambda: client.messages.create(
             model='claude-sonnet-4-6',
             max_tokens=3000,
             tools=[{'type': 'web_search_20250305', 'name': 'web_search'}],
             messages=[{'role': 'user', 'content': f"""Search for Stage {stage} Giro d'Italia 2026 expert analysis.
 
-Search these in order:
-1. "axelgaards optakt til {stage} etape giro ditalia 2026 site:sport.tv2.dk" (Danish, read it)
-2. "giro 2026 stage {stage} preview site:inrng.com"
-3. "giro 2026 stage {stage} preview site:velonews.com"
-4. "giro 2026 stage {stage} preview site:cyclingnews.com"
-5. "giro d'italia 2026 stage {stage} favourites"
+You MUST search for each of these sources separately and in order:
+{source_instructions}
 
-Collect everything you find about: rider favourites, team tactics, weather, road conditions, finish profile. Return all raw findings as detailed prose."""}],
+Special instructions:
+- Emil Axelgaard / TV2: search in Danish. URL pattern: sport.tv2.dk/cykling/YYYY-MM-DD-axelgaards-optakt-til-{stage}-etape-af-giro-ditalia. Read and summarize in English.
+- The Inner Ring: search "inrng.com giro 2026 stage {stage}"
+- VeloNews: search "velonews.com giro 2026 stage {stage} preview"
+- CyclingNews: search "cyclingnews.com giro 2026 stage {stage} preview"
+- ProCyclingStats: search "procyclingstats giro 2026 stage {stage}"
+- FirstCycling: search "firstcycling giro 2026 stage {stage}"
+
+For each source found, note which source it came from.
+If a source is unavailable or paywalled, note it as "not found" and continue.
+Collect ALL rider mentions, team tactics, weather, and finish analysis from ALL sources.
+Return detailed prose — do not summarize yet, collect everything."""}],
         ))
         raw_intel = ' '.join(b.text for b in search_message.content if b.type == 'text')
         _log(f"gather-intel stage={stage} raw_intel={raw_intel[:300]}")
+
+        sources_list_str = ', '.join([f"{s['name']} ({s['weight']})" for s in sources_sorted])
 
         # Step 2 — structure into JSON (Haiku: small input, no search tool)
         structure_message = call_with_retry(lambda: client.messages.create(
             model='claude-haiku-4-5-20251001',
             max_tokens=2000,
-            messages=[{'role': 'user', 'content': f"""Convert this cycling analysis into a JSON object.
+            messages=[{'role': 'user', 'content': f"""Convert this raw cycling analysis into structured JSON.
+
+Sources searched (by weight): {sources_list_str}
 
 Raw analysis:
 {raw_intel}
 
-For each source consulted, extract an explicit star rating (1-5) per rider mentioned.
-If a source uses different rating language, convert to stars:
-  favourite=5, strong contender=4, contender=3, outside chance=2, mention only=1.
-If a source gives no explicit rating, infer from language used.
-
-Return ONLY this JSON, no other text, no markdown:
+Return ONLY this JSON, no markdown:
 {{
-  "sources_consulted": ["list of sources found"],
+  "sources_consulted": ["source name", ...],
+  "sources_not_found": ["source name", ...],
   "source_ratings": [
     {{
       "source": "TV2/Axelgaard",
@@ -558,25 +576,20 @@ Return ONLY this JSON, no other text, no markdown:
         {{"rider": "Jonathan Milan", "stars": 5}},
         {{"rider": "Paul Magnier", "stars": 4}}
       ]
-    }},
-    {{
-      "source": "Inner Ring",
-      "weight": 1.2,
-      "ratings": [
-        {{"rider": "Jonathan Milan", "stars": 5}}
-      ]
     }}
   ],
   "key_signals": [
     {{"rider": "Name", "signal": "what was said", "direction": "up/down/neutral", "strength": "strong/moderate/weak"}}
   ],
   "weather": "weather summary",
-  "stage_notes": "key tactical notes",
+  "stage_notes": "tactical notes",
   "summary": "two sentence summary"
 }}
 
-Include every rider mentioned. direction=up means favoured beyond raw odds, down means risks not in odds.
-source weight values: TV2/Axelgaard=1.5, Inner Ring=1.2, VeloNews=1.0, CyclingNews=1.0, other=0.8."""}],
+Include every rider mentioned by any source.
+Attribute star ratings per source — if a source did not mention a rider, omit them from that source's ratings.
+Star scale: favourite=5, strong contender=4, contender=3, outside chance=2, mention only=1.
+direction: up = favoured beyond raw odds, down = risk not in odds, neutral = in line with odds."""}],
         ))
         raw = structure_message.content[0].text.strip()
         _log(f"gather-intel stage={stage} structured={raw[:200]}")
