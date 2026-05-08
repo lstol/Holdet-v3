@@ -464,12 +464,15 @@ input[type=range]::-webkit-slider-thumb {
       <div class="race-label">Holdet v3 · Giro d'Italia 2026</div>
       <div style="display:flex;align-items:center;gap:6px;margin:3px 0;">
         <span style="font-size:11px;font-weight:600;color:var(--color-text);">Next stage</span>
-        <select id="target-stage-select" onchange="setTargetStage(parseInt(this.value))"
-                style="font-size:13px;font-weight:600;padding:4px 28px 4px 10px;
-                       border-radius:var(--radius-md);cursor:pointer;
-                       appearance:auto;-webkit-appearance:menulist;
-                       background:#2a3050;border:1px solid #4a5490;color:#ffffff;">
-        </select>
+        <div style="display:flex;align-items:center;gap:0;border:1px solid #4a5490;border-radius:var(--radius-md);overflow:hidden;">
+          <button onclick="setTargetStage(targetStage-1)"
+                  style="background:#2a3050;color:#fff;border:none;padding:4px 8px;cursor:pointer;font-size:13px;line-height:1;">◀</button>
+          <span id="target-stage-display"
+                style="background:#2a3050;color:#fff;font-size:13px;font-weight:600;
+                       padding:4px 10px;min-width:64px;text-align:center;line-height:1.4;">Stage 1</span>
+          <button onclick="setTargetStage(targetStage+1)"
+                  style="background:#2a3050;color:#fff;border:none;padding:4px 8px;cursor:pointer;font-size:13px;line-height:1;">▶</button>
+        </div>
       </div>
       <div class="stage-meta" id="h-stage-meta">—</div>
     </div>
@@ -744,16 +747,6 @@ window.INGEMANN_DATA = null;
 window.OPTIMIZER_DATA = null;
 
 function initStageSelect() {
-  const sel = $('target-stage-select');
-
-  // Populate options first — required before setting .value
-  for (let i = 1; i <= 21; i++) {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = `Stage ${i}`;
-    sel.appendChild(opt);
-  }
-
   const saved = parseInt(localStorage.getItem('holdet_target_stage'));
   if (saved >= 1 && saved <= 21) {
     targetStage = saved;
@@ -761,8 +754,7 @@ function initStageSelect() {
     const nextIdx = S.stages.findIndex(st => st.date > TODAY);
     targetStage = nextIdx >= 0 ? nextIdx + 1 : 21;
   }
-
-  sel.value = targetStage;
+  $('target-stage-display').textContent = `Stage ${targetStage}`;
   S.activeStageIndex = Math.max(0, targetStage - 1);
   S.carouselOffset   = Math.max(0, S.activeStageIndex - 1);
   renderCarousel();
@@ -773,6 +765,7 @@ function setTargetStage(n) {
   if (!n || n < 1 || n > 21) return;
   targetStage = n;
   localStorage.setItem('holdet_target_stage', String(n));
+  $('target-stage-display').textContent = `Stage ${n}`;
   S.activeStageIndex = Math.max(0, n - 1);
   S.carouselOffset   = Math.max(0, S.activeStageIndex - 1);
   renderCarousel();
