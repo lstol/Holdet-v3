@@ -2064,9 +2064,7 @@ async function refreshData() {
     });
     const data = await res.json();
     if (data.status === 'ok') {
-      const teamNote = data.team_size === 8 ? `· team ${data.team_size}/8` : `· team ${data.team_size}/8 (check selectors if 0)`;
-      const bankNote = data.bank_balance ? `· bank ${(data.bank_balance/1e6).toFixed(2)}M` : '';
-      msg.textContent = `✓ ${data.rider_count} riders ${bankNote} ${teamNote} — reloading…`;
+      msg.textContent = `✓ ${data.rider_count} riders loaded — reloading…`;
       setTimeout(() => location.reload(), 1800);
     } else {
       msg.textContent = `Error: ${data.message}`;
