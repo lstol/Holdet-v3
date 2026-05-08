@@ -340,41 +340,29 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
 
 # ── Step 6: Team characterisation ────────────────────────────────────────────
 
-def label_team(team, probs):
-    """Detect and label the dominant structural pattern in a team."""
-    tc = Counter(_norm_team(r.get('team', '')) for r in team)
-
-    # Team-bonus concentration: top-win rider's real-world team has ≥2 in fantasy
-    top_win_rider = max(team, key=lambda r: probs.get(r['name'], {}).get('win', 0))
-    top_nt        = _norm_team(top_win_rider.get('team', ''))
-    if tc[top_nt] >= 2:
+def label_team(team, probs, budget=BUDGET):
+    """Label team based on actual composition — structural diversity over generic names."""
+    prices       = [r.get('price', 0) for r in team]
+    total_price  = sum(prices)
+    avg_price    = total_price / len(prices) if prices else 0
+    has_milan    = any(r['name'] == 'Jonathan Milan' for r in team)
+    team_counts  = Counter(_norm_team(r.get('team', '')) for r in team)
+    max_same_team = max(team_counts.values()) if team_counts else 1
+    # GC rider: climbing affinity > 0.65 AND meaningful win probability (in odds)
+    has_gc = any(
+        r.get('terrain_affinity', {}).get('climbing', 0) > 0.65
+        and probs.get(r['name'], {}).get('top10', 0) > 0.10
+        for r in team
+    )
+    if not has_milan:
+        return 'No-Milan upset'
+    if has_gc:
+        return 'Sprint + GC bridge'
+    if avg_price < 7_000_000:
+        return 'Budget-depth sprint'
+    if max_same_team >= 2 and total_price >= 48_000_000:
         return 'Team-bonus concentration'
-
-    # Sprint-maximal: multiple high sprint-affinity riders
-    sprint_heavy = sum(
-        1 for r in team if r.get('terrain_affinity', {}).get('sprint', 0) > 0.70
-    )
-    if sprint_heavy >= 4:
-        return 'Sprint-maximal'
-
-    # GC-heavy: multiple high climbing-affinity riders
-    climbers = sum(
-        1 for r in team if r.get('terrain_affinity', {}).get('climbing', 0) > 0.65
-    )
-    if climbers >= 4:
-        return 'GC-heavy build'
-
-    # Star build: two marquee riders (price > 9M)
-    stars = sum(1 for r in team if r.get('price', 0) >= 9_000_000)
-    if stars >= 3:
-        return 'Star-power build'
-
-    # Depth build: many mid-priced riders
-    mid = sum(1 for r in team if 3_000_000 < r.get('price', 0) < 8_000_000)
-    if mid >= 5:
-        return 'Depth play'
-
-    return 'Balanced build'
+    return 'Sprint-maximal'
 
 
 def generate_rationale(team, probs, label):
@@ -405,37 +393,85 @@ def estimate_forward_pressure(team):
 def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
                               budget=BUDGET):
     """
-    Run 5 independent SA chains with different seeds.
-    Each chain searches all 184 riders with budget/team/count as the only
-    hard constraints — no tier filtering anywhere.
+    Run 5 strategy-differentiated SA chains.
 
-    Riders with team-bonus value appear naturally if their EV justifies inclusion.
-    After deduplication, run full Plackett-Luce Monte Carlo on each distinct team
-    to produce accurate CDF and breakdown.
+    Each chain has a structurally distinct constraint set guaranteeing diversity:
+      0. Unconstrained optimum (seed 42)
+      1. No top sprint anchor — forces a different lead rider (seed 123)
+      2. Budget-depth — pool capped at ≤9M per rider (seed 777)
+      3. GC-bridge — must include a climbing specialist (seed 2026)
+      4. Natural variation, different seed (seed 99)
 
-    Returns a list of candidate dicts sorted by ev_estimate descending.
+    After deduplication (>6 riders in common), run full Plackett-Luce Monte Carlo
+    on each distinct team for accurate CDF and breakdown.
     """
-    forced_set = set(force_in_names  or [])
-    excluded   = set(force_out_names or [])
+    # all_riders is the full roster — used for Monte Carlo (not filtered)
+    full_roster     = all_riders
+    user_forced_set = set(force_in_names  or [])
+    user_excluded   = set(force_out_names or [])
 
-    # Validate forced riders
-    forced      = [r for r in all_riders if r['name'] in forced_set]
-    forced_price = sum(r.get('price', 0) for r in forced)
-    if forced_price > budget:
-        raise ValueError(f'Force-in riders cost {forced_price:,} > budget {budget:,}')
+    # Validate user-forced riders
+    user_forced       = [r for r in all_riders if r['name'] in user_forced_set]
+    user_forced_price = sum(r.get('price', 0) for r in user_forced)
+    if user_forced_price > budget:
+        raise ValueError(f'Force-in riders cost {user_forced_price:,} > budget {budget:,}')
     ftc = defaultdict(int)
-    for r in forced:
+    for r in user_forced:
         ftc[_norm_team(r.get('team', ''))] += 1
         if ftc[_norm_team(r.get('team', ''))] > 2:
             raise ValueError(f'Force-in has >2 riders from {r.get("team","?")}')
 
-    # Run 5 SA chains
-    SEEDS = [42, 123, 777, 2026, 99]
+    # Strategy 1: identify the top sprint anchor by win probability
+    top_anchor = None
+    for r in sorted(all_riders, key=lambda r: probs.get(r['name'], {}).get('win', 0), reverse=True):
+        if r['name'] not in user_excluded and r['name'] not in user_forced_set:
+            top_anchor = r['name']
+            break
+
+    # Strategy 3: identify best GC anchor (climbing > 0.65, meaningful odds)
+    gc_anchor = None
+    for r in sorted(all_riders, key=lambda r: probs.get(r['name'], {}).get('top10', 0), reverse=True):
+        if (r['name'] not in user_excluded
+                and r['name'] not in user_forced_set
+                and r.get('terrain_affinity', {}).get('climbing', 0) > 0.65
+                and probs.get(r['name'], {}).get('top10', 0) > 0.10):
+            gc_anchor = r['name']
+            break
+
+    # Budget-depth pool: remove riders above 9M (except user-forced)
+    budget_depth_riders = [
+        r for r in all_riders
+        if r.get('price', 0) <= 9_000_000 or r['name'] in user_forced_set
+    ]
+
+    strategies = [
+        # 0 — unconstrained optimum
+        {'seed': 42,   'riders': all_riders,
+         'force_in':  list(user_forced_set),
+         'force_out': list(user_excluded)},
+        # 1 — no top sprint anchor
+        {'seed': 123,  'riders': all_riders,
+         'force_in':  list(user_forced_set),
+         'force_out': list(user_excluded) + ([top_anchor] if top_anchor else [])},
+        # 2 — budget-depth: pool capped at ≤9M per rider
+        {'seed': 777,  'riders': budget_depth_riders,
+         'force_in':  list(user_forced_set),
+         'force_out': list(user_excluded)},
+        # 3 — GC-bridge: force include a climbing specialist
+        {'seed': 2026, 'riders': all_riders,
+         'force_in':  list(user_forced_set) + ([gc_anchor] if gc_anchor else []),
+         'force_out': list(user_excluded)},
+        # 4 — natural variation
+        {'seed': 99,   'riders': all_riders,
+         'force_in':  list(user_forced_set),
+         'force_out': list(user_excluded)},
+    ]
+
     raw_results = []
-    for seed in SEEDS:
+    for strat in strategies:
         team, ev = simulated_annealing(
-            all_riders, probs, force_in_names, force_out_names,
-            budget=budget, n_iter=100_000, seed=seed,
+            strat['riders'], probs, strat['force_in'], strat['force_out'],
+            budget=budget, n_iter=100_000, seed=strat['seed'],
         )
         if team is not None:
             raw_results.append((ev, team))
@@ -460,8 +496,8 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
             f"(riders: {[r['name'] for r in team]})"
         )
         cap = select_captain(team, probs)
-        sim = simulate_stage(team, probs, cap['name'], all_riders=all_riders)
-        lbl = label_team(team, probs)
+        sim = simulate_stage(team, probs, cap['name'], all_riders=full_roster)
+        lbl = label_team(team, probs, budget)
         candidates.append({
             'label':            lbl,
             'riders':           team,
