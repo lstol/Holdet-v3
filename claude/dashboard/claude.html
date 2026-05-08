@@ -464,15 +464,15 @@ input[type=range]::-webkit-slider-thumb {
       <div class="race-label">Holdet v3 · Giro d'Italia 2026</div>
       <div style="display:flex;align-items:center;gap:8px;margin:3px 0;">
         <span style="font-size:11px;color:var(--color-text-2);">Preparing for</span>
-        <select id="target-stage-select" onchange="setTargetStage(parseInt(this.value))"
-                style="font-size:13px;font-weight:500;padding:4px 8px;
-                       border-radius:var(--radius-md);
-                       background:var(--color-surface-2);
-                       border:1px solid var(--color-border);
-                       color:var(--color-text);">
-        </select>
+        <input id="target-stage-select" type="number" min="1" max="21"
+               onchange="setTargetStage(Math.min(21,Math.max(1,parseInt(this.value)||1)))"
+               style="font-size:13px;font-weight:600;padding:3px 6px;width:52px;
+                      border-radius:var(--radius-md);text-align:center;
+                      background:var(--color-surface-2);
+                      border:1px solid var(--color-border);
+                      color:var(--color-text);">
         <span style="font-size:11px;color:var(--color-text-2);">
-          · Current team from Stage <span id="current-stage-label">—</span>
+          · Next stage: <span id="current-stage-label">—</span>
         </span>
       </div>
       <div class="stage-meta" id="h-stage-meta">—</div>
@@ -490,9 +490,10 @@ input[type=range]::-webkit-slider-thumb {
       <button class="btn btn-ghost" id="refresh-btn" onclick="refreshData()">
         <i class="ti ti-refresh"></i> Refresh
       </button>
-      <div id="server-msg" style="display:none"></div>
     </div>
   </header>
+<div id="server-msg" style="display:none;padding:6px 0;font-size:11px;
+     color:var(--color-warning);line-height:1.5;"></div>
 
   <!-- ── Stage carousel ──────────────────────────────────────── -->
   <div class="section" id="carousel">
@@ -747,17 +748,10 @@ window.INGEMANN_DATA = null;
 window.OPTIMIZER_DATA = null;
 
 function initStageSelect() {
-  const sel = $('target-stage-select');
-  for (let i = 1; i <= 21; i++) {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = `Stage ${i}`;
-    sel.appendChild(opt);
-  }
   const saved = localStorage.getItem('holdet_target_stage');
   const upcomingIdx = S.stages.findIndex(st => st.date >= TODAY);
   targetStage = saved ? parseInt(saved) : (upcomingIdx >= 0 ? upcomingIdx + 1 : 1);
-  sel.value = targetStage;
+  $('target-stage-select').value = targetStage;
   updateStageLabel();
 }
 
@@ -777,9 +771,7 @@ function setTargetStage(n) {
 }
 
 function updateStageLabel() {
-  const completed = Math.max(0, targetStage - 1);
-  $('current-stage-label').textContent =
-    completed === 0 ? 'None (pre-race)' : String(completed);
+  $('current-stage-label').textContent = String(targetStage);
 }
 
 /* ── Stage results panel ─────────────────────────────────────────────── */
@@ -1900,7 +1892,7 @@ async function refreshData() {
 /* ── Data loading ────────────────────────────────────────────────────── */
 async function loadRiders() {
   try {
-    const res = await fetch(`${SERVER}/riders`);
+    const res = await fetch(`${SERVER}/riders?stage=${targetStage}`);
     if (!res.ok) throw new Error('no riders');
     const data = await res.json();
     S.riders = (data.riders || []).map(r => ({ ...r, _type: deriveType(r) }));
