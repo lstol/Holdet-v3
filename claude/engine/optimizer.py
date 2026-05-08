@@ -454,13 +454,18 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
     # Run full Monte Carlo on each distinct team
     candidates = []
     for _, team in distinct[:5]:
+        total_price = sum(r.get('price', 0) for r in team)
+        assert total_price <= budget, (
+            f"Budget violation: team costs {total_price:,} > budget {budget:,} "
+            f"(riders: {[r['name'] for r in team]})"
+        )
         cap = select_captain(team, probs)
         sim = simulate_stage(team, probs, cap['name'], all_riders=all_riders)
         lbl = label_team(team, probs)
         candidates.append({
             'label':            lbl,
             'riders':           team,
-            'total_price':      sum(r.get('price', 0) for r in team),
+            'total_price':      total_price,
             'ev_estimate':      int(sim['mean']),
             'ev_breakdown':     sim['breakdown'],
             'cdf':              sim['cdf'],

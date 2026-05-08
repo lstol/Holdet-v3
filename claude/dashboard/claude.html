@@ -1325,6 +1325,7 @@ async function runPyOptimizer() {
 function renderOptimizerOutput(data) {
   const area = $('optimizer-output');
   const sorted = [...(data.teams || [])].sort((a, b) => (b.ev_estimate || 0) - (a.ev_estimate || 0));
+  const actualBudget = data.budget || 50_000_000;
 
   function riderRow(name) {
     const rd  = S.riders.find(x => x.name === name) || {};
@@ -1354,7 +1355,7 @@ function renderOptimizerOutput(data) {
     <div style="border:1px solid var(--color-border);border-radius:var(--radius-md);padding:8px 10px;margin-bottom:6px;">
       <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:5px;border-bottom:1px solid var(--color-border);margin-bottom:4px;">
         <span style="font-weight:600;font-size:12px;">#${i+1} ${esc(team.label)}</span>
-        <span style="font-size:12px;font-weight:500;color:var(--color-success);">EV ${fmt(team.ev_estimate)} <span style="color:var(--color-text-3);font-weight:400;font-size:11px;">${((team.total_price||0)/1e6).toFixed(2)}M</span></span>
+        <span style="font-size:12px;font-weight:500;color:var(--color-success);">EV ${fmt(team.ev_estimate)} <span style="color:var(--color-text-3);font-weight:400;font-size:11px;">${((team.total_price||0)/1e6).toFixed(2)}M of ${(actualBudget/1e6).toFixed(2)}M</span></span>
       </div>
       <table class="tcard-table">
         <thead><tr>

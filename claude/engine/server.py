@@ -343,12 +343,19 @@ def run_optimizer_py():
     intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
     intel_data = json.load(open(intel_path)) if os.path.exists(intel_path) else {}
 
+    # Read actual budget from Holdet snapshot; fall back to 50M
+    snapshot_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_holdet.json')
+    snapshot = json.load(open(snapshot_path)) if os.path.exists(snapshot_path) else {}
+    budget = int(snapshot.get('bank_balance', 50_000_000))
+    app.logger.info(f"run-optimizer-py stage={stage} budget={budget:,}")
+    _log(f"run-optimizer-py stage={stage} budget={budget:,}")
+
     try:
         # Build probability distributions
         probs = build_probabilities(active_riders, odds, intel_data, sliders)
 
-        # Generate candidate teams (hard constraints enforced inside)
-        candidates = generate_candidate_teams(active_riders, probs, force_in, force_out)
+        # Generate candidate teams using actual budget
+        candidates = generate_candidate_teams(active_riders, probs, force_in, force_out, budget=budget)
 
         if not candidates:
             return jsonify({'status': 'error', 'message': 'No valid teams found — check budget/constraints'}), 500
@@ -383,6 +390,7 @@ def run_optimizer_py():
             'teams':   teams_out,
             'captain': overall_captain,
             'tier_a':  [t['riders'][0] for t in teams_out[:2]],
+            'budget':  budget,
         }
 
         out_path = os.path.join(BASE_DIR, 'claude', 'output', f'stage_{stage}_claude_py.json')
