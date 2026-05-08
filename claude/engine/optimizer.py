@@ -358,10 +358,12 @@ def label_team(team, probs, budget=BUDGET):
         return 'No-Milan upset'
     if has_gc:
         return 'Sprint + GC bridge'
-    if avg_price < 7_000_000:
-        return 'Budget-depth sprint'
+    # Team-bonus before budget-depth: expensive anchor + cheap teammates from same team
+    # still reads as a team-bonus play, not a budget roster
     if max_same_team >= 2 and total_price >= 48_000_000:
         return 'Team-bonus concentration'
+    if avg_price < 7_000_000:
+        return 'Budget-depth sprint'
     return 'Sprint-maximal'
 
 
