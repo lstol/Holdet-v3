@@ -533,6 +533,7 @@ def parse_odds_image():
         end   = raw.rfind(']')
         if start != -1 and end != -1 and end > start:
             raw = raw[start:end+1]
+        _log(f"parse-odds-image after-strip raw={repr(raw[:200])}")
         parsed = json.loads(raw)  # [{name, pct}, ...]
 
         # Load existing odds to merge into
