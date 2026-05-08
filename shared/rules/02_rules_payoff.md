@@ -212,3 +212,35 @@ Still applies normally on TTT stages: GC standing, jersey bonuses, sprint/KOM po
 | Final score | Rider values + bank (captain deposits + depth bonus + interest). |
 | DNF sprint/KOM | DNF riders earn points accumulated before abandonment. |
 | DNF team bonus | DNF riders do NOT receive team bonus on that stage. |
+
+---
+
+## 9. Sprint Points (per stage type)
+
+Each sprint point = **3,000 kr**.
+
+| Type | Stages | Positions paid | Points |
+|------|--------|---------------|--------|
+| A | 1,3,4,6,12,15,18,21 | Top 15 | 50-35-25-18-14-12-10-8-7-6-5-4-3-2-1 |
+| B | 2,5,8,11,13,17 | Top 10 | 25-18-12-8-6-5-4-3-2-1 |
+| C | 7,9,10,14,16,19,20 | Top 10 | 15-12-9-7-6-5-4-3-2-1 |
+
+**Intermediate sprints** — top 5: 12-8-5-3-1 points (× 3,000 kr each).
+Number of intermediate sprints per stage defined in `stage_scoring.json`.
+
+---
+
+## 10. Mountain Points (KOM)
+
+Each KOM point = **3,000 kr**.
+
+| Category | Climbs in Giro 2026 | Positions paid | Points |
+|----------|-------------------|---------------|--------|
+| Cat 4 | 9 | Top 3 | 3-2-1 |
+| Cat 3 | 17 | Top 4 | 9-4-2-1 |
+| Cat 2 | 13 | Top 6 | 18-8-6-4-2-1 |
+| Cat 1 | 9 | Top 8 | 40-18-12-9-6-4-2-1 |
+| Cat 1 at finish | — | Top 8 | 50-24-16-9-6-4-2-1 |
+| Cima Coppi (Stage 19, Giau) | 1 | Top 9 | 50-30-20-14-10-6-4-2-1 |
+
+Full per-stage climb data (with category and at-finish flag) stored in `shared/data/stages/giro_2026/stage_scoring.json`.

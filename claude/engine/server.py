@@ -48,12 +48,19 @@ except ImportError:
 
 app = Flask(__name__)
 
-BASE_DIR       = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-SNAPSHOT_DIR   = os.path.join(BASE_DIR, 'shared', 'data', 'snapshots')
-RIDERS_FILE    = os.path.join(BASE_DIR, 'shared', 'data', 'riders', 'giro_2026', 'riders.json')
-EXPERT_SOURCES = os.path.join(BASE_DIR, 'claude', 'engine', 'expert_sources.yaml')
-FETCH_RIDERS   = os.path.join(BASE_DIR, 'claude', 'engine', 'fetch_riders.py')
-LOG_FILE       = os.path.join(BASE_DIR, 'claude', 'logs', 'server.log')
+BASE_DIR          = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+SNAPSHOT_DIR      = os.path.join(BASE_DIR, 'shared', 'data', 'snapshots')
+RIDERS_FILE       = os.path.join(BASE_DIR, 'shared', 'data', 'riders', 'giro_2026', 'riders.json')
+STAGE_SCORING_FILE= os.path.join(BASE_DIR, 'shared', 'data', 'stages', 'giro_2026', 'stage_scoring.json')
+EXPERT_SOURCES    = os.path.join(BASE_DIR, 'claude', 'engine', 'expert_sources.yaml')
+FETCH_RIDERS      = os.path.join(BASE_DIR, 'claude', 'engine', 'fetch_riders.py')
+LOG_FILE          = os.path.join(BASE_DIR, 'claude', 'logs', 'server.log')
+
+def _load_stage_scoring():
+    if os.path.exists(STAGE_SCORING_FILE):
+        with open(STAGE_SCORING_FILE) as f:
+            return json.load(f)
+    return {}
 
 
 def _log(msg: str) -> None:
@@ -102,6 +109,15 @@ def static_files(filename):
 @app.route('/stage-images/<path:filename>')
 def stage_images(filename):
     return send_from_directory(os.path.join(BASE_DIR, 'shared', 'data', 'stage_images'), filename)
+
+
+# ── Stage scoring ────────────────────────────────────────────────────────────
+
+@app.route('/stage-scoring/<int:stage_num>', methods=['GET'])
+def stage_scoring(stage_num):
+    scoring      = _load_stage_scoring()
+    stage_config = scoring.get('stages', {}).get(str(stage_num), {})
+    return jsonify({'stage': stage_num, 'config': stage_config, 'scoring': scoring})
 
 
 # ── Riders ───────────────────────────────────────────────────────────────────
@@ -360,29 +376,24 @@ def run_optimizer_py():
     _log(f"run-optimizer-py stage={stage} budget={budget:,}")
 
     try:
-        # Derive stage type from sprint/gc sliders
-        n1 = sliders.get('n1', sliders)  # support both nested and flat slider shapes
-        sprint_pct = n1.get('sprint', 0) if isinstance(n1, dict) else 0
-        gc_pct     = n1.get('gc',     0) if isinstance(n1, dict) else 0
-        if sprint_pct >= 60:
-            stage_type     = 'sprint'
-            n_intermediates = 1
-        elif gc_pct >= 50:
-            stage_type     = 'mountain'
-            n_intermediates = 0
-        else:
-            stage_type     = 'hilly'
-            n_intermediates = 1
-        app.logger.info(f"run-optimizer-py stage_type={stage_type} n_inter={n_intermediates}")
+        # Load stage scoring config
+        scoring      = _load_stage_scoring()
+        stage_config = scoring.get('stages', {}).get(str(stage), {})
+        sprint_type  = stage_config.get('sprint_type', 'A')
+        app.logger.info(
+            f"run-optimizer-py stage={stage} sprint_type={sprint_type} "
+            f"n_inter={stage_config.get('n_intermediate_sprints','?')} "
+            f"climbs={len(stage_config.get('climbs',[]))}"
+        )
 
-        # Build probability distributions (annotates with sprint/jersey/gc EVs)
+        # Build probability distributions (annotates with sprint/jersey/gc/kom EVs)
         probs = build_probabilities(active_riders, odds, intel_data, sliders,
-                                    stage_type=stage_type, n_intermediates=n_intermediates)
+                                    stage_config=stage_config, scoring=scoring)
 
         # Generate candidate teams using actual budget
         candidates = generate_candidate_teams(active_riders, probs, force_in, force_out,
-                                              budget=budget, stage_type=stage_type,
-                                              n_intermediates=n_intermediates)
+                                              budget=budget, stage_config=stage_config,
+                                              scoring=scoring)
 
         if not candidates:
             return jsonify({'status': 'error', 'message': 'No valid teams found — check budget/constraints'}), 500
@@ -394,8 +405,7 @@ def run_optimizer_py():
             cap         = select_captain(team_riders, probs)
             sim         = simulate_stage(team_riders, probs, cap['name'],
                                          all_riders=active_riders,
-                                         stage_type=stage_type,
-                                         n_intermediates=n_intermediates)
+                                         stage_config=stage_config, scoring=scoring)
 
             total_price = sum(r['price'] for r in team_riders)
             teams_out.append({
@@ -417,10 +427,11 @@ def run_optimizer_py():
         overall_captain  = select_captain(best_team_riders, probs)
 
         result = {
-            'teams':   teams_out,
-            'captain': overall_captain,
-            'tier_a':  [t['riders'][0] for t in teams_out[:2]],
-            'budget':  budget,
+            'teams':        teams_out,
+            'captain':      overall_captain,
+            'tier_a':       [t['riders'][0] for t in teams_out[:2]],
+            'budget':       budget,
+            'stage_config': stage_config,
         }
 
         out_path = os.path.join(BASE_DIR, 'claude', 'output', f'stage_{stage}_claude_py.json')

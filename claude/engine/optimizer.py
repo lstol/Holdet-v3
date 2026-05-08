@@ -79,6 +79,57 @@ _FP_W23   = (FINISH_POINTS[1] + FINISH_POINTS[2]) / 2
 _FP_W4_10 = sum(FINISH_POINTS[3:10]) / 7
 _FP_W11_15= sum(FINISH_POINTS[10:15]) / 5
 
+# ── Stage scoring helpers ─────────────────────────────────────────────────────
+
+import json as _json
+import os as _os
+
+def load_stage_scoring():
+    """Load stage_scoring.json from shared/data/stages/giro_2026/. Returns {} on miss."""
+    base = _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+    path = _os.path.join(base, 'shared', 'data', 'stages', 'giro_2026', 'stage_scoring.json')
+    if _os.path.exists(path):
+        with open(path) as f:
+            return _json.load(f)
+    return {}
+
+def get_stage_config(stage_num, scoring):
+    """Return the per-stage dict from scoring, or {} if missing."""
+    return scoring.get('stages', {}).get(str(stage_num), {})
+
+def sprint_type_to_stage_type(sprint_type):
+    """A→'sprint', B→'hilly', C→'mountain'."""
+    return {'A': 'sprint', 'B': 'hilly', 'C': 'mountain'}.get(sprint_type, 'sprint')
+
+def compute_sprint_ev(rider_pos, stage_config, scoring):
+    """Sprint kr EV for a rider at 1-indexed finish position on this stage."""
+    pv   = scoring.get('point_value_kr', POINT_VALUE)
+    pts  = stage_config.get('sprint_points', [])
+    kr   = pts[rider_pos - 1] * pv if rider_pos <= len(pts) else 0
+    n    = stage_config.get('n_intermediate_sprints', 0)
+    if n > 0:
+        ipts = scoring.get('intermediate_sprint_points', [])
+        kr  += (ipts[rider_pos - 1] * pv if rider_pos <= len(ipts) else 0) * n
+    return kr
+
+def compute_climb_ev(rider_pos, climbs, scoring):
+    """KOM kr EV for a rider at 1-indexed finish position across all stage climbs."""
+    pv = scoring.get('point_value_kr', POINT_VALUE)
+    kr = 0
+    for climb in climbs:
+        cat = climb.get('cat')
+        if cat == 'cima_coppi':
+            cat_key = 'cima_coppi'
+        elif climb.get('at_finish') and cat == 1:
+            cat_key = 'cat1_finish'
+        else:
+            cat_key = f'cat{cat}'
+        cp  = scoring.get('climb_points', {}).get(cat_key, {})
+        pts = cp.get('points', [])
+        if rider_pos <= len(pts):
+            kr += pts[rider_pos - 1] * pv
+    return kr
+
 
 # ── Utility: team-name normalisation ─────────────────────────────────────────
 
@@ -103,50 +154,66 @@ def _norm_team(name):
 
 # ── Stage-type EV annotation ──────────────────────────────────────────────────
 
-def add_stage_evs(probs, stage_type='sprint', n_intermediates=1):
+def add_stage_evs(probs, stage_config=None, scoring=None):
     """
-    Annotate each rider's probs entry with stage-type-specific EV fields (in-place).
-    Adds: sprint_ev, jersey_ev, gc_ev, total_ev.
+    Annotate each rider's probs entry with stage-specific EV fields (in-place).
+    Adds: sprint_ev, jersey_ev, gc_ev, kom_ev, total_ev.
 
-    stage_type: 'sprint' | 'hilly' | 'mountain'
-    n_intermediates: number of intermediate sprint locations
+    stage_config: dict from stage_scoring.json['stages']['N']
+    scoring:      full stage_scoring.json dict (for point_value_kr, climb_points, etc.)
     """
+    if stage_config is None:
+        stage_config = {}
+    if scoring is None:
+        scoring = {}
+
+    pv          = scoring.get('point_value_kr', POINT_VALUE)
+    sprint_pts  = stage_config.get('sprint_points', SPRINT_POINTS_FINAL)
+    sprint_kr   = [p * pv for p in sprint_pts]
+    n_inter     = stage_config.get('n_intermediate_sprints', 1)
+    inter_pts   = scoring.get('intermediate_sprint_points', SPRINT_POINTS_INTERMEDIATE)
+    inter_kr    = [p * pv for p in inter_pts]
+    climbs      = stage_config.get('climbs', [])
+    sprint_type = stage_config.get('sprint_type', 'A')
+    stage_type  = sprint_type_to_stage_type(sprint_type)
+
     for p in probs.values():
         fp = p.get('finish_probs', [0.0] * 15)
         pw = p.get('win', 0.0)
 
-        # Sprint EV — only on sprint/hilly stages; zero on mountain
+        # Sprint EV (zero on mountain stages — Type C)
         if stage_type in ('sprint', 'hilly'):
-            sprint_ev = sum(
-                fp[i] * SPRINT_KR_FINAL[i]
-                for i in range(min(len(fp), len(SPRINT_KR_FINAL)))
-            )
-            sprint_ev += n_intermediates * sum(
-                fp[i] * SPRINT_KR_INTERMEDIATE[i]
-                for i in range(min(len(fp), len(SPRINT_KR_INTERMEDIATE)))
-            )
+            sprint_ev = sum(fp[i] * sprint_kr[i]
+                            for i in range(min(len(fp), len(sprint_kr))))
+            sprint_ev += n_inter * sum(fp[i] * inter_kr[i]
+                                       for i in range(min(len(fp), len(inter_kr))))
         else:
             sprint_ev = 0.0
 
-        # Jersey EV — stage winner takes GC jersey always; points jersey on sprint stages
-        if stage_type == 'sprint':
+        # Jersey EV (points jersey only on Type A sprint stages)
+        if sprint_type == 'A':
             jersey_ev = pw * (JERSEY_BONUS['gc'] + JERSEY_BONUS['points'])
         else:
             jersey_ev = pw * JERSEY_BONUS['gc']
 
-        # GC EV — after Stage 1 GC standings mirror finish order; reasonable for early stages
+        # GC EV
         gc_ev = sum(fp[i] * GC_BONUS.get(i + 1, 0) for i in range(min(len(fp), 10)))
+
+        # KOM EV (approximate: use finish position as proxy for climb position)
+        kom_ev = sum(fp[i] * compute_climb_ev(i + 1, climbs, scoring)
+                     for i in range(len(fp)) if fp[i] > 0)
 
         p['sprint_ev'] = sprint_ev
         p['jersey_ev'] = jersey_ev
         p['gc_ev']     = gc_ev
-        p['total_ev']  = p['finish_ev'] + sprint_ev + jersey_ev + gc_ev
+        p['kom_ev']    = kom_ev
+        p['total_ev']  = p['finish_ev'] + sprint_ev + jersey_ev + gc_ev + kom_ev
 
 
 # ── Step 1: Build probabilities ───────────────────────────────────────────────
 
 def build_probabilities(all_riders, odds, intel, sliders=None,
-                        stage_type='sprint', n_intermediates=1):
+                        stage_config=None, scoring=None):
     """
     Returns dict: {rider_name: {win, top3, top10, top15, finish_probs,
                                 finish_ev, team_bonus_ev, p2, p3, p_top15,
@@ -247,7 +314,7 @@ def build_probabilities(all_riders, odds, intel, sliders=None,
             'name': name,
         }
 
-    add_stage_evs(result, stage_type=stage_type, n_intermediates=n_intermediates)
+    add_stage_evs(result, stage_config=stage_config, scoring=scoring)
     return result
 
 
@@ -496,7 +563,7 @@ def estimate_forward_pressure(team):
 # ── Step 7: Main entry point ──────────────────────────────────────────────────
 
 def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
-                              budget=BUDGET, stage_type='sprint', n_intermediates=1):
+                              budget=BUDGET, stage_config=None, scoring=None):
     """
     Run 7 strategy-differentiated SA chains (target: ~60 s total, 9 s each).
 
@@ -625,7 +692,7 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
         )
         cap = select_captain(team, probs)
         sim = simulate_stage(team, probs, cap['name'], all_riders=full_roster,
-                             stage_type=stage_type, n_intermediates=n_intermediates)
+                             stage_config=stage_config, scoring=scoring)
         lbl = label_team(team, probs, budget)
         candidates.append({
             'label':            lbl,
@@ -674,21 +741,32 @@ def select_captain(team_riders, all_probs):
 # ── Monte Carlo simulation (Plackett-Luce) ────────────────────────────────────
 
 def simulate_stage(team_riders, all_probs, captain_name, all_riders=None,
-                   n_sims=10_000, stage_type='sprint', n_intermediates=1):
+                   n_sims=10_000, stage_config=None, scoring=None):
     """
     Simulate n_sims stage outcomes using Plackett-Luce sampling.
 
-    Scoring components per rider:
-      - Stage finish points (top-15 pay table)
-      - Sprint points: final sprint + n_intermediates intermediate sprints
-      - Jersey bonus: winner takes GC jersey; also points jersey on sprint stages
-      - GC bonus: paid to top-10 in overall standings (Stage 1 = finish order)
-      - Team bonus: real-world teammate in fantasy team podiums
-      - Depth bonus: number of fantasy riders in top-15
-      - Captain: ALL of the above doubled for the designated captain
+    Scoring: stage finish · sprint (final + intermediates) · jersey · GC bonus ·
+             KOM/climb points · team bonus · depth bonus.
+    Captain: ALL positive per-rider components are doubled.
 
+    stage_config: dict from stage_scoring.json['stages']['N']
+    scoring:      full stage_scoring.json dict
     Returns {'mean', 'cdf': {p25,p50,p75,p90}, 'breakdown': {...}}.
     """
+    if stage_config is None:
+        stage_config = {}
+    if scoring is None:
+        scoring = {}
+
+    pv          = scoring.get('point_value_kr', POINT_VALUE)
+    sprint_pts_raw = stage_config.get('sprint_points', SPRINT_POINTS_FINAL)
+    sprint_kr   = [p * pv for p in sprint_pts_raw]
+    n_inter     = stage_config.get('n_intermediate_sprints', 1)
+    inter_pts_raw = scoring.get('intermediate_sprint_points', SPRINT_POINTS_INTERMEDIATE)
+    inter_kr    = [p * pv for p in inter_pts_raw]
+    climbs      = stage_config.get('climbs', [])
+    sprint_type = stage_config.get('sprint_type', 'A')
+
     rng = np.random.default_rng()
 
     field_names = list(all_probs.keys())
@@ -725,42 +803,59 @@ def simulate_stage(team_riders, all_probs, captain_name, all_riders=None,
     fp_lookup  = np.array(FINISH_POINTS, dtype=np.float64)
     finish_pts = np.where(team_pos < 15, fp_lookup[np.minimum(team_pos, 14)], 0.0)
 
-    # ── Sprint points ─────────────────────────────────────────────────────────
-    if stage_type in ('sprint', 'hilly'):
-        sp_final_lookup = np.zeros(n_field, dtype=np.float64)
-        for i, kr in enumerate(SPRINT_KR_FINAL):
+    # ── Sprint points (zero on Type C mountain stages) ────────────────────────
+    stage_type = sprint_type_to_stage_type(sprint_type)
+    if stage_type in ('sprint', 'hilly') and sprint_kr:
+        sp_lkp = np.zeros(n_field, dtype=np.float64)
+        for i, kr in enumerate(sprint_kr):
             if i < n_field:
-                sp_final_lookup[i] = kr
-        sprint_pts = sp_final_lookup[np.minimum(team_pos, n_field - 1)]
-        sprint_pts = np.where(team_pos < len(SPRINT_KR_FINAL), sprint_pts, 0.0)
-
-        if n_intermediates > 0:
-            sp_inter_lookup = np.zeros(n_field, dtype=np.float64)
-            for i, kr in enumerate(SPRINT_KR_INTERMEDIATE):
+                sp_lkp[i] = kr
+        sprint_pts = np.where(team_pos < len(sprint_kr),
+                              sp_lkp[np.minimum(team_pos, n_field - 1)], 0.0)
+        if n_inter > 0 and inter_kr:
+            si_lkp = np.zeros(n_field, dtype=np.float64)
+            for i, kr in enumerate(inter_kr):
                 if i < n_field:
-                    sp_inter_lookup[i] = kr
-            inter_pts = np.where(
-                team_pos < len(SPRINT_KR_INTERMEDIATE),
-                sp_inter_lookup[np.minimum(team_pos, n_field - 1)],
-                0.0,
-            )
-            sprint_pts = sprint_pts + inter_pts * n_intermediates
+                    si_lkp[i] = kr
+            sprint_pts = sprint_pts + np.where(
+                team_pos < len(inter_kr),
+                si_lkp[np.minimum(team_pos, n_field - 1)], 0.0
+            ) * n_inter
     else:
         sprint_pts = np.zeros_like(finish_pts)
 
     # ── Jersey bonus ──────────────────────────────────────────────────────────
-    if stage_type == 'sprint':
-        winner_jersey = float(JERSEY_BONUS['gc'] + JERSEY_BONUS['points'])
-    else:
-        winner_jersey = float(JERSEY_BONUS['gc'])
+    winner_jersey = float(
+        JERSEY_BONUS['gc'] + (JERSEY_BONUS['points'] if sprint_type == 'A' else 0)
+    )
     jersey_pts = np.where(team_pos == 0, winner_jersey, 0.0)
 
     # ── GC bonus ─────────────────────────────────────────────────────────────
-    gc_lookup = np.zeros(n_field, dtype=np.float64)
+    gc_lkp = np.zeros(n_field, dtype=np.float64)
     for pos_1idx, bonus in GC_BONUS.items():
         if pos_1idx - 1 < n_field:
-            gc_lookup[pos_1idx - 1] = float(bonus)
-    gc_pts = np.where(team_pos < 10, gc_lookup[np.minimum(team_pos, n_field - 1)], 0.0)
+            gc_lkp[pos_1idx - 1] = float(bonus)
+    gc_pts = np.where(team_pos < 10, gc_lkp[np.minimum(team_pos, n_field - 1)], 0.0)
+
+    # ── KOM points (all categorised climbs on this stage) ────────────────────
+    kom_pts = np.zeros_like(finish_pts)
+    for climb in climbs:
+        cat = climb.get('cat')
+        if cat == 'cima_coppi':
+            cat_key = 'cima_coppi'
+        elif climb.get('at_finish') and cat == 1:
+            cat_key = 'cat1_finish'
+        else:
+            cat_key = f'cat{cat}'
+        cp   = scoring.get('climb_points', {}).get(cat_key, {})
+        cpts = cp.get('points', [])
+        if cpts:
+            kl = np.zeros(n_field, dtype=np.float64)
+            for i, p in enumerate(cpts):
+                if i < n_field:
+                    kl[i] = p * pv
+            kom_pts += np.where(team_pos < len(cpts),
+                                kl[np.minimum(team_pos, n_field - 1)], 0.0)
 
     # ── Depth bonus ───────────────────────────────────────────────────────────
     depth_cnt = (team_pos < 15).sum(axis=1)
@@ -777,8 +872,8 @@ def simulate_stage(team_riders, all_probs, captain_name, all_riders=None,
             if rteam:
                 team_bonus += (top_rteam == rteam).astype(np.float64) * bval
 
-    # ── Captain doubling — applies to ALL per-rider components ────────────────
-    rider_totals  = finish_pts + sprint_pts + jersey_pts + gc_pts  # (n_sims, 8)
+    # ── Captain doubles ALL positive per-rider components ────────────────────
+    rider_totals  = finish_pts + sprint_pts + jersey_pts + gc_pts + kom_pts
     cap_total     = rider_totals[:, capt_ti]
     captain_bonus = np.maximum(cap_total, 0.0)
 
@@ -786,6 +881,7 @@ def simulate_stage(team_riders, all_probs, captain_name, all_riders=None,
     sprint_totals = sprint_pts.sum(axis=1)
     jersey_totals = jersey_pts.sum(axis=1)
     gc_totals     = gc_pts.sum(axis=1)
+    kom_totals    = kom_pts.sum(axis=1)
     totals        = rider_totals.sum(axis=1) + captain_bonus + depth_pts + team_bonus
 
     s = np.sort(totals)
@@ -802,6 +898,7 @@ def simulate_stage(team_riders, all_probs, captain_name, all_riders=None,
             'sprint_points': int(sprint_totals.mean()),
             'jersey_bonus':  int(jersey_totals.mean()),
             'gc_bonus':      int(gc_totals.mean()),
+            'kom_points':    int(kom_totals.mean()),
             'captain_bonus': int(captain_bonus.mean()),
             'team_bonus':    int(team_bonus.mean()),
             'depth_bonus':   int(depth_pts.mean()),

@@ -499,6 +499,13 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 
+  <!-- ── Stage scoring summary ──────────────────────────────── -->
+  <div id="stage-scoring-bar" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:8px 14px;font-size:11px;color:var(--color-text-2);display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+    <span id="scoring-sprint-label" style="color:var(--color-text-3)">Sprint: —</span>
+    <span id="scoring-inter-label"  style="color:var(--color-text-3)">Intermediate: —</span>
+    <span id="scoring-climb-label"  style="color:var(--color-text-3)">Climbs: —</span>
+  </div>
+
   <!-- ── Stage type sliders ──────────────────────────────────── -->
   <div class="section">
     <div class="section-header"><h2>Stage type sliders</h2></div>
@@ -754,6 +761,26 @@ function renderProfile(stage) {
   const routeTxt = `${stage.start_city || '?'} › ${stage.finish_city || '?'} · ${stage.distance_km || '?'}km`;
   $('profile-route').textContent      = `${stage.date || ''} · ${routeTxt}`;
   $('profile-type-badge').textContent = terrain.toUpperCase();
+  loadScoringBar(stage.stage_number);
+}
+
+async function loadScoringBar(stageNum) {
+  try {
+    const r    = await fetch(`${SERVER}/stage-scoring/${stageNum}`);
+    const data = await r.json();
+    const cfg  = data.config || {};
+    const stype = cfg.sprint_type || '?';
+    const spts  = (cfg.sprint_points || []).slice(0, 5).join('-') + (cfg.sprint_points?.length > 5 ? '…' : '');
+    const nInter = cfg.n_intermediate_sprints ?? '?';
+    const climbs = (cfg.climbs || []);
+    const climbStr = climbs.length === 0
+      ? 'No categorised climbs'
+      : climbs.map(c => c.cat === 'cima_coppi' ? `Cima Coppi (${c.name || 'Giau'})` : `Cat${c.cat}`).join(' · ');
+    const typeLabel = {'A':'Type A (top 15, 50-35-25…)', 'B':'Type B (top 10, 25-18-12…)', 'C':'Type C (top 10, 15-12-9…)'}[stype] || `Type ${stype}`;
+    $('scoring-sprint-label').textContent = `Sprint: ${typeLabel}`;
+    $('scoring-inter-label').textContent  = `${nInter} intermediate sprint${nInter !== 1 ? 's' : ''}`;
+    $('scoring-climb-label').textContent  = climbStr;
+  } catch(_) {}
 }
 
 /* ── Carousel ───────────────────────────────────────────────────────── */

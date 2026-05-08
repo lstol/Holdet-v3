@@ -1,0 +1,42 @@
+{
+  "point_value_kr": 3000,
+  "stages": {
+    "1":  {"sprint_type": "A", "sprint_points": [50,35,25,18,14,12,10,8,7,6,5,4,3,2,1], "n_intermediate_sprints": 1, "climbs": [{"cat": 4, "at_finish": false}, {"cat": 4, "at_finish": false}]},
+    "2":  {"sprint_type": "B", "sprint_points": [25,18,12,8,6,5,4,3,2,1], "n_intermediate_sprints": 1, "climbs": []},
+    "3":  {"sprint_type": "A", "sprint_points": [50,35,25,18,14,12,10,8,7,6,5,4,3,2,1], "n_intermediate_sprints": 1, "climbs": []},
+    "4":  {"sprint_type": "A", "sprint_points": [50,35,25,18,14,12,10,8,7,6,5,4,3,2,1], "n_intermediate_sprints": 1, "climbs": []},
+    "5":  {"sprint_type": "B", "sprint_points": [25,18,12,8,6,5,4,3,2,1], "n_intermediate_sprints": 1, "climbs": []},
+    "6":  {"sprint_type": "A", "sprint_points": [50,35,25,18,14,12,10,8,7,6,5,4,3,2,1], "n_intermediate_sprints": 1, "climbs": []},
+    "7":  {"sprint_type": "C", "sprint_points": [15,12,9,7,6,5,4,3,2,1], "n_intermediate_sprints": 0, "climbs": []},
+    "8":  {"sprint_type": "B", "sprint_points": [25,18,12,8,6,5,4,3,2,1], "n_intermediate_sprints": 1, "climbs": []},
+    "9":  {"sprint_type": "C", "sprint_points": [15,12,9,7,6,5,4,3,2,1], "n_intermediate_sprints": 0, "climbs": []},
+    "10": {"sprint_type": "C", "sprint_points": [15,12,9,7,6,5,4,3,2,1], "n_intermediate_sprints": 0, "climbs": []},
+    "11": {"sprint_type": "B", "sprint_points": [25,18,12,8,6,5,4,3,2,1], "n_intermediate_sprints": 1, "climbs": []},
+    "12": {"sprint_type": "A", "sprint_points": [50,35,25,18,14,12,10,8,7,6,5,4,3,2,1], "n_intermediate_sprints": 1, "climbs": []},
+    "13": {"sprint_type": "B", "sprint_points": [25,18,12,8,6,5,4,3,2,1], "n_intermediate_sprints": 1, "climbs": []},
+    "14": {"sprint_type": "C", "sprint_points": [15,12,9,7,6,5,4,3,2,1], "n_intermediate_sprints": 0, "climbs": []},
+    "15": {"sprint_type": "A", "sprint_points": [50,35,25,18,14,12,10,8,7,6,5,4,3,2,1], "n_intermediate_sprints": 1, "climbs": []},
+    "16": {"sprint_type": "C", "sprint_points": [15,12,9,7,6,5,4,3,2,1], "n_intermediate_sprints": 0, "climbs": []},
+    "17": {"sprint_type": "B", "sprint_points": [25,18,12,8,6,5,4,3,2,1], "n_intermediate_sprints": 1, "climbs": []},
+    "18": {"sprint_type": "A", "sprint_points": [50,35,25,18,14,12,10,8,7,6,5,4,3,2,1], "n_intermediate_sprints": 1, "climbs": []},
+    "19": {"sprint_type": "C", "sprint_points": [15,12,9,7,6,5,4,3,2,1], "n_intermediate_sprints": 0, "climbs": [{"cat": "cima_coppi", "at_finish": false, "name": "Giau"}]},
+    "20": {"sprint_type": "C", "sprint_points": [15,12,9,7,6,5,4,3,2,1], "n_intermediate_sprints": 0, "climbs": []},
+    "21": {"sprint_type": "A", "sprint_points": [50,35,25,18,14,12,10,8,7,6,5,4,3,2,1], "n_intermediate_sprints": 1, "climbs": []}
+  },
+  "intermediate_sprint_points": [12, 8, 5, 3, 1],
+  "climb_points": {
+    "cat4":        {"points": [3, 2, 1],                "top_n": 3},
+    "cat3":        {"points": [9, 4, 2, 1],             "top_n": 4},
+    "cat2":        {"points": [18, 8, 6, 4, 2, 1],      "top_n": 6},
+    "cat1":        {"points": [40, 18, 12, 9, 6, 4, 2, 1], "top_n": 8},
+    "cat1_finish": {"points": [50, 24, 16, 9, 6, 4, 2, 1], "top_n": 8},
+    "cima_coppi":  {"points": [50, 30, 20, 14, 10, 6, 4, 2, 1], "top_n": 9}
+  },
+  "_notes": {
+    "climbs_todo": "Stage climb arrays are partially populated. Stages 2-18,20-21 need climb data from roadbook.",
+    "sprint_type_legend": "A=top15 (50-35-25...), B=top10 (25-18-12...), C=top10 (15-12-9...)",
+    "stages_A": [1, 3, 4, 6, 12, 15, 18, 21],
+    "stages_B": [2, 5, 8, 11, 13, 17],
+    "stages_C": [7, 9, 10, 14, 16, 19, 20]
+  }
+}
