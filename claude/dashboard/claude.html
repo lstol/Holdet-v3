@@ -141,6 +141,8 @@ a { color: var(--color-primary); }
 .btn-ghost { background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-2); }
 .btn-ghost:hover { color: var(--color-text); border-color: var(--color-text-3); }
 .btn-sm { padding: 4px 8px; font-size: 11px; }
+#run-optimizer-py-btn { background: #1e2a3a; color: #6b8cba; border: 1px solid #2e4060; }
+#run-optimizer-py-btn:hover { background: #253448; color: #89aad4; }
 .btn:disabled { opacity: .45; cursor: default; }
 
 /* ── Carousel ───────────────────────────────────────────────────── */
@@ -352,18 +354,15 @@ input[type=range]::-webkit-slider-thumb {
 .tbadge { display:inline-block; font-size:10px; font-weight:700; padding:1px 6px; border-radius:3px; font-family:var(--font-mono); }
 .tbadge.tA { background:rgba(240,168,50,.15); color:var(--color-warning); }
 .tbadge.tB { background:rgba(123,130,168,.1);  color:var(--color-text-3); }
-.tcard-table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:8px; }
-.tcard-table th { text-align:left; padding:3px 6px; font-size:10px; color:var(--color-text-3); font-weight:600; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid var(--color-border); }
+.tcard-table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:0; }
+.tcard-table th { text-align:left; padding:2px 5px; font-size:10px; color:var(--color-text-3); font-weight:600; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid var(--color-border); }
 .tcard-table th.num { text-align:right; }
-.tcard-table td { padding:4px 6px; border-bottom:1px solid rgba(43,48,88,.3); }
+.tcard-table td { padding:2px 5px; border-bottom:1px solid rgba(43,48,88,.25); line-height:1.4; }
 .tcard-table td.num { text-align:right; font-family:var(--font-mono); }
 .tcard-table tr:last-child td { border-bottom:none; }
-.ev-grid { display:grid; grid-template-columns:1fr 1fr; gap:3px 16px; padding:7px 0; border-top:1px solid var(--color-border); border-bottom:1px solid var(--color-border); margin-bottom:7px; }
-.ev-row { display:flex; justify-content:space-between; font-size:11px; }
-.ev-row .ev-label { color:var(--color-text-2); }
-.ev-row .ev-val { font-family:var(--font-mono); font-weight:500; }
-.ev-row.total .ev-label { color:var(--color-text); font-weight:600; }
-.ev-row.total .ev-val { color:var(--color-success); font-weight:600; }
+.ev-line { font-size:11px; color:var(--color-text-2); padding:4px 0 2px; border-top:1px solid var(--color-border); font-family:var(--font-mono); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ev-line .ev-total { color:var(--color-success); font-weight:600; }
+.meta-line { font-size:11px; color:var(--color-text-2); padding:1px 0 2px; font-family:var(--font-mono); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .captain-card { background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:9px 12px; margin-top:4px; }
 
 /* ── Misc ────────────────────────────────────────────────────────── */
@@ -1342,50 +1341,35 @@ function renderOptimizerOutput(data) {
     </tr>`;
   }
 
-  function evRow(label, val, isTot) {
-    const cls = isTot ? 'ev-row total' : 'ev-row';
-    return `<div class="${cls}"><span class="ev-label">${label}</span><span class="ev-val">${((val||0)/1000).toFixed(0)}k</span></div>`;
-  }
+  function fmt(v) { return ((v||0)/1000).toFixed(0)+'k'; }
 
   area.className = '';
   area.innerHTML = sorted.map((team, i) => {
-    const bd = team.ev_breakdown || {};
+    const bd  = team.ev_breakdown || {};
     const cdf = team.cdf || {};
     const fp  = team.forward_pressure || {};
+    const evLine = `Stage ${fmt(bd.stage_finish)} · Capt ${fmt(bd.captain_bonus)} · Team ${fmt(bd.team_bonus)} · Depth ${fmt(bd.depth_bonus)}${bd.gc_bonus ? ' · GC '+fmt(bd.gc_bonus) : ''} · <span class="ev-total">Total ${fmt(team.ev_estimate)}</span>`;
+    const metaLine = `CDF p25:${fmt(cdf.p25)} · p50:${fmt(cdf.p50)} · p75:${fmt(cdf.p75)} · p90:${fmt(cdf.p90)} · Fwd n+2:${fp.n2||'—'} · n+3:${fp.n3||'—'}`;
     return `
-    <div style="border:1px solid var(--color-border);border-radius:var(--radius-md);padding:10px 12px;margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:7px;border-bottom:1px solid var(--color-border);margin-bottom:8px;">
-        <span style="font-weight:600;font-size:13px;">#${i+1} ${esc(team.label)}</span>
-        <span style="font-size:12px;font-weight:500;color:var(--color-success);">EV ${((team.ev_estimate||0)/1000).toFixed(0)}k
-          <span style="color:var(--color-text-3);font-weight:400;font-size:11px;margin-left:6px;">${((team.total_price||0)/1e6).toFixed(2)}M</span>
-        </span>
+    <div style="border:1px solid var(--color-border);border-radius:var(--radius-md);padding:8px 10px;margin-bottom:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:5px;border-bottom:1px solid var(--color-border);margin-bottom:4px;">
+        <span style="font-weight:600;font-size:12px;">#${i+1} ${esc(team.label)}</span>
+        <span style="font-size:12px;font-weight:500;color:var(--color-success);">EV ${fmt(team.ev_estimate)} <span style="color:var(--color-text-3);font-weight:400;font-size:11px;">${((team.total_price||0)/1e6).toFixed(2)}M</span></span>
       </div>
-      <table class="tcard-table" style="margin-bottom:8px;">
+      <table class="tcard-table">
         <thead><tr>
           <th>Rider</th><th>Team</th><th class="num">Price</th><th style="text-align:center;">Tier</th><th>Role</th>
         </tr></thead>
         <tbody>${(team.riders || []).map(riderRow).join('')}</tbody>
       </table>
-      <div class="ev-grid">
-        ${evRow('Stage finish EV', bd.stage_finish)}
-        ${evRow('Captain bonus EV', bd.captain_bonus)}
-        ${evRow('Team bonus EV', bd.team_bonus)}
-        ${evRow('Depth bonus EV', bd.depth_bonus)}
-        ${evRow('GC bonus EV', bd.gc_bonus)}
-        ${evRow('Total EV', team.ev_estimate, true)}
-      </div>
-      <div style="font-size:11px;color:var(--color-text-2);margin-bottom:3px;">
-        CDF &nbsp; p25: ${((cdf.p25||0)/1000).toFixed(0)}k · p50: ${((cdf.p50||0)/1000).toFixed(0)}k · p75: ${((cdf.p75||0)/1000).toFixed(0)}k · p90: ${((cdf.p90||0)/1000).toFixed(0)}k
-      </div>
-      <div style="font-size:11px;color:var(--color-text-2);margin-bottom:4px;">
-        Fwd &nbsp;&nbsp; n+2: ${fp.n2 || '—'} · n+3: ${fp.n3 || '—'}
-      </div>
-      <div style="font-size:11px;color:var(--color-text-3);font-style:italic;">${esc(team.rationale || '')}</div>
+      <div class="ev-line">${evLine}</div>
+      <div class="meta-line">${metaLine}</div>
+      <div style="font-size:11px;color:var(--color-text-3);font-style:italic;padding-top:1px;">${esc(team.rationale || '')}</div>
     </div>`;
   }).join('') + (data.captain ? `
-    <div class="captain-card">
-      <div style="font-size:12px;font-weight:600;">⚡ Captain: ${esc(data.captain.name || '—')}</div>
-      <div style="font-size:11px;color:var(--color-text-2);margin-top:3px;">${esc(data.captain.rationale || '')}</div>
+    <div class="captain-card" style="margin-top:4px;">
+      <span style="font-size:12px;font-weight:600;">⚡ Captain: ${esc(data.captain.name || '—')}</span>
+      <span style="font-size:11px;color:var(--color-text-2);margin-left:8px;">${esc(data.captain.rationale || '')}</span>
     </div>` : '');
 }
 
