@@ -718,7 +718,6 @@ const S = {
   expertSources: [
     { name: 'Emil Axelgaard / TV2 Sport', weight: 1.5 },
     { name: 'Feltet.dk',                  weight: 1.3 },
-    { name: 'Inner Ring',                 weight: 1.2 },
   ],
   sliders: {
     n1: { sprint: 70, hilly: 20, hardgc: 5,  mixed: 5  },
@@ -849,10 +848,14 @@ async function fetchStageResults() {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({stage: completedStage}),
     });
-    const data = await res.json();
-    if (data.status === 'error') throw new Error(data.message);
-    status.textContent = `✓ Raw response logged — check server console`;
-    console.log('[fetch-stage-results] raw:', data.raw);
+    const envelope = await res.json();
+    if (envelope.status === 'error') throw new Error(envelope.message);
+    if (envelope.found) {
+      renderStageResults(envelope.data);
+      status.textContent = `✓ Stage ${completedStage} results loaded`;
+    } else {
+      status.textContent = `Stage ${completedStage} not scored yet — try again after the finish`;
+    }
   } catch(e) {
     status.textContent = `Error: ${e.message}`;
   } finally {
@@ -1186,7 +1189,7 @@ function renderCarousel() {
     pill.className = 'stage-pill' + (isActive ? ' active' : '') + (isPast ? ' past' : '');
     pill.textContent = `S${st.stage_number}`;
     pill.title = `${st.stage_name} · ${st.date}`;
-    pill.onclick = () => { S.activeStageIndex = realIdx; renderCarousel(); renderProfile(S.stages[S.activeStageIndex]); updateHeader(); setTargetStage(st.stage_number); };
+    pill.onclick = () => { S.activeStageIndex = realIdx; renderCarousel(); renderProfile(S.stages[S.activeStageIndex]); updateHeader(); };
     pills.appendChild(pill);
   });
 
@@ -1322,6 +1325,7 @@ function updateSumDisplay(key) {
 
 function updateWeight(i, val) {
   S.expertSources[i].weight = val;
+  localStorage.setItem('holdet_expert_weights', JSON.stringify(S.expertSources));
   saveWeights();
 }
 
@@ -2148,6 +2152,8 @@ async function init() {
   buildTypePills();
   const savedSliders = localStorage.getItem('holdet_sliders');
   if (savedSliders) { try { S.sliders = JSON.parse(savedSliders); } catch(_) {} }
+  const savedWeights = localStorage.getItem('holdet_expert_weights');
+  if (savedWeights) { try { S.expertSources = JSON.parse(savedWeights); } catch(_) {} }
   renderSliders();
   renderOdds();
   renderCarousel();

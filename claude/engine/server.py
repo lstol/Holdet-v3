@@ -865,20 +865,16 @@ def gather_ingemann():
 
 {raw_text[:3000]}
 
-Return ONLY this JSON, no markdown:
-{{
-  "riders": ["Rider Name 1", "Rider Name 2", "Rider Name 3", "Rider Name 4", "Rider Name 5", "Rider Name 6", "Rider Name 7", "Rider Name 8"],
-  "captain": "Rider Name",
-  "notes": "any brief tactical notes Ingemann made about his picks"
-}}
+Return ONLY the JSON object below. No text before or after. No markdown fences.
+{{"riders":["Rider Name 1","Rider Name 2","Rider Name 3","Rider Name 4","Rider Name 5","Rider Name 6","Rider Name 7","Rider Name 8"],"captain":"Rider Name","notes":"brief tactical notes"}}
 
 Extract exactly 8 rider names and 1 captain. Use full rider names as they appear in the text."""}]
         ))
-        raw = message.content[0].text.strip()
-        if raw.startswith('```'):
-            raw = re.sub(r'^```[a-z]*\n?', '', raw)
-            raw = re.sub(r'\n?```$', '', raw)
-        result = json.loads(raw.strip())
+        raw = message.content[0].text
+        m = re.search(r'\{.*\}', raw, re.DOTALL)
+        if not m:
+            raise ValueError(f"No JSON object found in Ingemann response: {raw[:200]}")
+        result = json.loads(m.group())
         result['stage'] = stage
         result['gathered_at'] = _dt.now().isoformat()
         path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_ingemann.json')
@@ -1051,9 +1047,12 @@ def fetch_stage_results_endpoint():
     try:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         from fetch_riders import fetch_stage_results
-        raw = fetch_stage_results(int(stage))
-        _log(f"fetch-stage-results stage={stage} sources={list(raw.get('raw_sources', {}).keys())}")
-        return jsonify({'status': 'ok', 'stage': stage, 'raw': raw})
+        data = fetch_stage_results(int(stage))
+        scored = data.get('scored', False)
+        _log(f"fetch-stage-results stage={stage} scored={scored} riders={len(data.get('rider_results', []))}")
+        data['found'] = scored
+        data['completed_stage'] = stage
+        return jsonify({'status': 'ok', 'found': scored, 'data': data})
     except SystemExit as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
     except Exception as e:

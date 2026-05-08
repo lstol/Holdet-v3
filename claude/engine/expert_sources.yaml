@@ -1,15 +1,5 @@
-# Expert source weights for probability shaping
-# Adjustable via dashboard — do not hardcode in scripts
 sources:
-  - name: "Emil Axelgaard / TV2 Sport"
-    weight: 1.5
-  - name: "The Inner Ring"
-    weight: 1.2
-  - name: "VeloNews"
-    weight: 1.0
-  - name: "CyclingNews"
-    weight: 1.0
-  - name: "ProCyclingStats"
-    weight: 0.8
-  - name: "FirstCycling"
-    weight: 0.8
+- name: Emil Axelgaard / TV2 Sport
+  weight: 1.5
+- name: Feltet.dk
+  weight: 1.3

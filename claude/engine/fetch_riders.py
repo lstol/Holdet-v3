@@ -457,62 +457,131 @@ def fetch_team_as_dict(cartridge: str, fantasy_team_id: str, cookie: str) -> dic
 
 def fetch_stage_results(stage: int) -> dict:
     """
-    Fetch Holdet stage results for the given completed stage number.
-    Tries the fantasy-team page and the nexus rounds API, logs the raw payload,
-    and returns whatever structured data is found.
+    Build stage results from Holdet players API + pre-stage team snapshot.
+
+    The nexus routes all return Next.js HTML (not JSON API). The players API
+    at /api/games/{id}/players is the only JSON endpoint and it carries
+    cumulative `points` per player. For stage N those equal the stage points
+    once Holdet finishes scoring (usually a few hours after the finish).
+
+    Returns a dict compatible with stage_N_results.json / renderStageResults().
+    Writes stage_N_results.json to SNAPSHOT_DIR if any rider has points > 0.
     """
-    load_dotenv(ROOT / ".env")
+    load_dotenv(ROOT / ".env", override=True)
     game_id         = os.getenv("HOLDET_GAME_ID_GIRO", "612")
-    cartridge       = os.getenv("HOLDET_CARTRIDGE", "giro-d-italia-2026")
     fantasy_team_id = os.getenv("HOLDET_FANTASY_TEAM_ID", "6796783")
     cookie          = _cookie()
 
-    result = {'stage': stage, 'raw_sources': {}}
+    SNAPSHOT_DIR = ROOT / "shared" / "data" / "snapshots"
 
-    # --- Try 1: rounds listing from nexus API ---
-    for url_template in [
-        f"{BASE_URL}/api/games/{game_id}/rounds",
-        f"{BASE_URL}/api/games/{game_id}/rounds/{stage}",
-        f"{BASE_URL}/api/games/{game_id}/rounds/{stage}/results",
-    ]:
-        try:
-            resp = requests.get(url_template, headers={"Cookie": cookie}, timeout=15)
-            print(f"[fetch_stage_results] {url_template} → HTTP {resp.status_code}")
-            if resp.status_code == 200:
-                try:
-                    payload = resp.json()
-                    result['raw_sources'][url_template] = payload
-                    print(f"  JSON keys: {list(payload.keys()) if isinstance(payload, dict) else f'array len={len(payload)}'}")
-                    print(f"  Preview: {str(payload)[:400]}")
-                except Exception:
-                    result['raw_sources'][url_template] = resp.text[:500]
-                    print(f"  Raw text: {resp.text[:400]}")
-        except Exception as e:
-            print(f"  Error: {e}")
+    # --- Step 1: fetch all player data (holdet_id → name, cumulative points) ---
+    url = f"{BASE_URL}/api/games/{game_id}/players"
+    print(f"[fetch_stage_results] GET {url}")
+    resp = requests.get(url, headers={"Cookie": cookie}, timeout=15)
+    if resp.status_code in (401, 403):
+        sys.exit(f"ERROR: HTTP {resp.status_code} — cookie expired.")
+    resp.raise_for_status()
 
-    # --- Try 2: team page Next.js payload (look for rounds/history keys) ---
-    team_url = f"{BASE_URL}/da/{cartridge}/me/fantasyteams/{fantasy_team_id}"
-    print(f"\n[fetch_stage_results] Scraping team page: {team_url}")
-    try:
-        resp = requests.get(team_url, headers={"Cookie": cookie}, timeout=20)
-        print(f"  HTTP {resp.status_code}")
-        if resp.status_code == 200:
-            html = resp.text
-            chunks = re.findall(r'self\.__next_f\.push\(\[1,\s*"(.*?)"\]\)', html, re.DOTALL)
-            for i, chunk in enumerate(chunks):
-                for keyword in ('round', 'Round', 'history', 'stagePoint', 'stagePlacement', 'roundResult'):
-                    if keyword in chunk:
-                        try:
-                            raw = chunk.encode().decode("unicode_escape")
-                        except Exception:
-                            raw = chunk
-                        print(f"  Chunk {i} contains '{keyword}': {raw[:600]}")
-                        result['raw_sources'][f'team_page_chunk_{i}'] = raw[:2000]
-                        break
-    except Exception as e:
-        print(f"  Error: {e}")
+    api_data = resp.json()
+    persons  = api_data["_embedded"]["persons"]
+    players  = {}   # holdet_id → {name, points, price}
+    for item in api_data["items"]:
+        pid  = str(item["personId"])
+        person = persons.get(pid, {})
+        name   = f"{person.get('firstName', '')} {person.get('lastName', '')}".strip()
+        players[item["id"]] = {
+            "name":   name,
+            "points": item.get("points") or 0,
+            "price":  item.get("price", 0),
+        }
+    n_scored = sum(1 for p in players.values() if p["points"] > 0)
+    print(f"  {len(players)} players, {n_scored} with points > 0")
 
-    print(f"\n[fetch_stage_results] Done. Found {len(result['raw_sources'])} raw sources.")
+    # --- Step 2: load pre-stage team snapshot ---
+    # stage_N_holdet.json written by /refresh after round N-1 ends (new format)
+    # or stage_{N}_holdet.json in old enrichment format (has 'riders' list of all)
+    snap_path = SNAPSHOT_DIR / f"stage_{stage}_holdet.json"
+    team_riders  = []  # [{holdet_id, name}]
+    captain_id   = None
+    captain_name = ""
+    bank_balance = 50_000_000
+    player_rank  = None
+
+    if snap_path.exists():
+        snap = json.loads(snap_path.read_text())
+        # New format: has team_composition, captain, bank_balance
+        if "team_composition" in snap and snap.get("team_composition"):
+            comp = snap["team_composition"]
+            captain_name = snap.get("captain", "")
+            captain_id   = snap.get("captain_id")
+            bank_balance = snap.get("bank_balance", 50_000_000)
+            player_rank  = snap.get("player_rank")
+            # Match names to player ids
+            name_map = {p["name"]: hid for hid, p in players.items()}
+            for rname in comp:
+                hid = name_map.get(rname)
+                team_riders.append({"holdet_id": hid, "name": rname})
+        # Old format: full riders list (enrichment snapshot)
+        elif "riders" in snap:
+            for r in snap["riders"]:
+                team_riders.append({"holdet_id": r.get("holdet_id"), "name": r.get("name", "")})
+    else:
+        print(f"  No snapshot at {snap_path} — using all riders with points")
+
+    # --- Step 3: build rider_results for team (or top-scored if no snapshot) ---
+    if team_riders:
+        rider_results = []
+        stage_total   = 0
+        for r in team_riders:
+            hid  = r["holdet_id"]
+            name = r["name"]
+            pts  = players.get(hid, {}).get("points", 0) if hid else 0
+            is_cap = (hid == captain_id) or (name == captain_name and captain_name)
+            rider_results.append({
+                "name":         name,
+                "finish":       "—",
+                "stage_pts":    pts,
+                "sprint_pts":   0,
+                "jersey_bonus": 0,
+                "gc_bonus":     0,
+                "team_bonus":   0,
+                "captain_bonus": pts if is_cap else 0,
+                "total":        pts,
+            })
+            stage_total += pts
+    else:
+        # Fallback: show all riders with points, sorted desc
+        rider_results = [
+            {"name": p["name"], "finish": "—", "stage_pts": p["points"],
+             "sprint_pts": 0, "jersey_bonus": 0, "gc_bonus": 0,
+             "team_bonus": 0, "captain_bonus": 0, "total": p["points"]}
+            for p in sorted(players.values(), key=lambda x: x["points"], reverse=True)
+            if p["points"] > 0
+        ][:20]
+        stage_total = sum(r["total"] for r in rider_results)
+
+    rider_results.sort(key=lambda r: r["total"], reverse=True)
+    scored = any(r["total"] > 0 for r in rider_results)
+
+    result = {
+        "rider_results":   rider_results,
+        "bank_balance":    bank_balance,
+        "stage_total":     stage_total,
+        "player_rank":     player_rank,
+        "captain_name":    captain_name,
+        "depth_bonus":     0,
+        "captain_bonus":   0,
+        "riders_in_top15": 0,
+        "scored":          scored,
+    }
+
+    if scored:
+        out = SNAPSHOT_DIR / f"stage_{stage}_results.json"
+        out.write_text(json.dumps(result, indent=2, ensure_ascii=False))
+        print(f"  Saved → {out}")
+    else:
+        print(f"  Stage {stage} not yet scored — no file written")
+
     return result
 
 
