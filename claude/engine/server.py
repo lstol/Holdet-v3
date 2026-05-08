@@ -774,58 +774,62 @@ def gather_intel():
         source_weights = {s['name']: s['weight'] for s in sources}
 
         client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+        tv2_w    = source_weights.get('Emil Axelgaard / TV2 Sport', 1.5)
+        feltet_w = source_weights.get('Feltet.dk', 1.3)
         structure_message = call_with_retry(lambda: client.messages.create(
             model='claude-haiku-4-5-20251001',
-            max_tokens=4000,
+            max_tokens=8000,
             messages=[{'role': 'user', 'content': f"""Structure this cycling expert analysis for Stage {stage} Giro d'Italia 2026 into JSON.
 
 SOURCE WEIGHTS:
-- TV2/Axelgaard: {source_weights.get('Emil Axelgaard / TV2 Sport', 1.5)} (highest priority, content in Danish)
-- Feltet.dk: {source_weights.get('Feltet.dk', 1.3)}
-- Inner Ring: {source_weights.get('Inner Ring', 1.2)}
+- TV2/Axelgaard: {tv2_w} (highest priority, content in Danish)
+- Feltet.dk: {feltet_w}
 
 TV2/AXELGAARD (Danish — summarise in English):
-{raw_sources['tv2'][:3000]}
+{raw_sources['tv2'][:2500]}
 
 FELTET.DK:
-{raw_sources['feltet'][:3000]}
+{raw_sources['feltet'][:2500]}
 
-INNER RING:
-{raw_sources['inner_ring'][:3000]}
+INNER RING (background context only, no weight):
+{raw_sources['inner_ring'][:1500]}
 
-Return ONLY this JSON, no markdown:
+Return ONLY the JSON object below. No text before or after. No markdown fences.
 {{
-  "sources_consulted": ["TV2/Axelgaard", "Feltet.dk", "Inner Ring"],
+  "sources_consulted": ["TV2/Axelgaard", "Feltet.dk"],
   "sources_not_found": [],
   "source_ratings": [
     {{
       "source": "TV2/Axelgaard",
-      "weight": 1.5,
-      "ratings": [
-        {{"rider": "Jonathan Milan", "stars": 5}},
-        {{"rider": "Paul Magnier", "stars": 4}}
-      ]
+      "weight": {tv2_w},
+      "ratings": [{{"rider": "Jonathan Milan", "stars": 5}}, {{"rider": "Paul Magnier", "stars": 4}}]
+    }},
+    {{
+      "source": "Feltet.dk",
+      "weight": {feltet_w},
+      "ratings": [{{"rider": "Corbin Strong", "stars": 5}}]
     }}
   ],
   "key_signals": [
     {{"rider": "Name", "signal": "what was said", "direction": "up/down/neutral", "strength": "strong/moderate/weak"}}
   ],
-  "weather": "weather summary",
-  "stage_notes": "key tactical notes",
+  "weather": "weather summary if mentioned, else empty string",
+  "stage_notes": "key tactical notes in 1-2 sentences",
   "summary": "two sentence summary"
 }}
 
-direction: up = favoured beyond raw odds, down = risk not in odds, neutral = in line with odds.
-strength: strong / moderate / weak.
-Include every rider mentioned by any source.
-TV2/Axelgaard content is in Danish — translate and summarise in English."""}]
+Rules:
+- direction: up = favoured beyond raw odds, down = risk not in odds, neutral = in line with odds
+- strength: strong / moderate / weak
+- Include every rider mentioned by either source in source_ratings
+- TV2 content is in Danish — translate and summarise each rider mention in English
+- Keep stage_notes and summary short (max 2 sentences each)"""}]
         ))
-        raw = structure_message.content[0].text.strip()
-        if raw.startswith('```'):
-            raw = re.sub(r'^```[a-z]*\n?', '', raw)
-            raw = re.sub(r'\n?```$', '', raw)
-            raw = raw.strip()
-        result = json.loads(raw)
+        raw = structure_message.content[0].text
+        m = re.search(r'\{.*\}', raw, re.DOTALL)
+        if not m:
+            raise ValueError(f"No JSON object in gather-intel response: {raw[:200]}")
+        result = json.loads(m.group())
         result['gathered_at'] = _dt.now().isoformat()
         result['stage'] = stage
         intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
