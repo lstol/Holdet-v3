@@ -2,7 +2,7 @@
 claude/engine/optimizer.py
 Python Monte Carlo optimizer for Holdet fantasy cycling.
 
-Search: Simulated Annealing — 5 independent chains, single objective function.
+Search: Simulated Annealing — 10 independent chains, biased swap, 3s each.
 Scoring: Plackett-Luce Monte Carlo on final candidates (exact CDF).
 
 Hard constraints (enforced throughout):
@@ -430,8 +430,8 @@ _sa_logger = logging.getLogger(__name__)
 
 
 def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
-                         budget=BUDGET, n_iter=2_000_000, seed=42,
-                         max_seconds=9, objective='ev', verbose=False):
+                         budget=BUDGET, n_iter=200_000, seed=42,
+                         max_seconds=3, objective='ev', verbose=False):
     """
     Single SA chain.  Returns (best_team_list, best_ev).
 
@@ -478,7 +478,7 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
     best_score    = current_score
 
     T       = 200_000.0
-    cooling = 0.999993
+    cooling = 0.99997
 
     start = time.time()
     i = 0
@@ -601,18 +601,21 @@ def estimate_forward_pressure(team):
 def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
                               budget=BUDGET, stage_config=None, scoring=None):
     """
-    Run 7 strategy-differentiated SA chains (target: ~60 s total, 9 s each).
+    Run 10 strategy-differentiated SA chains (target: ~20-25s total, 3s each).
 
     Chains:
       0. ev-maximal        — unconstrained EV (seed 42)
       1. ev-maximal-v2     — unconstrained EV, different seed (seed 123)
-      2. team-bonus        — force best available real-world team pair (seed 777)
+      2. team-bonus        — EV, third seed for team-bonus pair discovery (seed 777)
       3. depth-maximiser   — depth-weighted objective, top-15 coverage (seed 2026)
       4. budget-war-chest  — budget capped at 88% of available (seed 99)
       5. no-favourite      — exclude highest-win-prob rider (seed 314)
       6. gc-bridge         — force GC climbing specialist (seed 555)
+      7. sprint-only       — exclude low-odds GC/TTT specialists (seed 888)
+      8. high-price-anchor — force top-2-EV riders (seed 999)
+      9. random-explore    — unconstrained, fresh random seed (seed 1337)
 
-    Deduplication: drop teams sharing >6 riders with a higher-EV team.
+    Deduplication: drop teams sharing >4 riders with a higher-EV team.
     Min-EV filter: drop teams below 50% of best analytical EV (degenerate solutions).
     """
     full_roster     = all_riders
@@ -646,6 +649,22 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
                 and probs.get(r['name'], {}).get('top10', 0) > 0.10):
             gc_anchor = r['name']
             break
+
+    # Sprint-only: exclude low-odds GC climbers and TTT specialists
+    non_sprint_excl = list(user_excluded) + [
+        r['name'] for r in all_riders
+        if r.get('terrain_affinity', {}).get('climbing', 0) > 0.65
+        and probs.get(r['name'], {}).get('win', 0) < 0.01
+        and r['name'] not in user_forced_set
+    ]
+
+    # High-price-anchor: force top-2 EV riders
+    top2_ev = sorted(
+        [r for r in all_riders if r['name'] not in user_excluded],
+        key=lambda r: probs.get(r['name'], {}).get('total_ev', 0),
+        reverse=True
+    )[:2]
+    top2_ev_names = [r['name'] for r in top2_ev if r['name'] not in user_forced_set]
 
     strategies = [
         # 0 — unconstrained EV optimum
@@ -690,14 +709,32 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
          'force_in':  list(user_forced_set) + ([gc_anchor] if gc_anchor else []),
          'force_out': list(user_excluded),
          'budget': budget},
+        # 7 — sprint-only: exclude low-odds climbers and TTT specialists
+        {'name': 'sprint-only',      'seed': 888,  'objective': 'ev',
+         'riders': all_riders,
+         'force_in':  list(user_forced_set),
+         'force_out': non_sprint_excl,
+         'budget': budget},
+        # 8 — high-price-anchor: force top-2 EV riders, fill around them
+        {'name': 'high-price-anchor','seed': 999,  'objective': 'ev',
+         'riders': all_riders,
+         'force_in':  list(user_forced_set) + top2_ev_names,
+         'force_out': list(user_excluded),
+         'budget': budget},
+        # 9 — random-explore: unconstrained, fresh seed for diversity
+        {'name': 'random-explore',   'seed': 1337, 'objective': 'ev',
+         'riders': all_riders,
+         'force_in':  list(user_forced_set),
+         'force_out': list(user_excluded),
+         'budget': budget},
     ]
 
     raw_results = []
     for si, strat in enumerate(strategies):
         team, ev = simulated_annealing(
             strat['riders'], probs, strat['force_in'], strat['force_out'],
-            budget=strat['budget'], n_iter=2_000_000, seed=strat['seed'],
-            max_seconds=9, objective=strat['objective'], verbose=(si == 0),
+            budget=strat['budget'], n_iter=200_000, seed=strat['seed'],
+            max_seconds=3, objective=strat['objective'], verbose=(si == 0),
         )
         if team is not None:
             raw_results.append((ev, team, strat['name']))
@@ -710,12 +747,12 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
     raw_results = [(ev, team, name) for ev, team, name in raw_results
                    if ev > 0.5 * max_ev]
 
-    # Deduplicate: discard any team sharing >6 riders with a higher-EV team
+    # Deduplicate: discard any team sharing >4 riders with a higher-EV team
     raw_results.sort(key=lambda x: x[0], reverse=True)
     distinct = []
     for ev, team, name in raw_results:
         names = {r['name'] for r in team}
-        if not any(len(names & {r['name'] for r in t}) > 6 for _, t, _ in distinct):
+        if not any(len(names & {r['name'] for r in t}) > 4 for _, t, _ in distinct):
             distinct.append((ev, team, name))
 
     # Run full Monte Carlo on each distinct team
