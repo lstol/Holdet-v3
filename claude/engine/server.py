@@ -1037,6 +1037,30 @@ def current_team_endpoint():
     })
 
 
+@app.route('/save-current-team', methods=['POST', 'OPTIONS'])
+def save_current_team():
+    if request.method == 'OPTIONS':
+        return '', 204
+    try:
+        data    = request.get_json(force=True)
+        stage   = data.get('stage')
+        team    = data.get('team', [])
+        captain = data.get('captain', '')
+        path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_holdet.json')
+        existing = {}
+        if os.path.exists(path):
+            with open(path) as f:
+                existing = json.load(f)
+        existing['team_composition'] = team
+        existing['captain']          = captain
+        existing['stage']            = stage
+        with open(path, 'w') as f:
+            json.dump(existing, f, indent=2, ensure_ascii=False)
+        return jsonify({'status': 'ok', 'team_size': len(team)})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 @app.route('/stage-results', methods=['GET'])
 def stage_results():
     """Return scored results for the completed stage (target_stage - 1).
