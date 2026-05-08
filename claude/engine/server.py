@@ -187,9 +187,21 @@ def run_optimizer():
         return (f"Sprint {s.get('sprint',0)}%  Hilly {s.get('hilly',0)}%  "
                 f"Hard GC {s.get('hardgc',0)}%  Mixed {s.get('mixed',0)}%")
 
+    # Only send Tier A riders (win_pct >= 1%) to the prompt — reduces tokens significantly
+    tier_a = [r for r in active_riders
+              if any(o['name'] == r['name'] and o.get('win_pct', 0) >= 1.0 for o in odds)]
+    # Fall back to all active riders if odds not loaded yet
+    prompt_riders = tier_a if tier_a else active_riders
+    tier_b_count = len(active_riders) - len(prompt_riders)
+    tier_b_prices = sorted([r.get('price', 0) for r in active_riders if r not in prompt_riders])
+    tier_b_min = tier_b_prices[0] if tier_b_prices else 2_500_000
+    tier_b_max = tier_b_prices[-1] if tier_b_prices else 6_000_000
+    tier_b_summary = (f"{tier_b_count} additional budget riders available, "
+                      f"prices {tier_b_min//1_000_000:.1f}M–{tier_b_max//1_000_000:.1f}M")
+
     riders_json = json.dumps(
         [{'name': r['name'], 'price': r.get('price', 0), 'team': r.get('team', '')}
-         for r in active_riders],
+         for r in prompt_riders],
         indent=2
     )
     odds_json = json.dumps(odds, indent=2)
@@ -229,8 +241,11 @@ n+3: {sl('n3')}
 BOOKMAKER ODDS (implied win probability):
 {odds_json}
 
-AVAILABLE RIDERS (name, price, team):
+AVAILABLE RIDERS (name, price, team) — Tier A only (win probability ≥ 1%):
 {riders_json}
+
+BUDGET FILLERS: {tier_b_summary}
+(Use budget filler slots for team-bonus plays — pick riders whose real-world teammates are in your Tier A squad.)
 
 CONSTRAINTS:
 Force include: {force_in_str}
@@ -278,11 +293,11 @@ Generate 3-5 structurally distinct teams. Each exactly 8 riders, budget ≤50,00
 
     try:
         client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
-        message = client.messages.create(
+        message = call_with_retry(lambda: client.messages.create(
             model='claude-sonnet-4-6',
             max_tokens=4000,
             messages=[{'role': 'user', 'content': prompt}],
-        )
+        ))
         raw = message.content[0].text.strip()
         _log(f"run-optimizer stage={stage} raw={raw[:200]}")
         if raw.startswith('```'):
