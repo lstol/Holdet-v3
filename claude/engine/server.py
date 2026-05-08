@@ -536,13 +536,15 @@ def parse_odds_image():
         _log(f"parse-odds-image after-strip raw={repr(raw[:200])}")
         parsed = json.loads(raw)  # [{name, pct}, ...]
 
-        # Load existing odds to merge into
+        # Load existing odds to merge into (guard against empty/corrupt file)
         odds_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
-        if os.path.exists(odds_path):
-            existing_file = json.load(open(odds_path))
-            existing = existing_file.get('odds', existing_file) if isinstance(existing_file, dict) else existing_file
-        else:
-            existing = []
+        existing = []
+        if os.path.exists(odds_path) and os.path.getsize(odds_path) > 0:
+            try:
+                existing_file = json.load(open(odds_path))
+                existing = existing_file.get('odds', existing_file) if isinstance(existing_file, dict) else existing_file
+            except (json.JSONDecodeError, ValueError):
+                existing = []
 
         # Build name→row index map for merge
         existing_map = {r['name']: r for r in existing}
