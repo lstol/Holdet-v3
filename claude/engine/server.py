@@ -224,6 +224,12 @@ def refresh():
             'timestamp':    result['timestamp'],
         })
 
+    except SystemExit as e:
+        # fetch_riders.py calls sys.exit() on auth failures (401/403/missing cookie)
+        # Catch it here so it doesn't kill the Flask server
+        msg = str(e)
+        app.logger.error(f'Refresh auth failure: {msg}')
+        return jsonify({'status': 'error', 'message': msg}), 500
     except Exception as e:
         app.logger.error(f'Refresh error: {e}', exc_info=True)
         return jsonify({'status': 'error', 'message': str(e)}), 500
