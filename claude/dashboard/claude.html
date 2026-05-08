@@ -959,52 +959,74 @@ async function loadSavedOdds() {
   } catch(_) {}
 }
 
-function attachPasteZone(zoneId, oddsType) {
-  const zone = document.getElementById(zoneId);
-  if (!zone) return;
-  zone.addEventListener('click', function() { this.focus(); });
-  zone.addEventListener('paste', async function(e) {
-    const items = e.clipboardData.items;
-    for (const item of items) {
-      if (!item.type.startsWith('image/')) continue;
+document.addEventListener('DOMContentLoaded', function() {
+  ['win-paste-zone', 'top3-paste-zone', 'top10-paste-zone'].forEach(function(id) {
+    const zone = document.getElementById(id);
+    if (!zone) { console.error('Paste zone missing from DOM:', id); return; }
+
+    const oddsType = id.replace('-paste-zone', ''); // 'win' | 'top3' | 'top10'
+
+    zone.setAttribute('tabindex', '0');
+
+    zone.addEventListener('click', function() {
+      this.focus();
+      this.style.borderColor = 'var(--color-primary)';
+    });
+
+    zone.addEventListener('blur', function() {
+      this.style.borderColor = '';
+    });
+
+    zone.addEventListener('paste', function(e) {
+      console.log('Paste fired on', oddsType, 'zone');
+      const items = e.clipboardData.items;
+      let imageItem = null;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) { imageItem = items[i]; break; }
+      }
+      if (!imageItem) return;
       e.preventDefault();
-      const file = item.getAsFile();
-      const reader = new FileReader();
-      reader.onload = async function(ev) {
-        const base64    = ev.target.result.split(',')[1];
-        const statusEl  = $('odds-parse-status');
-        const st        = S.stages[S.activeStageIndex] || {};
-        const stage     = st.stage_number || 1;
-        statusEl.className = '';
-        statusEl.textContent = `Reading ${oddsType} odds…`;
-        try {
-          const res  = await fetch(`${SERVER}/parse-odds-image`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({stage, image: base64, media_type: item.type, type: oddsType}),
-          });
-          const data = await res.json();
+
+      // Capture file and mediaType synchronously before any async gap
+      const file      = imageItem.getAsFile();
+      const mediaType = imageItem.type;
+
+      const reader    = new FileReader();
+      reader.onload   = function(ev) {
+        const base64   = ev.target.result.split(',')[1];
+        const statusEl = document.getElementById('odds-parse-status');
+        const st       = S.stages[S.activeStageIndex] || {};
+        const stage    = st.stage_number || 1;
+        statusEl.className   = '';
+        statusEl.textContent = 'Reading ' + oddsType + ' odds from screenshot…';
+
+        fetch(SERVER + '/parse-odds-image', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({stage: stage, image: base64, media_type: mediaType, type: oddsType}),
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
           if (data.status === 'error') throw new Error(data.message);
-          // data is the merged array returned by server
+          // Server returns full merged array; win paste clears first, top3/top10 merge
+          if (oddsType === 'win') {
+            S.oddsRows = [];
+            document.getElementById('odds-tbody').innerHTML = '';
+          }
           populateOddsTable(data, new Date().toISOString());
-          statusEl.className = 'parse-ok';
-          const col = {win:'Win%', top3:'Top3%', top10:'Top10%'}[oddsType] || oddsType;
-          statusEl.textContent = `✓ ${col} updated · ${data.length} riders`;
-        } catch(err) {
-          statusEl.className = 'parse-err';
-          statusEl.textContent = `Error: ${err.message}`;
-        }
+          statusEl.className   = 'parse-ok';
+          const label = {win: 'Win%', top3: 'Top3%', top10: 'Top10%'}[oddsType];
+          statusEl.textContent = '✓ ' + label + ' updated · ' + data.length + ' riders';
+        })
+        .catch(function(err) {
+          statusEl.className   = 'parse-err';
+          statusEl.textContent = 'Error (' + oddsType + '): ' + err.message;
+          console.error('parse-odds-image error:', err);
+        });
       };
       reader.readAsDataURL(file);
-      break;
-    }
+    });
   });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  attachPasteZone('win-paste-zone',   'win');
-  attachPasteZone('top3-paste-zone',  'top3');
-  attachPasteZone('top10-paste-zone', 'top10');
 });
 
 function renderStars(n) {
