@@ -2,7 +2,7 @@
 
 **Race:** Giro d'Italia 2026
 **Stage 1:** May 8 (Nessebar → Burgas, 147 km, flat sprint)
-**Last updated:** ChatGPT rider loader (2026-05-07) — Giro 2026 rider universe artifact and dashboard hook
+**Last updated:** Session 5 (2026-05-08) — Playwright scrapers, four-strategy SA optimizer, Ingemann benchmark, stage state management
 
 ---
 
@@ -29,7 +29,11 @@
 | giro_2026/ subfolder pattern | ✅ Canonical — riders/, stages/, stage_images/ all use race subfolders |
 | sessions/notes/decisions | ✅ Under `claude/` — Claude-specific, not shared |
 | decisions_log.md | ✅ `claude/decisions/decisions_log.md` — decisions from Sessions 1–4 |
-| Optimizer | ❌ Not started — stub at `claude/engine/optimizer.py` |
+| Optimizer | ✅ Four-strategy SA optimizer — `claude/engine/optimizer.py` |
+| scraper.py | ✅ Playwright scrapers — TV2, Feltet, Inner Ring (with login) |
+| Ingemann benchmark | ✅ /gather-ingemann, /score-ingemann, /load-ingemann-scored |
+| Stage state management | ✅ targetStage selector, carousel sync, stage results panel |
+| Post-stage results | ✅ /stage-results endpoint — loads stage_N_results.json |
 | Snapshot schema | ✅ Specified in framing doc Section 12 |
 | Pre-race snapshot | ✅ `shared/data/snapshots/stage_1_holdet.json` — 184 riders, pre-race prices |
 | One-click refresh | ✅ `claude/engine/refresh.sh` + `HoldetRefresh.app` with `holdet://` URL scheme |
@@ -81,9 +85,13 @@
 
 ## Backlog (post-Stage 1)
 
-- [ ] Build `claude/engine/optimizer.py` — probability construction + team generation
+- [x] Build `claude/engine/optimizer.py` — four-strategy SA optimizer (Session 5)
+- [x] Playwright intel scrapers — TV2, Feltet, Inner Ring (Session 5)
+- [x] Ingemann benchmark scoring pipeline (Session 5)
+- [x] Stage state management — targetStage selector, post-stage results panel (Session 5)
 - [ ] CDF output rendering in dashboard Output tab
 - [ ] Forward transfer pressure display (n+2, n+3) in dashboard
+- [ ] Populate stage_N_results.json after each stage (post-stage results fetch)
 - [ ] chatgpt/dashboard/chatgpt.html — post-ChatGPT onboarding
 - [ ] compare.html dashboard — Claude vs ChatGPT comparison view (post-ChatGPT onboarding)
 - [ ] Post-stage data refresh (results, jerseys, GC standings)
@@ -115,3 +123,4 @@
 | ChatGPT rider loader | 2026-05-07 | Loaded authoritative Giro 2026 rider universe, validated IDs/prices/names, and exported dashboard artifact |
 | Session 4 | 2026-05-07 | Dashboard fully wired (file:// mode, no server); fetch_riders.py verified; 184-rider lock; one-click refresh via holdet:// URL scheme; column sort, 21-stage carousel, TYPE_FIT tier logic, slider auto-sum, stage-relevance odds table |
 | Session 5 | 2026-05-08 | Full server rewrite (Flask/5050, LaunchAgent); /parse-odds-image Cmd+V paste; /gather-intel web search; /gather-odds removed; stage date fixed |
+| Session 5 (cont.) | 2026-05-08 | Playwright scrapers (TV2/Feltet/Inner Ring), four-strategy SA optimizer, Ingemann benchmark pipeline, targetStage state management, post-stage results panel |
