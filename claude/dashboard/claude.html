@@ -1047,13 +1047,11 @@ function renderSliders() {
   grid.innerHTML = '';
 
   ['n1','n2','n3'].forEach((key, ki) => {
-    const stNum  = targetStage + ki;
-    const stData = S.stages.find(s => s.stage_number === stNum);
-    const stName = stData ? stData.finish_city : `Stage ${stNum}`;
-    const label  = `${ki === 0 ? 'Next' : `+${ki+1}`} — Stage ${stNum} · ${stName}`;
+    const stageNums = [targetStage, targetStage + 1, targetStage + 2];
+    const labels = stageNums.map(n => n <= 21 ? `Stage ${n}` : '—');
     const div = document.createElement('div');
     div.className = 'slider-panel';
-    div.innerHTML = `<div class="slider-panel-title">${label}</div>` +
+    div.innerHTML = `<div class="slider-panel-title">${labels[ki]}</div>` +
       ['sprint','hilly','hardgc','mixed'].map(type => {
         const names = { sprint:'Sprint', hilly:'Hilly', hardgc:'Hard GC', mixed:'Mixed' };
         const v = S.sliders[key][type];
