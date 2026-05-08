@@ -844,6 +844,161 @@ TV2/Axelgaard content is in Danish — translate and summarise in English."""}]
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+# ── Ingemann benchmark ───────────────────────────────────────────────────────
+
+@app.route('/gather-ingemann', methods=['POST', 'OPTIONS'])
+def gather_ingemann():
+    if request.method == 'OPTIONS':
+        return '', 204
+    stage = request.json.get('stage')
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from scraper import scrape_ingemann_team
+        raw_text = scrape_ingemann_team(int(stage))
+        app.logger.info(f"Ingemann raw: {len(raw_text)} chars")
+        _log(f"gather-ingemann stage={stage} chars={len(raw_text)}")
+
+        client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+        message = call_with_retry(lambda: client.messages.create(
+            model='claude-haiku-4-5-20251001',
+            max_tokens=1000,
+            messages=[{'role': 'user', 'content': f"""Extract Ingemann's Holdet team from this Feltet.dk article for Stage {stage} Giro d'Italia 2026.
+
+{raw_text[:3000]}
+
+Return ONLY this JSON, no markdown:
+{{
+  "riders": ["Rider Name 1", "Rider Name 2", "Rider Name 3", "Rider Name 4", "Rider Name 5", "Rider Name 6", "Rider Name 7", "Rider Name 8"],
+  "captain": "Rider Name",
+  "notes": "any brief tactical notes Ingemann made about his picks"
+}}
+
+Extract exactly 8 rider names and 1 captain. Use full rider names as they appear in the text."""}]
+        ))
+        raw = message.content[0].text.strip()
+        if raw.startswith('```'):
+            raw = re.sub(r'^```[a-z]*\n?', '', raw)
+            raw = re.sub(r'\n?```$', '', raw)
+        result = json.loads(raw.strip())
+        result['stage'] = stage
+        result['gathered_at'] = _dt.now().isoformat()
+        path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_ingemann.json')
+        with open(path, 'w') as f:
+            json.dump(result, f, indent=2)
+        return jsonify(result)
+    except json.JSONDecodeError as e:
+        return jsonify({'status': 'error', 'message': str(e), 'raw': raw}), 500
+    except Exception as e:
+        _log(f"gather-ingemann error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/score-ingemann', methods=['POST', 'OPTIONS'])
+def score_ingemann():
+    if request.method == 'OPTIONS':
+        return '', 204
+    stage = request.json.get('stage')
+    try:
+        ingemann_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_ingemann.json')
+        if not os.path.exists(ingemann_path):
+            return jsonify({'status': 'error', 'message': 'Ingemann team not scraped yet'}), 400
+
+        ingemann = json.load(open(ingemann_path))
+        rider_names  = ingemann.get('riders', [])
+        captain_name = ingemann.get('captain', '')
+
+        rider_data    = json.load(open(RIDERS_FILE))
+        active        = [r for r in rider_data['riders'] if not r.get('isOut') and r.get('status') != 'dns']
+
+        odds_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
+        raw_odds  = json.load(open(odds_path)) if os.path.exists(odds_path) else {}
+        odds = raw_odds.get('odds', raw_odds) if isinstance(raw_odds, dict) else raw_odds
+
+        intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
+        intel = json.load(open(intel_path)) if os.path.exists(intel_path) else {}
+
+        from optimizer import (build_probabilities, simulate_stage,
+                               load_stage_scoring, get_stage_config)
+        scoring      = load_stage_scoring()
+        stage_config = get_stage_config(stage, scoring)
+        probs = build_probabilities(active, odds, intel, {}, stage_config=stage_config, scoring=scoring)
+
+        team = []
+        for name in rider_names:
+            match = next((r for r in active if r['name'].lower() == name.lower()), None)
+            if match:
+                team.append(match)
+
+        if len(team) != 8:
+            return jsonify({
+                'status': 'error',
+                'message': f'Could only match {len(team)}/8 riders — check names',
+                'matched': [r['name'] for r in team],
+                'requested': rider_names,
+            }), 400
+
+        sim = simulate_stage(team, probs, captain_name, all_riders=active,
+                             stage_config=stage_config, scoring=scoring)
+
+        result = {
+            'label':       "Ingemann's Benchmark",
+            'strategy':    'ingemann',
+            'description': 'Feltet.dk expert recommendation — Ingemann (previous Holdet winner)',
+            'riders':      [{'name': r['name'], 'team': r.get('team', ''),
+                             'price': r['price'], 'type': r.get('type', '')} for r in team],
+            'captain':     {'name': captain_name, 'rationale': "Ingemann's pick"},
+            'total_price': sum(r['price'] for r in team),
+            'ev_estimate': sim['mean'],
+            'ev_breakdown': sim['breakdown'],
+            'cdf':         sim['cdf'],
+            'forward':     {},
+            'notes':       ingemann.get('notes', ''),
+            'stage':       stage,
+        }
+
+        out_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_ingemann_scored.json')
+        with open(out_path, 'w') as f:
+            json.dump(result, f, indent=2)
+        _log(f"score-ingemann stage={stage} ev={int(sim['mean'])}")
+        return jsonify(result)
+    except Exception as e:
+        _log(f"score-ingemann error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/load-ingemann-scored', methods=['GET'])
+def load_ingemann_scored():
+    stage = request.args.get('stage')
+    path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_ingemann_scored.json')
+    if os.path.exists(path):
+        with open(path) as f:
+            return jsonify(json.load(f))
+    return jsonify({})
+
+
+@app.route('/current-team', methods=['GET'])
+def current_team_endpoint():
+    target_stage = request.args.get('target_stage', type=int, default=1)
+    source_stage = max(1, target_stage - 1)
+    path = os.path.join(SNAPSHOT_DIR, f'stage_{source_stage}_holdet.json')
+    if not os.path.exists(path):
+        return jsonify({'riders': [], 'stage': source_stage, 'found': False})
+
+    snapshot = json.load(open(path))
+    team_ids  = set(snapshot.get('team_composition', []))
+    rider_data = json.load(open(RIDERS_FILE))
+    team = [r for r in rider_data['riders']
+            if r['name'] in team_ids or str(r.get('holdet_id', '')) in team_ids]
+
+    return jsonify({
+        'riders':       team,
+        'bank_balance': snapshot.get('bank_balance', 0),
+        'captain':      snapshot.get('captain', ''),
+        'stage':        source_stage,
+        'found':        True,
+    })
+
+
 # ── Save weights ──────────────────────────────────────────────────────────────
 
 @app.route('/save-weights', methods=['POST', 'OPTIONS'])
