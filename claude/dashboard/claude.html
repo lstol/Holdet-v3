@@ -776,6 +776,7 @@ function setTargetStage(n) {
   loadSavedIntel();
   loadSavedOutput();
   loadSavedIngemann();
+  loadCurrentTeam();
   loadStageResults();
 }
 
@@ -910,6 +911,17 @@ async function gatherIngemann() {
   } catch(e) {
     btn.textContent = `Error: ${e.message.slice(0, 30)}`;
     btn.disabled = false;
+  }
+}
+
+async function loadCurrentTeam() {
+  try {
+    const res  = await fetch(`${SERVER}/current-team?target_stage=${targetStage}`);
+    const data = await res.json();
+    window.CURRENT_TEAM_DATA = (data.found && data.riders && data.riders.length > 0)
+      ? data : null;
+  } catch(_) {
+    window.CURRENT_TEAM_DATA = null;
   }
 }
 
@@ -1784,6 +1796,40 @@ function renderOptimizerOutput(data) {
     </div>`;
   }
 
+  function buildCurrentTeamCard(data) {
+    if (!data || !data.riders || !data.riders.length) return '';
+    const capName    = data.captain || '';
+    const totalPrice = data.riders.reduce((s, r) => s + (r.price || 0), 0);
+
+    const ridersHtml = data.riders.map(r => {
+      const name     = r.name || '';
+      const isCapRow = name === capName;
+      const odd      = S.oddsRows.find(x => x.name === name) || {};
+      const tier     = (parseFloat(odd.win) || 0) >= 1 ? 'A' : 'B';
+      const shortName = name.length > 22 ? name.slice(0, 21) + '…' : name;
+      return `<div class="tc-rider-row" style="${isCapRow ? 'background:rgba(240,168,50,.06);' : ''}">
+        <span class="tc-rname" title="${esc(name)}">${isCapRow ? '⚡ ' : ''}${esc(shortName)}</span>
+        <span class="tc-rprice">${r.price ? (r.price/1e6).toFixed(2)+'M' : '—'}</span>
+        <span class="tbadge t${tier}">${tier}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="team-card" style="border:1px dashed var(--color-border);opacity:0.85;">
+      <div class="tc-head">
+        <div class="tc-label">📋 Current Team · Stage ${data.stage}</div>
+        <div class="tc-ev" style="color:var(--color-text-2);font-size:11px;">
+          Locked · ${(totalPrice/1e6).toFixed(2)}M
+        </div>
+      </div>
+      <div class="tc-riders">${ridersHtml}</div>
+      <div class="tc-meta">
+        <div class="tc-rationale" style="color:var(--color-text-2);">
+          Submitted team — transfers calculated from here
+        </div>
+      </div>
+    </div>`;
+  }
+
   function buildCard(team, idx, isIngemann) {
     const bd    = team.ev_breakdown || {};
     const cdf   = team.cdf || {};
@@ -1843,6 +1889,11 @@ function renderOptimizerOutput(data) {
   // Ingemann leftmost
   if (window.INGEMANN_DATA) {
     html += buildCard(window.INGEMANN_DATA, 0, true);
+  }
+
+  // Current team second from left
+  if (window.CURRENT_TEAM_DATA) {
+    html += buildCurrentTeamCard(window.CURRENT_TEAM_DATA);
   }
 
   // Optimizer teams (preserve strategy order)
@@ -1965,6 +2016,7 @@ async function init() {
   await loadSavedIntel();
   await loadSavedOutput();
   await loadSavedIngemann();
+  await loadCurrentTeam();
   await loadStageResults();
   updateHeader();
 }
