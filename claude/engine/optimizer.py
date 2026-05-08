@@ -14,6 +14,7 @@ Hard constraints (enforced throughout):
 import math
 import re
 import random
+import time
 from collections import Counter, defaultdict
 
 import numpy as np
@@ -276,15 +277,16 @@ def get_valid_random_team(forced, pool, budget):
 # ── Step 5: Simulated Annealing ───────────────────────────────────────────────
 
 def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
-                         budget=BUDGET, n_iter=100_000, seed=42):
+                         budget=BUDGET, n_iter=2_000_000, seed=42,
+                         max_seconds=9):
     """
     Single SA chain.  Returns (best_team_list, best_ev).
 
-    Search space: all 184 riders subject to budget / team / count constraints.
+    Search space: all riders subject to budget / team / count constraints.
     No tier filtering — cheap riders with team-bonus value appear naturally.
 
-    Temperature schedule: T₀ = 50,000 (≈ 50k fantasy points), decay = 0.99995.
-    After 100k iterations T ≈ 335, accepting only tiny downgrades.
+    Temperature schedule: T₀ = 200,000, decay = 0.999993.
+    Time-based safety stop: exits after max_seconds regardless of n_iter.
     """
     rng = random.Random(seed)
 
@@ -307,13 +309,20 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
     best_team  = team[:]
     best_ev    = current_ev
 
-    T        = 50_000.0
-    cooling  = 0.99995
+    T        = 200_000.0
+    cooling  = 0.999993
     pool_len = len(pool)
-    # Build index: name → position in pool, for duplicate detection
-    pool_idx = {r['name']: i for i, r in enumerate(pool)}
 
-    for _ in range(n_iter):
+    start = time.time()
+    i = 0
+    while i < n_iter:
+        if time.time() - start > max_seconds:
+            import logging
+            logging.getLogger(__name__).info(
+                f"SA stopping at iter {i} after {max_seconds}s (seed={seed})"
+            )
+            break
+
         # Pick a random swappable slot (never touch forced riders)
         if n_forced >= 8:
             break
@@ -323,6 +332,7 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
         # Skip if rider already in team
         if any(new_rider['name'] == r['name'] for r in team):
             T *= cooling
+            i += 1
             continue
 
         # Propose swap
@@ -331,6 +341,7 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
 
         if not is_valid(new_team, budget):
             T *= cooling
+            i += 1
             continue
 
         new_ev = compute_team_ev(new_team, probs)
@@ -344,6 +355,7 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
                 best_team = team[:]
 
         T *= cooling
+        i += 1
 
     return best_team, best_ev
 
@@ -456,6 +468,12 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
         if r.get('price', 0) <= 9_000_000 or r['name'] in user_forced_set
     ]
 
+    # Mid-price pool: riders between 6M and 14M (broad mid-tier focus)
+    mid_price_riders = [
+        r for r in all_riders
+        if 6_000_000 <= r.get('price', 0) <= 14_000_000 or r['name'] in user_forced_set
+    ]
+
     strategies = [
         # 0 — unconstrained optimum
         {'seed': 42,   'riders': all_riders,
@@ -477,13 +495,23 @@ def generate_candidate_teams(all_riders, probs, force_in_names, force_out_names,
         {'seed': 99,   'riders': all_riders,
          'force_in':  list(user_forced_set),
          'force_out': list(user_excluded)},
+        # 5 — mid-price focus: pool 6M–14M riders (avoid extremes)
+        {'seed': 314,  'riders': mid_price_riders,
+         'force_in':  list(user_forced_set),
+         'force_out': list(user_excluded)},
+        # 6 — no-anchor-no-gc: explore without either dominant archetype
+        {'seed': 555,  'riders': all_riders,
+         'force_in':  list(user_forced_set),
+         'force_out': list(user_excluded)
+                      + ([top_anchor] if top_anchor else [])
+                      + ([gc_anchor]  if gc_anchor  else [])},
     ]
 
     raw_results = []
     for strat in strategies:
         team, ev = simulated_annealing(
             strat['riders'], probs, strat['force_in'], strat['force_out'],
-            budget=budget, n_iter=100_000, seed=strat['seed'],
+            budget=budget, n_iter=2_000_000, seed=strat['seed'], max_seconds=9,
         )
         if team is not None:
             raw_results.append((ev, team))

@@ -1449,16 +1449,27 @@ async function runOptimizer() {
 async function runPyOptimizer() {
   const btn = $('run-optimizer-py-btn');
   const outEl = $('optimizer-output');
-  btn.textContent = 'Running…';
   btn.disabled = true;
   outEl.className = '';
   outEl.textContent = 'Running Python Monte Carlo optimizer…';
   const st = S.stages[S.activeStageIndex] || {};
   const stage = st.stage_number || 1;
+
+  let elapsed = 0;
+  const timer = setInterval(() => {
+    elapsed++;
+    btn.textContent = `Running… ${elapsed}s`;
+  }, 1000);
+  btn.textContent = 'Running… 0s';
+
+  const controller = new AbortController();
+  const abortTimeout = setTimeout(() => controller.abort(), 120_000);
+
   try {
     const res = await fetch(`${SERVER}/run-optimizer-py`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
+      signal: controller.signal,
       body: JSON.stringify({
         stage,
         sliders: S.sliders,
@@ -1466,14 +1477,19 @@ async function runPyOptimizer() {
         force_out: [...S.forceOut].map(id => { const r = S.riders.find(x => (x.rider_id || x.holdet_id) == id); return r ? r.name : id; }),
       }),
     });
+    clearTimeout(abortTimeout);
+    clearInterval(timer);
     const data = await res.json();
     if (data.status === 'error') throw new Error(data.message);
     renderOptimizerOutput(data);
+    await saveOutput(data);
   } catch(e) {
+    clearTimeout(abortTimeout);
+    clearInterval(timer);
     outEl.innerHTML = `<div style="color:var(--color-danger,#e05)">Error: ${e.message}</div>`;
   } finally {
-    btn.innerHTML = '<i class="ti ti-cpu"></i> Run Python optimizer ↗';
     btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-cpu"></i> Run Python optimizer ↗';
   }
 }
 
