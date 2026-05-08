@@ -545,7 +545,9 @@ def parse_odds_image():
 
         for item in parsed:
             name = item.get('name', '')
-            pct  = item.get('pct', 0)
+            # Model sometimes returns field-specific keys (win_pct, top3_pct, top10_pct)
+            # instead of the requested 'pct' key — accept both
+            pct  = item.get('pct') or item.get(field_name) or item.get('win_pct') or 0
             if not name:
                 continue
             if name in existing_map:
