@@ -1177,8 +1177,9 @@ function shiftCarousel(dir) {
 /* ── Header ─────────────────────────────────────────────────────────── */
 function updateHeader() {
   const st = S.stages[S.activeStageIndex];
-  if (!st) { $('h-stage-title').textContent = '—'; $('h-stage-meta').textContent = '—'; return; }
-  $('h-stage-title').textContent = st.stage_name || `Stage ${st.stage_number}`;
+  const titleEl = $('h-stage-title');
+  if (!st) { if (titleEl) titleEl.textContent = '—'; $('h-stage-meta').textContent = '—'; return; }
+  if (titleEl) titleEl.textContent = st.stage_name || `Stage ${st.stage_number}`;
   const terrain = st.is_ttt ? 'TTT' : st.is_itt ? 'ITT' : (st.terrain_classification || '—');
   $('h-stage-meta').textContent = `${st.date || '—'} · ${st.start_city || '?'} › ${st.finish_city || '?'} · ${st.distance_km || '?'}km · ${terrain}`;
   $('h-bank').textContent = fmt_price(S.bankBalance);
