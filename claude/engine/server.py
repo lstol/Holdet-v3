@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 
 _HERE    = os.path.dirname(os.path.abspath(__file__))          # …/claude/engine
 _ENV     = os.path.join(_HERE, '..', '..', '.env')             # repo root .env
-load_dotenv(os.path.abspath(_ENV))                             # explicit abs path
+load_dotenv(os.path.abspath(_ENV), override=True)              # explicit abs path; override=True so shell env blanks don't win
 
 _API_KEY = os.getenv('ANTHROPIC_API_KEY')
 if not _API_KEY:
@@ -1038,6 +1038,27 @@ def stage_results():
     data['found'] = True
     data['completed_stage'] = completed
     return jsonify(data)
+
+
+# ── Fetch stage results from Holdet ──────────────────────────────────────────
+
+@app.route('/fetch-stage-results', methods=['POST', 'OPTIONS'])
+def fetch_stage_results_endpoint():
+    if request.method == 'OPTIONS':
+        return '', 204
+    body  = request.get_json(force=True) or {}
+    stage = body.get('stage', 1)
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from fetch_riders import fetch_stage_results
+        raw = fetch_stage_results(int(stage))
+        _log(f"fetch-stage-results stage={stage} sources={list(raw.get('raw_sources', {}).keys())}")
+        return jsonify({'status': 'ok', 'stage': stage, 'raw': raw})
+    except SystemExit as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    except Exception as e:
+        _log(f"fetch-stage-results error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 # ── Save weights ──────────────────────────────────────────────────────────────

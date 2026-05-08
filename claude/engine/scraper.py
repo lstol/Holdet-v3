@@ -79,15 +79,21 @@ async def fetch_tv2_stage_preview(stage: int) -> str:
         await page.click('button[type="submit"]')
         await page.wait_for_timeout(3000)
 
-        await page.goto('https://sport.tv2.dk/cykling/giro-d-italia/etaper', wait_until='networkidle')
-
         pattern = re.compile(rf'axelgaards-optakt-til-{stage}[.-]etape', re.IGNORECASE)
-        links = await page.query_selector_all('a[href]')
         article_url = None
-        for link in links:
-            href = await link.get_attribute('href')
-            if href and pattern.search(href):
-                article_url = href if href.startswith('http') else f'https://sport.tv2.dk{href}'
+
+        for search_url in [
+            'https://sport.tv2.dk/profil/emil-axels',
+            'https://sport.tv2.dk/cykling/giro-d-italia/etaper',
+        ]:
+            await page.goto(search_url, wait_until='networkidle')
+            links = await page.query_selector_all('a[href]')
+            for link in links:
+                href = await link.get_attribute('href')
+                if href and pattern.search(href):
+                    article_url = href if href.startswith('http') else f'https://sport.tv2.dk{href}'
+                    break
+            if article_url:
                 break
 
         if not article_url:
@@ -119,10 +125,16 @@ async def fetch_feltet_stage_analysis(stage: int) -> str:
 
         await _feltet_login(page)
 
-        pattern = re.compile(rf'feltets-fiduser-{stage}[.-].*etape.*giro', re.IGNORECASE)
+        pattern = re.compile(rf'feltets-fiduser-{stage}[.-].*etape', re.IGNORECASE)
         article_url = None
 
-        for search_url in ['https://www.feltet.dk/', 'https://www.feltet.dk/plus/']:
+        search_pages = [
+            'https://www.feltet.dk/plus/',
+            'https://www.feltet.dk/landevej/',
+            'https://www.feltet.dk/',
+            f'https://www.feltet.dk/?s=feltets-fiduser+{stage}.+etape',
+        ]
+        for search_url in search_pages:
             await page.goto(search_url, wait_until='load', timeout=30000)
             links = await page.query_selector_all('a[href]')
             for link in links:
@@ -164,7 +176,13 @@ async def fetch_feltet_ingemann_team(stage: int) -> str:
         pattern = re.compile(rf'girospillet.*hold.*{stage}[.-].*etape', re.IGNORECASE)
         article_url = None
 
-        for search_url in ['https://www.feltet.dk/', 'https://www.feltet.dk/plus/']:
+        search_pages = [
+            'https://www.feltet.dk/plus/',
+            'https://www.feltet.dk/landevej/',
+            'https://www.feltet.dk/',
+            f'https://www.feltet.dk/?s=girospillet+hold+{stage}.+etape',
+        ]
+        for search_url in search_pages:
             await page.goto(search_url, wait_until='load', timeout=30000)
             links = await page.query_selector_all('a[href]')
             for link in links:

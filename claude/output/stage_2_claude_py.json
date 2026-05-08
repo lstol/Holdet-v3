@@ -1,0 +1,350 @@
+{
+  "teams": [
+    {
+      "label": "Optimal",
+      "strategy": "optimal",
+      "description": "Maximise stage EV — best team for today",
+      "riders": [
+        {
+          "name": "Michael Storer",
+          "team": "Tudor Pro Cycling",
+          "price": 7000000,
+          "type": ""
+        },
+        {
+          "name": "Ben O'Connor",
+          "team": "Team Jayco AlUla",
+          "price": 7000000,
+          "type": ""
+        },
+        {
+          "name": "Juanpe Lopez",
+          "team": "Movistar Team",
+          "price": 4000000,
+          "type": ""
+        },
+        {
+          "name": "Will Barta",
+          "team": "Tudor Pro Cycling",
+          "price": 2500000,
+          "type": ""
+        },
+        {
+          "name": "Francesco Busatto",
+          "team": "Alpecin-Premier Tech",
+          "price": 3500000,
+          "type": ""
+        },
+        {
+          "name": "Koen Bouwman",
+          "team": "Team Jayco AlUla",
+          "price": 3000000,
+          "type": ""
+        },
+        {
+          "name": "Edward Planckaert",
+          "team": "Alpecin-Premier Tech",
+          "price": 3500000,
+          "type": ""
+        },
+        {
+          "name": "Enric Mas Nicolau",
+          "team": "Movistar Team",
+          "price": 7000000,
+          "type": ""
+        }
+      ],
+      "total_price": 37500000,
+      "ev_estimate": 154507,
+      "ev_breakdown": {
+        "stage_finish": 59064,
+        "sprint_points": 14718,
+        "jersey_bonus": 1105,
+        "gc_bonus": 23707,
+        "kom_points": 2368,
+        "captain_bonus": 12845,
+        "team_bonus": 37580,
+        "depth_bonus": 3118
+      },
+      "cdf": {
+        "p25": 0,
+        "p50": 70000,
+        "p75": 219000,
+        "p90": 430000
+      },
+      "captain": {
+        "name": "Michael Storer",
+        "rationale": "Michael Storer has the highest total EV in the team (~10k doubled as captain, 2% top-3). Includes sprint points, jersey, and GC bonus upside."
+      },
+      "forward": {
+        "transfers_n1": 8,
+        "cost_n1": 415320,
+        "transfers_n2": 0,
+        "cost_n2": 0,
+        "total_forward_cost": 415320
+      },
+      "rationale": "Maximise stage EV — best team for today"
+    },
+    {
+      "label": "Depth maximiser",
+      "strategy": "depth",
+      "description": "Maximise riders in top 15 — targets non-linear depth bonus",
+      "riders": [
+        {
+          "name": "Callum Scotson",
+          "team": "Decathlon CMA CGM",
+          "price": 2530000,
+          "type": ""
+        },
+        {
+          "name": "Tord Gudmestad",
+          "team": "Decathlon CMA CGM",
+          "price": 3144000,
+          "type": ""
+        },
+        {
+          "name": "Gianmarco Garofoli",
+          "team": "Soudal Quick-Step",
+          "price": 4060000,
+          "type": ""
+        },
+        {
+          "name": "Jasper Stuyven",
+          "team": "Soudal Quick-Step",
+          "price": 4145000,
+          "type": ""
+        },
+        {
+          "name": "Luca Mozzato",
+          "team": "Tudor Pro Cycling",
+          "price": 4000000,
+          "type": ""
+        },
+        {
+          "name": "Victor Campenaerts",
+          "team": "Team Visma Lease a Bike",
+          "price": 4500000,
+          "type": ""
+        },
+        {
+          "name": "Will Barta",
+          "team": "Tudor Pro Cycling",
+          "price": 2500000,
+          "type": ""
+        },
+        {
+          "name": "Jonas Vingegaard",
+          "team": "Team Visma Lease a Bike",
+          "price": 17500000,
+          "type": ""
+        }
+      ],
+      "total_price": 42379000,
+      "ev_estimate": 155852,
+      "ev_breakdown": {
+        "stage_finish": 60320,
+        "sprint_points": 14673,
+        "jersey_bonus": 1027,
+        "gc_bonus": 24201,
+        "kom_points": 2291,
+        "captain_bonus": 12729,
+        "team_bonus": 37196,
+        "depth_bonus": 3413
+      },
+      "cdf": {
+        "p25": 0,
+        "p50": 70000,
+        "p75": 223000,
+        "p90": 430000
+      },
+      "captain": {
+        "name": "Callum Scotson",
+        "rationale": "Callum Scotson has the highest total EV in the team (~10k doubled as captain, 2% top-3). Includes sprint points, jersey, and GC bonus upside."
+      },
+      "forward": {
+        "transfers_n1": 8,
+        "cost_n1": 415320,
+        "transfers_n2": 0,
+        "cost_n2": 0,
+        "total_forward_cost": 415320
+      },
+      "rationale": "Maximise riders in top 15 — targets non-linear depth bonus"
+    },
+    {
+      "label": "Low transfer cost",
+      "strategy": "low-transfer",
+      "description": "Minimise transfers needed for stage n+1 (8 expected from optimal)",
+      "riders": [
+        {
+          "name": "Alessandro Tonelli",
+          "team": "Team Polti VisitMalta",
+          "price": 2500000,
+          "type": ""
+        },
+        {
+          "name": "Lennert Van Eetvelt",
+          "team": "Lotto-Intermarché",
+          "price": 7500000,
+          "type": ""
+        },
+        {
+          "name": "Felix Gall",
+          "team": "Decathlon CMA CGM",
+          "price": 9030000,
+          "type": ""
+        },
+        {
+          "name": "Diego Pablo Sevilla",
+          "team": "Team Polti VisitMalta",
+          "price": 2627000,
+          "type": ""
+        },
+        {
+          "name": "Simone Gualdi",
+          "team": "Lotto-Intermarché",
+          "price": 3500000,
+          "type": ""
+        },
+        {
+          "name": "Tobias Lund Andresen",
+          "team": "Decathlon CMA CGM",
+          "price": 9375000,
+          "type": ""
+        },
+        {
+          "name": "Wout Poels",
+          "team": "Unibet Rose Rockets",
+          "price": 4500000,
+          "type": ""
+        },
+        {
+          "name": "Tomáš Kopecký",
+          "team": "Unibet Rose Rockets",
+          "price": 2500000,
+          "type": ""
+        }
+      ],
+      "total_price": 41532000,
+      "ev_estimate": 154096,
+      "ev_breakdown": {
+        "stage_finish": 59420,
+        "sprint_points": 14682,
+        "jersey_bonus": 1160,
+        "gc_bonus": 23868,
+        "kom_points": 2331,
+        "captain_bonus": 13376,
+        "team_bonus": 36152,
+        "depth_bonus": 3106
+      },
+      "cdf": {
+        "p25": 0,
+        "p50": 70000,
+        "p75": 213000,
+        "p90": 433000
+      },
+      "captain": {
+        "name": "Alessandro Tonelli",
+        "rationale": "Alessandro Tonelli has the highest total EV in the team (~10k doubled as captain, 2% top-3). Includes sprint points, jersey, and GC bonus upside."
+      },
+      "forward": {
+        "transfers_n1": 0,
+        "cost_n1": 0,
+        "transfers_n2": 0,
+        "cost_n2": 0,
+        "total_forward_cost": 0
+      },
+      "rationale": "Minimise transfers needed for stage n+1 (8 expected from optimal)"
+    },
+    {
+      "label": "Two-stage lookahead",
+      "strategy": "lookahead",
+      "description": "EV minus transfer costs n+1 (8) and n+2 (0)",
+      "riders": [
+        {
+          "name": "Diego Pablo Sevilla",
+          "team": "Team Polti VisitMalta",
+          "price": 2627000,
+          "type": ""
+        },
+        {
+          "name": "Simone Gualdi",
+          "team": "Lotto-Intermarché",
+          "price": 3500000,
+          "type": ""
+        },
+        {
+          "name": "Lennert Van Eetvelt",
+          "team": "Lotto-Intermarché",
+          "price": 7500000,
+          "type": ""
+        },
+        {
+          "name": "Felix Gall",
+          "team": "Decathlon CMA CGM",
+          "price": 9030000,
+          "type": ""
+        },
+        {
+          "name": "Tobias Lund Andresen",
+          "team": "Decathlon CMA CGM",
+          "price": 9375000,
+          "type": ""
+        },
+        {
+          "name": "Alessandro Tonelli",
+          "team": "Team Polti VisitMalta",
+          "price": 2500000,
+          "type": ""
+        },
+        {
+          "name": "Wout Poels",
+          "team": "Unibet Rose Rockets",
+          "price": 4500000,
+          "type": ""
+        },
+        {
+          "name": "Tomáš Kopecký",
+          "team": "Unibet Rose Rockets",
+          "price": 2500000,
+          "type": ""
+        }
+      ],
+      "total_price": 41532000,
+      "ev_estimate": 153680,
+      "ev_breakdown": {
+        "stage_finish": 60451,
+        "sprint_points": 14956,
+        "jersey_bonus": 1107,
+        "gc_bonus": 24355,
+        "kom_points": 2371,
+        "captain_bonus": 11917,
+        "team_bonus": 35186,
+        "depth_bonus": 3335
+      },
+      "cdf": {
+        "p25": 0,
+        "p50": 70000,
+        "p75": 220000,
+        "p90": 434000
+      },
+      "captain": {
+        "name": "Diego Pablo Sevilla",
+        "rationale": "Diego Pablo Sevilla has the highest total EV in the team (~10k doubled as captain, 2% top-3). Includes sprint points, jersey, and GC bonus upside."
+      },
+      "forward": {
+        "transfers_n1": 0,
+        "cost_n1": 0,
+        "transfers_n2": 0,
+        "cost_n2": 0,
+        "total_forward_cost": 0
+      },
+      "rationale": "EV minus transfer costs n+1 (8) and n+2 (0)"
+    }
+  ],
+  "captain": {
+    "name": "Michael Storer",
+    "rationale": "Michael Storer has the highest total EV in the team (~10k doubled as captain, 2% top-3). Includes sprint points, jersey, and GC bonus upside."
+  },
+  "budget": 50000000,
+  "stage": 2
+}

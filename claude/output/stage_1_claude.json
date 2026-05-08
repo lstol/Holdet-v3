@@ -1,0 +1,177 @@
+{
+  "teams": [
+    {
+      "label": "Milan-Captain Milan-Magnier Core",
+      "riders": [
+        "Jonathan Milan",
+        "Paul Magnier",
+        "Tobias Lund Andresen",
+        "Dylan Groenewegen",
+        "Tord Gudmestad",
+        "Casper van Uden",
+        "Corbin Strong",
+        "Luca Mozzato"
+      ],
+      "total_price": 49500000,
+      "ev_estimate": 1020000,
+      "ev_breakdown": {
+        "stage_finish": 540000,
+        "captain_bonus": 195000,
+        "team_bonus": 72000,
+        "depth_bonus": 148000,
+        "gc_bonus": 65000
+      },
+      "cdf": {
+        "p25": 480000,
+        "p50": 890000,
+        "p75": 1320000,
+        "p90": 1820000
+      },
+      "forward_pressure": {
+        "n2": "medium",
+        "n3": "low"
+      },
+      "rationale": "Milan as captain maximises right-tail EV on 52% win probability doubled upside; Magnier and Lund as backup sprinters ensure depth-bonus stacking across likely top-15 finishers."
+    },
+    {
+      "label": "Lund-Captain Contrarian",
+      "riders": [
+        "Tobias Lund Andresen",
+        "Jonathan Milan",
+        "Paul Magnier",
+        "Ethan Vernon",
+        "Tord Gudmestad",
+        "Matteo Malucelli",
+        "Corbin Strong",
+        "Luca Mozzato"
+      ],
+      "total_price": 49500000,
+      "ev_estimate": 975000,
+      "ev_breakdown": {
+        "stage_finish": 480000,
+        "captain_bonus": 210000,
+        "team_bonus": 65000,
+        "depth_bonus": 155000,
+        "gc_bonus": 65000
+      },
+      "cdf": {
+        "p25": 420000,
+        "p50": 820000,
+        "p75": 1280000,
+        "p90": 1950000
+      },
+      "forward_pressure": {
+        "n2": "high",
+        "n3": "low"
+      },
+      "rationale": "Captaining Lund exploits his underpriced strong-signal upgrade and best leadout in peloton via Gudmestad; right-tail explodes if he beats Milan at lower ownership."
+    },
+    {
+      "label": "Depth-Bomb Seven Sprinters",
+      "riders": [
+        "Jonathan Milan",
+        "Paul Magnier",
+        "Tobias Lund Andresen",
+        "Dylan Groenewegen",
+        "Matteo Malucelli",
+        "Erlend Blikra",
+        "Tord Gudmestad",
+        "Casper van Uden"
+      ],
+      "total_price": 50000000,
+      "ev_estimate": 1085000,
+      "ev_breakdown": {
+        "stage_finish": 510000,
+        "captain_bonus": 185000,
+        "team_bonus": 78000,
+        "depth_bonus": 247000,
+        "gc_bonus": 65000
+      },
+      "cdf": {
+        "p25": 520000,
+        "p50": 960000,
+        "p75": 1440000,
+        "p90": 1980000
+      },
+      "forward_pressure": {
+        "n2": "medium",
+        "n3": "low"
+      },
+      "rationale": "Seven riders with realistic top-15 potential targets the non-linear 400k depth bonus tier; Blikra and Malucelli fill the 7th and 8th slots cheaply while sustaining high floor."
+    },
+    {
+      "label": "Magnier-Captain Budget-Aggressive",
+      "riders": [
+        "Paul Magnier",
+        "Jonathan Milan",
+        "Tobias Lund Andresen",
+        "Matteo Malucelli",
+        "Matteo Moschetti",
+        "Tord Gudmestad",
+        "Corbin Strong",
+        "Luca Mozzato"
+      ],
+      "total_price": 49500000,
+      "ev_estimate": 910000,
+      "ev_breakdown": {
+        "stage_finish": 470000,
+        "captain_bonus": 175000,
+        "team_bonus": 68000,
+        "depth_bonus": 132000,
+        "gc_bonus": 65000
+      },
+      "cdf": {
+        "p25": 390000,
+        "p50": 780000,
+        "p75": 1210000,
+        "p90": 1780000
+      },
+      "forward_pressure": {
+        "n2": "high",
+        "n3": "medium"
+      },
+      "rationale": "Captaining Magnier at lower price point frees budget for Moschetti as a value pick; strong n+2 carry as Magnier excels on hillier finishes and remains underpriced relative to upside."
+    },
+    {
+      "label": "Safe-Floor GC-Hedge",
+      "riders": [
+        "Jonathan Milan",
+        "Paul Magnier",
+        "Tobias Lund Andresen",
+        "Erlend Blikra",
+        "Ben Turner",
+        "Tord Gudmestad",
+        "Casper van Uden",
+        "Corbin Strong"
+      ],
+      "total_price": 49500000,
+      "ev_estimate": 945000,
+      "ev_breakdown": {
+        "stage_finish": 520000,
+        "captain_bonus": 195000,
+        "team_bonus": 70000,
+        "depth_bonus": 160000,
+        "gc_bonus": 0
+      },
+      "cdf": {
+        "p25": 460000,
+        "p50": 840000,
+        "p75": 1260000,
+        "p90": 1740000
+      },
+      "forward_pressure": {
+        "n2": "medium",
+        "n3": "high"
+      },
+      "rationale": "Turner and Blikra provide solid top-10 probability at low cost while the three headline sprinters anchor the finish-points EV; best positioned for n+3 harder stages with GC-capable utility riders."
+    }
+  ],
+  "captain": {
+    "name": "Jonathan Milan",
+    "rationale": "At 52% win probability with strong-signal upgrade, Milan's 200k stage win doubled to 400k effective for the captain creates the highest single-outcome right-tail EV in the field, and losses are not amplified under the captain rule."
+  },
+  "tier_a": [
+    "Jonathan Milan",
+    "Tobias Lund Andresen"
+  ]
+}

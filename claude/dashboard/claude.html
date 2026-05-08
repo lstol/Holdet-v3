@@ -588,7 +588,15 @@ input[type=range]::-webkit-slider-thumb {
   </div>
 
   <!-- ── Stage results panel ───────────────────────────────────── -->
-  <div id="stage-results-panel" style="display:none;margin-top:12px;"></div>
+  <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+    <button id="fetch-results-btn" class="btn btn-sm btn-ghost"
+            onclick="fetchStageResults()"
+            style="font-size:11px;">
+      <i class="ti ti-download"></i> Fetch Stage <span id="fetch-results-stage-label">1</span> results
+    </button>
+    <span id="fetch-results-status" style="font-size:11px;color:var(--color-text-2);"></span>
+  </div>
+  <div id="stage-results-panel" style="display:none;margin-top:8px;"></div>
 
   <!-- ── Current team ────────────────────────────────────────── -->
   <!-- ── Current team panel ────────────────────────────────────── -->
@@ -789,6 +797,7 @@ function initStageSelect() {
     targetStage = nextIdx >= 0 ? nextIdx + 1 : 21;
   }
   $('target-stage-display').textContent = `Stage ${targetStage}`;
+  const lbl = $('fetch-results-stage-label'); if (lbl) lbl.textContent = targetStage - 1 || '—';
   S.activeStageIndex = Math.max(0, targetStage - 1);
   S.carouselOffset   = Math.max(0, S.activeStageIndex - 1);
   renderCarousel();
@@ -800,6 +809,7 @@ function setTargetStage(n) {
   targetStage = n;
   localStorage.setItem('holdet_target_stage', String(n));
   $('target-stage-display').textContent = `Stage ${n}`;
+  const lbl = $('fetch-results-stage-label'); if (lbl) lbl.textContent = n - 1 || '—';
   S.activeStageIndex = Math.max(0, n - 1);
   S.carouselOffset   = Math.max(0, S.activeStageIndex - 1);
   renderCarousel();
@@ -826,6 +836,30 @@ async function loadSnapshot() {
 }
 
 /* ── Stage results panel ─────────────────────────────────────────────── */
+async function fetchStageResults() {
+  const completedStage = targetStage - 1;
+  const btn = $('fetch-results-btn');
+  const status = $('fetch-results-status');
+  if (completedStage < 1) { status.textContent = 'No completed stage yet'; return; }
+  btn.disabled = true;
+  status.textContent = `Fetching Stage ${completedStage} results…`;
+  try {
+    const res  = await fetch(`${SERVER}/fetch-stage-results`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({stage: completedStage}),
+    });
+    const data = await res.json();
+    if (data.status === 'error') throw new Error(data.message);
+    status.textContent = `✓ Raw response logged — check server console`;
+    console.log('[fetch-stage-results] raw:', data.raw);
+  } catch(e) {
+    status.textContent = `Error: ${e.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 async function loadStageResults() {
   if (targetStage <= 1) {
     $('stage-results-panel').style.display = 'none';
@@ -1275,6 +1309,7 @@ function updateSlider(key, type, val) {
 
   updateSumDisplay(key);
   renderTable();
+  localStorage.setItem('holdet_sliders', JSON.stringify(S.sliders));
 }
 
 function updateSumDisplay(key) {
@@ -1407,10 +1442,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(function(res) { return res.json(); })
         .then(function(data) {
           if (data.status === 'error') throw new Error(data.message);
-          // Server returns full merged array; win paste clears first, top3/top10 merge
+          // Win paste: zero out existing win values so top3/top10 survive
           if (oddsType === 'win') {
-            S.oddsRows = [];
-            document.getElementById('odds-tbody').innerHTML = '';
+            S.oddsRows.forEach(r => { r.win = ''; });
           }
           populateOddsTable(data, new Date().toISOString());
           statusEl.className   = 'parse-ok';
@@ -2112,6 +2146,8 @@ async function init() {
 
   initStageSelect();
   buildTypePills();
+  const savedSliders = localStorage.getItem('holdet_sliders');
+  if (savedSliders) { try { S.sliders = JSON.parse(savedSliders); } catch(_) {} }
   renderSliders();
   renderOdds();
   renderCarousel();

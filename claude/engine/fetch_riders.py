@@ -452,6 +452,71 @@ def fetch_team_as_dict(cartridge: str, fantasy_team_id: str, cookie: str) -> dic
 
 
 # ---------------------------------------------------------------------------
+# Step 6b — fetch_stage_results (raw Holdet history payload for one stage)
+# ---------------------------------------------------------------------------
+
+def fetch_stage_results(stage: int) -> dict:
+    """
+    Fetch Holdet stage results for the given completed stage number.
+    Tries the fantasy-team page and the nexus rounds API, logs the raw payload,
+    and returns whatever structured data is found.
+    """
+    load_dotenv(ROOT / ".env")
+    game_id         = os.getenv("HOLDET_GAME_ID_GIRO", "612")
+    cartridge       = os.getenv("HOLDET_CARTRIDGE", "giro-d-italia-2026")
+    fantasy_team_id = os.getenv("HOLDET_FANTASY_TEAM_ID", "6796783")
+    cookie          = _cookie()
+
+    result = {'stage': stage, 'raw_sources': {}}
+
+    # --- Try 1: rounds listing from nexus API ---
+    for url_template in [
+        f"{BASE_URL}/api/games/{game_id}/rounds",
+        f"{BASE_URL}/api/games/{game_id}/rounds/{stage}",
+        f"{BASE_URL}/api/games/{game_id}/rounds/{stage}/results",
+    ]:
+        try:
+            resp = requests.get(url_template, headers={"Cookie": cookie}, timeout=15)
+            print(f"[fetch_stage_results] {url_template} → HTTP {resp.status_code}")
+            if resp.status_code == 200:
+                try:
+                    payload = resp.json()
+                    result['raw_sources'][url_template] = payload
+                    print(f"  JSON keys: {list(payload.keys()) if isinstance(payload, dict) else f'array len={len(payload)}'}")
+                    print(f"  Preview: {str(payload)[:400]}")
+                except Exception:
+                    result['raw_sources'][url_template] = resp.text[:500]
+                    print(f"  Raw text: {resp.text[:400]}")
+        except Exception as e:
+            print(f"  Error: {e}")
+
+    # --- Try 2: team page Next.js payload (look for rounds/history keys) ---
+    team_url = f"{BASE_URL}/da/{cartridge}/me/fantasyteams/{fantasy_team_id}"
+    print(f"\n[fetch_stage_results] Scraping team page: {team_url}")
+    try:
+        resp = requests.get(team_url, headers={"Cookie": cookie}, timeout=20)
+        print(f"  HTTP {resp.status_code}")
+        if resp.status_code == 200:
+            html = resp.text
+            chunks = re.findall(r'self\.__next_f\.push\(\[1,\s*"(.*?)"\]\)', html, re.DOTALL)
+            for i, chunk in enumerate(chunks):
+                for keyword in ('round', 'Round', 'history', 'stagePoint', 'stagePlacement', 'roundResult'):
+                    if keyword in chunk:
+                        try:
+                            raw = chunk.encode().decode("unicode_escape")
+                        except Exception:
+                            raw = chunk
+                        print(f"  Chunk {i} contains '{keyword}': {raw[:600]}")
+                        result['raw_sources'][f'team_page_chunk_{i}'] = raw[:2000]
+                        break
+    except Exception as e:
+        print(f"  Error: {e}")
+
+    print(f"\n[fetch_stage_results] Done. Found {len(result['raw_sources'])} raw sources.")
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Step 7 — fetch_all (riders + team, returns combined dict for /refresh)
 # ---------------------------------------------------------------------------
 

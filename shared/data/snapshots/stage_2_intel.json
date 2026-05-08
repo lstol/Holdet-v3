@@ -1,0 +1,146 @@
+{
+  "stage": 2,
+  "intel": {
+    "_gathered_at": "2026-05-08T22:32:41.552472",
+    "gathered_at": "2026-05-08T22:32:41.550375",
+    "key_signals": [
+      {
+        "direction": "up",
+        "rider": "Jhonathan Narvaez",
+        "signal": "Won stage sprint ahead of Pogačar and Schachmann; took maglia rosa with Ineos; triumphant return after Gent-Wevelgem crash",
+        "strength": "strong"
+      },
+      {
+        "direction": "neutral",
+        "rider": "Tadej Pogačar",
+        "signal": "Strong on climb, couldn't drop field despite extended effort; lost sprint to Narvaez but gained 14 seconds on rivals; UAE team control softened after Colle Maddelena",
+        "strength": "strong"
+      },
+      {
+        "direction": "up",
+        "rider": "Rafał Majka",
+        "signal": "Only UAE domestique to reach final climb with Pogačar; successfully launched winning move",
+        "strength": "moderate"
+      },
+      {
+        "direction": "up",
+        "rider": "Max Schachmann",
+        "signal": "Within range at finish; welcome return after prolonged illness and recurring virus setbacks",
+        "strength": "moderate"
+      },
+      {
+        "direction": "down",
+        "rider": "Thymen Arensman",
+        "signal": "Lost 2 minutes on Colle Maddelena; GC bid derailed; Ineos unable to execute 1-2 attack strategy",
+        "strength": "strong"
+      },
+      {
+        "direction": "down",
+        "rider": "Tobias Foss",
+        "signal": "Lost 8 minutes on Colle Maddelena; significant setback for Ineos GC strategy",
+        "strength": "strong"
+      },
+      {
+        "direction": "down",
+        "rider": "Romain Bardet",
+        "signal": "Lost 1 minute on Colle Maddelena; GC bid affected but not eliminated",
+        "strength": "moderate"
+      },
+      {
+        "direction": "down",
+        "rider": "Luke Plapp",
+        "signal": "Lost 1 minute on Colle Maddelena; GC ambitions compromised",
+        "strength": "moderate"
+      },
+      {
+        "direction": "neutral",
+        "rider": "Lilian Calmejane",
+        "signal": "Early breakaway participant; held solo long enough to secure mountains jersey",
+        "strength": "weak"
+      }
+    ],
+    "source_ratings": [
+      {
+        "ratings": [
+          {
+            "rider": "Tadej Pogačar",
+            "stars": 5
+          },
+          {
+            "rider": "Jhonathan Narvaez",
+            "stars": 5
+          },
+          {
+            "rider": "Rafał Majka",
+            "stars": 4
+          },
+          {
+            "rider": "Max Schachmann",
+            "stars": 4
+          },
+          {
+            "rider": "Thymen Arensman",
+            "stars": 2
+          },
+          {
+            "rider": "Tobias Foss",
+            "stars": 2
+          },
+          {
+            "rider": "Romain Bardet",
+            "stars": 3
+          },
+          {
+            "rider": "Luke Plapp",
+            "stars": 3
+          },
+          {
+            "rider": "Lilian Calmejane",
+            "stars": 3
+          }
+        ],
+        "source": "Inner Ring",
+        "weight": 0.8
+      }
+    ],
+    "source_retrieval_errors": [
+      {
+        "error": "net::ERR_NAME_NOT_RESOLVED at https://profil.tv2.dk/login",
+        "source": "TV2/Axelgaard",
+        "weight": 1.5
+      },
+      {
+        "error": "Timeout 30000ms exceeded waiting for email input field",
+        "source": "Feltet.dk",
+        "weight": 1
+      }
+    ],
+    "sources_consulted": [
+      "Inner Ring"
+    ],
+    "sources_not_found": [
+      "TV2/Axelgaard",
+      "Feltet.dk"
+    ],
+    "stage": 2,
+    "stage_notes": [
+      "Early breakaway with strong UAE team control behind",
+      "Colle Maddelena functioned as primary selector despite being short and regular",
+      "UAE pace ejected multiple GC contenders before summit finish",
+      "Final climb relatively selective; only 23 riders within 2 minutes of winner in 2017",
+      "Tactics may differ from 2017 visit to same region due to stage profile changes",
+      "Multiple late attacks swept up on San Vito climb before finish"
+    ],
+    "stage_profile": {
+      "distance": "100km",
+      "finish_characteristics": "Gentle start, flat cobbled middle section, steep launchpad section, flattens before line",
+      "finish_distance": "11.8km",
+      "finish_gradient": "6.2% average (steeper sections due to cobbled middle section)",
+      "finish_type": "Alpine summit finish",
+      "terrain": "Canavese plains (cornfields) transitioning to Alpine foothills with gentle climbing"
+    },
+    "summary": "Jhonathan Narvaez claimed Stage 2 with a sprint victory over Pogačar and Schachmann, taking the maglia rosa for Ineos after impressive team performance. UAE's pace on Colle Maddelena damaged GC contenders like Arensman and Foss, though Pogačar secured 14 seconds on rivals despite losing the stage sprint.",
+    "weather": "Mild conditions"
+  },
+  "gathered_at": "2026-05-08T22:32:41.576914"
+}
