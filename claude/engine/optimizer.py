@@ -32,14 +32,14 @@ FINISH_POINTS = [
 
 DEPTH_BONUS = {
     0:       0,
-    1:       0,
-    2:  20_000,
-    3:  50_000,
-    4:  90_000,
-    5: 140_000,
-    6: 200_000,
-    7: 270_000,
-    8: 350_000,
+    1:   4_000,
+    2:   8_000,
+    3:  15_000,
+    4:  35_000,
+    5:  65_000,
+    6: 120_000,
+    7: 220_000,
+    8: 400_000,
 }
 
 # 0-indexed finish position → bonus per fantasy rider from same real-world team
