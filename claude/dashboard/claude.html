@@ -215,7 +215,7 @@ input[type=range]::-webkit-slider-thumb {
 
 /* ── Intelligence ───────────────────────────────────────────────── */
 #intel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.intel-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; }
+.intel-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; }
 .intel-panel-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-2); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
 
 /* Odds table */
@@ -223,7 +223,7 @@ input[type=range]::-webkit-slider-thumb {
 .parse-ok  { color: var(--color-success); }
 .parse-err { color: var(--color-warning); }
 #odds-table-wrap { overflow-x: auto; max-height: 200px; overflow-y: auto; }
-#intel-display { font-size: 12px; max-height: 200px; overflow-y: auto; }
+#intel-display { font-size: 12px; flex: 1; overflow-y: auto; }
 /* Paste zones row */
 .odds-paste-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 6px; }
 .odds-paste-zone {
@@ -580,7 +580,6 @@ input[type=range]::-webkit-slider-thumb {
           <span>Intelligence</span>
           <span class="panel-header-ts" id="intel-header-ts">Stage — · Not yet gathered</span>
           <button id="gather-intel-btn" class="btn btn-sm btn-ghost" onclick="gatherIntel()"><i class="ti ti-antenna"></i> Gather</button>
-          <button id="gather-ingemann-btn" class="btn btn-sm btn-ghost" onclick="gatherIngemann()" style="margin-left:4px;"><i class="ti ti-user-star"></i> Ingemann</button>
         </div>
         <div id="intel-display">
           <div class="intel-empty">No intel gathered yet — click Gather</div>
@@ -611,6 +610,11 @@ input[type=range]::-webkit-slider-thumb {
             <i class="ti ti-player-play"></i> Run optimizer
           </button>
         </div>
+      </div>
+      <div id="ingemann-btn-row" style="display:flex;width:300px;margin-bottom:6px;padding:0 2px;">
+        <button id="gather-ingemann-btn" class="btn btn-sm btn-ghost" onclick="gatherIngemann()" style="width:100%;justify-content:center;">
+          <i class="ti ti-user-star"></i> Fetch Ingemann
+        </button>
       </div>
       <div id="optimizer-output" class="placeholder">
         Load data and run optimizer to generate candidate teams
@@ -857,16 +861,17 @@ function renderStageResults(data) {
     <table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;">
       <thead>
         <tr style="background:var(--color-surface-2);border-bottom:1px solid var(--color-border);">
-          <th style="padding:5px 10px;text-align:left;font-size:11px;color:var(--color-text-2);font-weight:500;width:22%;">Rider</th>
-          <th style="padding:5px 8px;text-align:center;font-size:11px;color:var(--color-text-2);font-weight:500;width:8%;">Finish</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Stage</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Sprint</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Jersey</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">GC</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Team</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">Value</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:12%;">Cap.</th>
+          <th style="padding:5px 10px;text-align:left;font-size:11px;color:var(--color-text-2);font-weight:500;width:20%;">Rider</th>
+          <th style="padding:5px 8px;text-align:center;font-size:11px;color:var(--color-text-2);font-weight:500;width:7%;">Finish</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">Stage</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">Sprint</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">Jersey</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">GC</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">Team</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:8%;">Value</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Cap.</th>
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:8%;">Total</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:12%;">New Rider Value</th>
         </tr>
       </thead>
       <tbody>
@@ -897,6 +902,10 @@ function renderStageResults(data) {
                        color:${r.total>0?'var(--color-success)':r.total<0?'var(--color-danger)':'var(--color-text-2)'};">
               ${fmt(r.total)}
             </td>
+            <td style="padding:5px 8px;text-align:right;
+                       color:${r.stage_pts>0?'var(--color-success)':r.stage_pts<0?'var(--color-danger)':'var(--color-text-3)'};">
+              ${fmt(r.stage_pts)}
+            </td>
           </tr>`;
         }).join('')}
       </tbody>
@@ -906,7 +915,7 @@ function renderStageResults(data) {
                 border-top:1px solid var(--color-border);
                 font-size:11px;color:var(--color-text-2);
                 display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
-      <span>Depth bonus (${data.riders_in_top15}/8 in top 15):
+      <span>Depth bonus (${data.riders_in_top15 == null ? '?' : data.riders_in_top15}/8 in top 15):
             <strong>+${(data.depth_bonus/1000).toFixed(0)}k</strong></span>
       ${data.captain_bonus ?
         `<span>Captain bonus: <strong style="color:var(--color-warning);">+${(data.captain_bonus/1000).toFixed(0)}k</strong></span>` : ''}

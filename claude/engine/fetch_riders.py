@@ -574,6 +574,19 @@ def fetch_stage_results(stage: int) -> dict:
     rider_results.sort(key=lambda r: r["total"], reverse=True)
     scored = stage_total != 0 or any(r["stage_pts"] != 0 for r in rider_results)
 
+    # Reverse-map specialBonus → riders-in-top-15 count via the authoritative
+    # Holdet curve (shared/rules/game_strategy.md). The API doesn't expose
+    # per-rider finish positions on this endpoint, but the curve values are
+    # unique so the bonus → count mapping is exact.
+    DEPTH_BONUS_CURVE = {
+        0: 0, 1: 4_000, 2: 8_000, 3: 15_000, 4: 35_000,
+        5: 65_000, 6: 120_000, 7: 220_000, 8: 400_000,
+    }
+    riders_in_top15 = next(
+        (n for n, v in DEPTH_BONUS_CURVE.items() if v == special_bonus),
+        None,  # bonus value off-curve → unknown
+    )
+
     result = {
         "rider_results":   rider_results,
         "bank_balance":    bank_balance,
@@ -582,7 +595,7 @@ def fetch_stage_results(stage: int) -> dict:
         "captain_name":    captain_name,
         "depth_bonus":     special_bonus,
         "captain_bonus":   captain_bonus,
-        "riders_in_top15": 0,
+        "riders_in_top15": riders_in_top15,
         "scored":          scored,
     }
 
