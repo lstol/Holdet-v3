@@ -161,62 +161,68 @@ async def fetch_feltet_stage_analysis(stage: int) -> str:
         return content.strip() or f'[Feltet: Could not extract content from {article_url}]'
 
 
-async def fetch_feltet_ingemann_team(stage: int) -> str:
-    """
-    Log in to Feltet.dk and fetch Ingemann's Holdet team recommendation.
-    URL pattern: feltet.dk/plus/girospillet-se-ekspertens-hold-til-N.-etape/[id]
-    """
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context()
-        page = await context.new_page()
-
-        await _feltet_login(page)
-
-        pattern = re.compile(rf'girospillet.*hold.*{stage}[.-].*etape', re.IGNORECASE)
-        article_url = None
-
-        search_pages = [
-            'https://www.feltet.dk/plus/',
-            'https://www.feltet.dk/landevej/',
-            'https://www.feltet.dk/',
-            f'https://www.feltet.dk/?s=girospillet+hold+{stage}.+etape',
-        ]
-        for search_url in search_pages:
-            await page.goto(search_url, wait_until='load', timeout=30000)
-            links = await page.query_selector_all('a[href]')
-            for link in links:
-                href = await link.get_attribute('href')
-                if href and pattern.search(href):
-                    article_url = href if href.startswith('http') else f'https://www.feltet.dk{href}'
-                    break
-            if article_url:
-                break
-
-        if not article_url:
-            await browser.close()
-            return f'[Feltet Ingemann: Stage {stage} team not found]'
-
-        await page.goto(article_url, wait_until='load', timeout=30000)
-
-        # Log full body text so we can see page structure in server log
-        body_text = await page.inner_text('body')
-        print(f"[fetch_feltet_ingemann_team] article_url={article_url}")
-        print(f"[fetch_feltet_ingemann_team] BODY TEXT ({len(body_text)} chars):\n{body_text[:3000]}")
-
-        content = ''
-        for selector in ['article', '.article-body', '.entry-content', '.post-content',
-                         '.article-content', '.content-body', '.content', 'main', 'body']:
-            el = await page.query_selector(selector)
-            if el:
-                text = await el.inner_text()
-                if text and len(text.strip()) > 50:
-                    content = text
-                    print(f"[fetch_feltet_ingemann_team] matched selector: {selector!r} ({len(text)} chars)")
-                    break
-
-        await browser.close()
-        return content.strip() or f'[Feltet Ingemann: Could not extract content from {article_url}]'
+# 2026-05-10: Ingemann scraper deprecated — Feltet stopped publishing the
+# girospillet column for Giro 2026 (S16-2 diagnosis: Stage 1 article exists,
+# Stages 2+ never published; not a scraper bug, an upstream content gap).
+# Replaced by /paste-expert-team in server.py (source-agnostic image input).
+# Keep dead code one commit cycle in case Feltet resumes; full deletion in
+# S17 backlog if not.
+# async def fetch_feltet_ingemann_team(stage: int) -> str:
+#     """
+#     Log in to Feltet.dk and fetch Ingemann's Holdet team recommendation.
+#     URL pattern: feltet.dk/plus/girospillet-se-ekspertens-hold-til-N.-etape/[id]
+#     """
+#     async with async_playwright() as p:
+#         browser = await p.chromium.launch(headless=True)
+#         context = await browser.new_context()
+#         page = await context.new_page()
+#
+#         await _feltet_login(page)
+#
+#         pattern = re.compile(rf'girospillet.*hold.*{stage}[.-].*etape', re.IGNORECASE)
+#         article_url = None
+#
+#         search_pages = [
+#             'https://www.feltet.dk/plus/',
+#             'https://www.feltet.dk/landevej/',
+#             'https://www.feltet.dk/',
+#             f'https://www.feltet.dk/?s=girospillet+hold+{stage}.+etape',
+#         ]
+#         for search_url in search_pages:
+#             await page.goto(search_url, wait_until='load', timeout=30000)
+#             links = await page.query_selector_all('a[href]')
+#             for link in links:
+#                 href = await link.get_attribute('href')
+#                 if href and pattern.search(href):
+#                     article_url = href if href.startswith('http') else f'https://www.feltet.dk{href}'
+#                     break
+#             if article_url:
+#                 break
+#
+#         if not article_url:
+#             await browser.close()
+#             return f'[Feltet Ingemann: Stage {stage} team not found]'
+#
+#         await page.goto(article_url, wait_until='load', timeout=30000)
+#
+#         # Log full body text so we can see page structure in server log
+#         body_text = await page.inner_text('body')
+#         print(f"[fetch_feltet_ingemann_team] article_url={article_url}")
+#         print(f"[fetch_feltet_ingemann_team] BODY TEXT ({len(body_text)} chars):\n{body_text[:3000]}")
+#
+#         content = ''
+#         for selector in ['article', '.article-body', '.entry-content', '.post-content',
+#                          '.article-content', '.content-body', '.content', 'main', 'body']:
+#             el = await page.query_selector(selector)
+#             if el:
+#                 text = await el.inner_text()
+#                 if text and len(text.strip()) > 50:
+#                     content = text
+#                     print(f"[fetch_feltet_ingemann_team] matched selector: {selector!r} ({len(text)} chars)")
+#                     break
+#
+#         await browser.close()
+#         return content.strip() or f'[Feltet Ingemann: Could not extract content from {article_url}]'
 
 
 async def fetch_inner_ring_preview(stage: int) -> str:
@@ -281,8 +287,9 @@ def scrape_all_intel(stage: int) -> dict:
     return asyncio.run(_run())
 
 
-def scrape_ingemann_team(stage: int) -> str:
-    """Scrapes Ingemann's Holdet team recommendation from Feltet."""
-    async def _run():
-        return await fetch_feltet_ingemann_team(stage)
-    return asyncio.run(_run())
+# 2026-05-10: deprecated alongside fetch_feltet_ingemann_team above.
+# def scrape_ingemann_team(stage: int) -> str:
+#     """Scrapes Ingemann's Holdet team recommendation from Feltet."""
+#     async def _run():
+#         return await fetch_feltet_ingemann_team(stage)
+#     return asyncio.run(_run())

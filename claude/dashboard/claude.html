@@ -611,10 +611,11 @@ input[type=range]::-webkit-slider-thumb {
           </button>
         </div>
       </div>
-      <div id="ingemann-btn-row" style="display:flex;width:300px;margin-bottom:6px;padding:0 2px;">
-        <button id="gather-ingemann-btn" class="btn btn-sm btn-ghost" onclick="gatherIngemann()" style="width:100%;justify-content:center;">
-          <i class="ti ti-user-star"></i> Fetch Ingemann
-        </button>
+      <div id="ingemann-btn-row" style="display:flex;flex-direction:column;width:300px;margin-bottom:6px;padding:0 2px;">
+        <div class="odds-paste-zone" id="ingemann-paste-zone" tabindex="0" style="width:100%;padding:9px 4px;">
+          📷 Paste expert team<br>click → Cmd+V
+        </div>
+        <div id="ingemann-paste-status" style="font-size:10px;min-height:14px;margin-top:4px;color:var(--color-text-3);"></div>
       </div>
       <div id="optimizer-output" class="placeholder">
         Load data and run optimizer to generate candidate teams
@@ -868,9 +869,9 @@ function renderStageResults(data) {
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Jersey</th>
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">GC</th>
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Team</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">Value</th>
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:12%;">Cap.</th>
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:8%;">Total</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">Value</th>
         </tr>
       </thead>
       <tbody>
@@ -893,7 +894,6 @@ function renderStageResults(data) {
             <td style="padding:5px 8px;text-align:right;">${fmt(r.jersey_bonus)}</td>
             <td style="padding:5px 8px;text-align:right;">${fmt(r.gc_bonus)}</td>
             <td style="padding:5px 8px;text-align:right;">${fmt(r.team_bonus)}</td>
-            <td style="padding:5px 8px;text-align:right;color:var(--color-text-2);">${priceStr}</td>
             <td style="padding:5px 8px;text-align:right;color:var(--color-warning);">
               ${r.captain_bonus ? fmt(r.captain_bonus) : '—'}
             </td>
@@ -901,6 +901,7 @@ function renderStageResults(data) {
                        color:${r.total>0?'var(--color-success)':r.total<0?'var(--color-danger)':'var(--color-text-2)'};">
               ${fmt(r.total)}
             </td>
+            <td style="padding:5px 8px;text-align:right;font-weight:700;color:var(--color-text);">${priceStr}</td>
           </tr>`;
         }).join('')}
       </tbody>
@@ -922,15 +923,18 @@ function renderStageResults(data) {
 }
 
 /* ── Ingemann ─────────────────────────────────────────────────────────── */
-async function gatherIngemann() {
-  const btn = $('gather-ingemann-btn');
-  btn.textContent = 'Fetching…';
-  btn.disabled = true;
+// 2026-05-10: Fetch Ingemann scraper deprecated (S16-2 diagnosis: Feltet
+// stopped publishing the Girospillet column for Giro 2026). Replaced by
+// paste-zone → /paste-expert-team endpoint, which is source-agnostic.
+async function pasteExpertTeam(base64, mediaType) {
+  const status = $('ingemann-paste-status');
+  status.style.color = 'var(--color-text-3)';
+  status.textContent = 'Reading expert team from screenshot…';
   try {
-    const r1 = await fetch(`${SERVER}/gather-ingemann`, {
+    const r1 = await fetch(`${SERVER}/paste-expert-team`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({stage: targetStage}),
+      body: JSON.stringify({stage: targetStage, image: base64, media_type: mediaType}),
     });
     const team = await r1.json();
     if (team.status === 'error') throw new Error(team.message);
@@ -945,10 +949,18 @@ async function gatherIngemann() {
 
     window.INGEMANN_DATA = scored;
     if (window.OPTIMIZER_DATA) renderOptimizerOutput(window.OPTIMIZER_DATA);
-    btn.textContent = '✓ Ingemann loaded';
+
+    const warns = team.warnings || [];
+    if (warns.length === 0) {
+      status.style.color = 'var(--color-success)';
+      status.textContent = `✓ ${team.riders.length} riders · captain ${team.captain}`;
+    } else {
+      status.style.color = 'var(--color-warning)';
+      status.textContent = `⚠ Loaded with ${warns.length} unmatched: ${warns.join(' · ')}`;
+    }
   } catch(e) {
-    btn.textContent = `Error: ${e.message.slice(0, 30)}`;
-    btn.disabled = false;
+    status.style.color = 'var(--color-warning)';
+    status.textContent = 'Error: ' + e.message;
   }
 }
 
@@ -1322,6 +1334,33 @@ document.addEventListener('DOMContentLoaded', function() {
       reader.readAsDataURL(file);
     });
   });
+
+  // Ingemann / expert-team paste zone (replaces former Fetch Ingemann button)
+  const ingZone = document.getElementById('ingemann-paste-zone');
+  if (ingZone) {
+    ingZone.addEventListener('click', function() {
+      this.focus();
+      this.style.borderColor = 'var(--color-primary)';
+    });
+    ingZone.addEventListener('blur', function() { this.style.borderColor = ''; });
+    ingZone.addEventListener('paste', function(e) {
+      const items = e.clipboardData.items;
+      let imageItem = null;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) { imageItem = items[i]; break; }
+      }
+      if (!imageItem) return;
+      e.preventDefault();
+      const file      = imageItem.getAsFile();
+      const mediaType = imageItem.type;
+      const reader    = new FileReader();
+      reader.onload   = function(ev) {
+        const base64 = ev.target.result.split(',')[1];
+        pasteExpertTeam(base64, mediaType);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
 });
 
 function renderStars(n) {

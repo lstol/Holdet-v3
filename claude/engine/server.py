@@ -83,6 +83,36 @@ def call_with_retry(fn, max_retries=3):
             time.sleep(wait)
 
 
+def match_rider_name(query: str, roster: list):
+    """Match a free-form rider name (full, abbreviated 'J. Milan', or last-name only)
+    against a roster of {'name': ...} dicts. Returns the matched rider dict or None.
+
+    Resolution order: exact (case-insensitive) → initial+lastname → lastname-only.
+    """
+    q = query.strip()
+    if not q:
+        return None
+    exact = next((r for r in roster if r['name'].lower() == q.lower()), None)
+    if exact:
+        return exact
+    parts = q.split()
+    if len(parts) >= 2 and len(parts[0]) <= 3 and parts[0].endswith('.'):
+        initial  = parts[0][0].lower()
+        lastname = ' '.join(parts[1:]).lower()
+        candidates = [
+            r for r in roster
+            if r['name'].lower().endswith(lastname)
+            and r['name'].split()[0][0].lower() == initial
+        ]
+        if len(candidates) == 1:
+            return candidates[0]
+    lastname_q = q.lower()
+    candidates = [r for r in roster if r['name'].lower().split()[-1] == lastname_q]
+    if len(candidates) == 1:
+        return candidates[0]
+    return None
+
+
 @app.after_request
 def cors(r):
     r.headers['Access-Control-Allow-Origin'] = '*'
@@ -890,6 +920,143 @@ Rules:
 
 # ── Ingemann benchmark ───────────────────────────────────────────────────────
 
+@app.route('/paste-expert-team', methods=['POST', 'OPTIONS'])
+def paste_expert_team():
+    """Source-agnostic expert team input via vision model.
+
+    Replaces the Feltet scraper, which broke when Feltet stopped publishing
+    the Girospillet column for Giro 2026 (S16-2 diagnosis). Accepts a pasted
+    screenshot of any expert team view (Holdet's "view team", a tweet, etc.),
+    extracts 8 riders + captain via Haiku, name-matches against the active
+    roster, and writes the same stage_N_ingemann.json schema downstream
+    /score-ingemann already consumes.
+    """
+    if request.method == 'OPTIONS':
+        return '', 204
+    if not HAS_ANTHROPIC:
+        return jsonify({'status': 'error', 'message': 'anthropic package not installed'}), 500
+
+    body       = request.json or {}
+    stage      = body.get('stage', '?')
+    image_data = body.get('image')
+    media_type = body.get('media_type', 'image/png')
+    if not image_data:
+        return jsonify({'status': 'error', 'message': 'No image provided'}), 400
+
+    raw = ''
+    try:
+        prompt = (
+            "You are extracting a fantasy cycling team from a screenshot.\n\n"
+            "Return ONLY valid JSON in this exact format:\n"
+            '{\n'
+            '  "riders": [\n'
+            '    {"name": "<rider name as shown>", "price_kr": <integer kroner>},\n'
+            '    ... 8 entries total\n'
+            '  ],\n'
+            '  "captain": "<name of the rider with the gold star icon>"\n'
+            '}\n\n'
+            "Rules:\n"
+            "- Extract exactly 8 riders.\n"
+            "- Names: copy them as shown in the image. Do not expand initials.\n"
+            "  (e.g. \"J. Milan\" stays \"J. Milan\", \"Paul Magnier\" stays \"Paul Magnier\".)\n"
+            "- Prices: convert European format like \"9.575.000\" to integer 9575000.\n"
+            "  Ignore any price-change deltas like \"+575.000\" — those are not the price.\n"
+            "- Captain: the rider with a gold/yellow STAR icon next to their price.\n"
+            "  The green \"+\" square icon is NOT the captain marker — it appears\n"
+            "  next to multiple riders.\n"
+            "- Ignore non-rider visual elements like sponsor logos (e.g. MERIDA).\n"
+            "- If you cannot identify exactly 8 riders or cannot identify a captain,\n"
+            '  return {"error": "<reason>"} instead.\n'
+            "- No prose, no markdown fences, no explanation. JSON only."
+        )
+        client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+        message = call_with_retry(lambda: client.messages.create(
+            model='claude-haiku-4-5-20251001',
+            max_tokens=2000,
+            messages=[{'role': 'user', 'content': [
+                {'type': 'image', 'source': {'type': 'base64', 'media_type': media_type, 'data': image_data}},
+                {'type': 'text',  'text': prompt},
+            ]}],
+        ))
+        raw = message.content[0].text.strip()
+        _log(f"paste-expert-team stage={stage} raw={raw[:400]}")
+        raw = re.sub(r'^[\s]*```[a-z]*\s*', '', raw)
+        raw = re.sub(r'\s*```[\s]*$', '', raw).strip()
+        m = re.search(r'\{.*\}', raw, re.DOTALL)
+        if not m:
+            return jsonify({'status': 'error',
+                            'message': 'No JSON object in vision response — try a cleaner screenshot.',
+                            'raw': raw}), 500
+        parsed = json.loads(m.group())
+
+        if 'error' in parsed:
+            return jsonify({'status': 'error',
+                            'message': f"Vision model could not extract team: {parsed['error']}",
+                            'raw': raw}), 400
+
+        rider_objs = parsed.get('riders', [])
+        captain_raw = (parsed.get('captain') or '').strip()
+        if len(rider_objs) != 8:
+            return jsonify({'status': 'error',
+                            'message': f'Expected 8 riders, got {len(rider_objs)}. Try a cleaner screenshot.',
+                            'raw': raw}), 400
+        if not captain_raw:
+            return jsonify({'status': 'error',
+                            'message': 'No captain identified — make sure the gold star icon is visible.',
+                            'raw': raw}), 400
+
+        # Name-match against active roster, collect warnings for unresolved names.
+        rider_data = json.load(open(RIDERS_FILE))
+        active     = [r for r in rider_data['riders'] if not r.get('isOut') and r.get('status') != 'dns']
+
+        resolved_riders = []   # what we write to the snapshot (canonical names if matched)
+        display_riders  = []   # what we return to the UI (with prices)
+        warnings = []
+        for ro in rider_objs:
+            raw_name = (ro.get('name') or '').strip()
+            price    = ro.get('price_kr', 0)
+            match = match_rider_name(raw_name, active)
+            if match:
+                resolved_riders.append(match['name'])
+                display_riders.append({'name': match['name'], 'raw_name': raw_name, 'price_kr': price})
+            else:
+                resolved_riders.append(raw_name)
+                display_riders.append({'name': raw_name, 'raw_name': raw_name, 'price_kr': price})
+                warnings.append(f"Unmatched rider: {raw_name!r}")
+
+        captain_match = match_rider_name(captain_raw, active)
+        captain_resolved = captain_match['name'] if captain_match else captain_raw
+        if not captain_match:
+            warnings.append(f"Unmatched captain: {captain_raw!r}")
+
+        snapshot = {
+            'riders':       resolved_riders,
+            'captain':      captain_resolved,
+            'notes':        'Pasted expert team (image input)',
+            'stage':        stage,
+            'gathered_at':  _dt.now().isoformat(),
+        }
+        path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_ingemann.json')
+        with open(path, 'w') as f:
+            json.dump(snapshot, f, indent=2)
+        _log(f"paste-expert-team stage={stage} matched={8 - len(warnings)}/8 captain_matched={bool(captain_match)}")
+
+        return jsonify({
+            'status':   'ok',
+            'riders':   display_riders,
+            'captain':  captain_resolved,
+            'captain_raw': captain_raw,
+            'warnings': warnings,
+            'stage':    stage,
+        })
+    except json.JSONDecodeError as e:
+        _log(f"paste-expert-team JSON error: {e}")
+        return jsonify({'status': 'error', 'message': f'JSON parse error: {e}', 'raw': raw}), 500
+    except Exception as e:
+        _log(f"paste-expert-team error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 @app.route('/gather-ingemann', methods=['POST', 'OPTIONS'])
 def gather_ingemann():
     if request.method == 'OPTIONS':
@@ -963,36 +1130,17 @@ def score_ingemann():
         stage_config = get_stage_config(stage, scoring)
         probs = build_probabilities(active, odds, intel, {}, stage_config=stage_config, scoring=scoring)
 
-        def match_rider_name(query: str, roster: list) -> dict | None:
-            q = query.strip()
-            # 1. Exact match (case-insensitive)
-            exact = next((r for r in roster if r['name'].lower() == q.lower()), None)
-            if exact:
-                return exact
-            # 2. Initial+lastname: "J. Milan" → first token is "X." initial, rest is last name
-            parts = q.split()
-            if len(parts) >= 2 and len(parts[0]) <= 3 and parts[0].endswith('.'):
-                initial = parts[0][0].lower()
-                lastname = ' '.join(parts[1:]).lower()
-                candidates = [
-                    r for r in roster
-                    if r['name'].lower().endswith(lastname)
-                    and r['name'].split()[0][0].lower() == initial
-                ]
-                if len(candidates) == 1:
-                    return candidates[0]
-            # 3. Lastname-only fallback
-            lastname_q = q.lower()
-            candidates = [r for r in roster if r['name'].lower().split()[-1] == lastname_q]
-            if len(candidates) == 1:
-                return candidates[0]
-            return None
-
         team = []
         for name in rider_names:
             match = match_rider_name(name, active)
             if match:
                 team.append(match)
+
+        # Resolve captain to canonical roster name so simulate_stage's exact-match
+        # at optimizer.py:1074 finds it (image paste may give "A. Vendrame").
+        captain_match = match_rider_name(captain_name, active) if captain_name else None
+        if captain_match:
+            captain_name = captain_match['name']
 
         if len(team) != 8:
             return jsonify({
