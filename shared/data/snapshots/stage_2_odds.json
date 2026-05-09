@@ -1,28 +1,26 @@
 {
   "odds": [
     {
+      "name": "Corbin Strong",
+      "win_pct": 12.8,
+      "top3_pct": 28.6,
+      "top10_pct": 62.5
+    },
+    {
       "name": "Ant\u00f3nio Morgado",
       "win_pct": 12.5,
       "top3_pct": 33.3,
-      "top10_pct": 64.5
+      "top10_pct": 62.5
     },
     {
-      "name": "Corbin Strong",
-      "win_pct": 11.1,
-      "top3_pct": 28.6,
-      "top10_pct": 66.7
+      "name": "Antonio Morgado",
+      "win_pct": 10.8
     },
     {
       "name": "Andrea Vendrame",
-      "win_pct": 7.7,
+      "win_pct": 7.9,
       "top3_pct": 20.0,
       "top10_pct": 50.0
-    },
-    {
-      "name": "Giulio Ciccone",
-      "win_pct": 6.7,
-      "top3_pct": 16.7,
-      "top10_pct": 51.3
     },
     {
       "name": "Jhonatan Narv\u00e1ez",
@@ -31,13 +29,30 @@
       "top10_pct": 47.6
     },
     {
-      "name": "Jan Christen",
-      "win_pct": 5.9,
-      "top10_pct": 55.6
+      "name": "Tobias Lund Andresen",
+      "top3_pct": 16.7,
+      "win_pct": 6.0
     },
     {
       "name": "Tobias Lund Andersen",
-      "win_pct": 5.9
+      "win_pct": 5.9,
+      "top10_pct": 44.4
+    },
+    {
+      "name": "Giulio Ciccone",
+      "win_pct": 5.8,
+      "top3_pct": 16.7,
+      "top10_pct": 51.3
+    },
+    {
+      "name": "Filippo Ganna",
+      "win_pct": 5.6,
+      "top3_pct": 14.3,
+      "top10_pct": 40.0
+    },
+    {
+      "name": "Jhonatan Narvaez",
+      "win_pct": 5.4
     },
     {
       "name": "Jonas Vingegaard",
@@ -46,28 +61,19 @@
       "top10_pct": 51.3
     },
     {
+      "name": "Jan Christen",
+      "win_pct": 5.2,
+      "top10_pct": 54.1
+    },
+    {
+      "name": "Jonas Vingegaard Hansen",
+      "win_pct": 5.2
+    },
+    {
       "name": "Christian Scaroni",
-      "win_pct": 4.8,
+      "win_pct": 4.6,
       "top3_pct": 12.5,
       "top10_pct": 40.0
-    },
-    {
-      "name": "Filippo Ganna",
-      "win_pct": 4.3,
-      "top3_pct": 14.3,
-      "top10_pct": 40.0
-    },
-    {
-      "name": "Giulio Pellizzari",
-      "win_pct": 4.3,
-      "top3_pct": 12.5,
-      "top10_pct": 51.3
-    },
-    {
-      "name": "Paul Magnier",
-      "win_pct": 3.8,
-      "top3_pct": 11.1,
-      "top10_pct": 36.4
     },
     {
       "name": "Lennert Van Eetvelt",
@@ -76,22 +82,44 @@
       "top10_pct": 40.0
     },
     {
-      "name": "Ben Turner",
-      "win_pct": 2.9,
+      "name": "Edoardo Zambanini",
+      "win_pct": 3.4,
       "top3_pct": 10.0,
       "top10_pct": 36.4
     },
     {
-      "name": "Edoardo Zambanini",
-      "win_pct": 2.9,
+      "name": "Paul Magnier",
+      "win_pct": 3.1,
+      "top3_pct": 11.1,
+      "top10_pct": 36.4
+    },
+    {
+      "name": "Ben Turner",
+      "win_pct": 3.1,
       "top3_pct": 10.0,
       "top10_pct": 36.4
+    },
+    {
+      "name": "Lennert Van Etvelt",
+      "win_pct": 2.9
     },
     {
       "name": "Orluis Aular",
-      "win_pct": 2.9,
+      "win_pct": 2.5,
       "top3_pct": 11.1,
       "top10_pct": 36.4
+    },
+    {
+      "name": "Guillermo Thomas Silva",
+      "win_pct": 2.5,
+      "top3_pct": 9.1,
+      "top10_pct": 28.6
+    },
+    {
+      "name": "Giulio Pellizzari",
+      "win_pct": 2.4,
+      "top3_pct": 12.5,
+      "top10_pct": 51.3
     },
     {
       "name": "Aleksandr Vlasov",
@@ -100,15 +128,10 @@
       "top10_pct": 33.3
     },
     {
-      "name": "Guillermo Thomas Silva",
-      "win_pct": 2.4,
-      "top3_pct": 9.1,
-      "top10_pct": 28.6
-    },
-    {
       "name": "Jasper Stuyven",
       "win_pct": 2.4,
-      "top3_pct": 9.1
+      "top3_pct": 9.1,
+      "top10_pct": 22.2
     },
     {
       "name": "Michael Valgren",
@@ -117,30 +140,35 @@
       "top10_pct": 36.4
     },
     {
-      "name": "Florian Stork",
-      "win_pct": 2.0,
-      "top3_pct": 7.7
+      "name": "Alexander Vlasov",
+      "win_pct": 2.4
     },
     {
       "name": "Kaden Groves",
-      "win_pct": 2.0,
-      "top3_pct": 7.7
+      "win_pct": 2.2,
+      "top3_pct": 7.7,
+      "top10_pct": 18.2
     },
     {
       "name": "Marc Soler",
+      "win_pct": 2.2,
+      "top3_pct": 7.7,
+      "top10_pct": 20.0
+    },
+    {
+      "name": "Florian Stork",
       "win_pct": 2.0,
-      "top3_pct": 7.7
+      "top3_pct": 7.7,
+      "top10_pct": 18.2
     },
     {
       "name": "Luk\u00e1\u0161 Kubi\u0161",
-      "win_pct": 1.5
+      "win_pct": 1.5,
+      "top3_pct": 5.9,
+      "top10_pct": 18.2
     },
     {
       "name": "Jan Christien",
-      "top3_pct": 16.7
-    },
-    {
-      "name": "Tobias Lund Andresen",
       "top3_pct": 16.7
     },
     {
@@ -149,25 +177,81 @@
     },
     {
       "name": "Egan Bernal",
-      "top10_pct": 36.4
+      "top10_pct": 36.4,
+      "top3_pct": 4.8
     },
     {
       "name": "Adam Yates",
-      "top10_pct": 30.8
+      "top10_pct": 30.8,
+      "top3_pct": 3.8
     },
     {
       "name": "Filippo Zana",
-      "top10_pct": 30.8
+      "top10_pct": 30.8,
+      "top3_pct": 4.8
     },
     {
       "name": "Javier Romo",
-      "top10_pct": 25.0
+      "top10_pct": 25.0,
+      "top3_pct": 4.8
     },
     {
       "name": "Simone Gualdi",
-      "top10_pct": 25.0
+      "top10_pct": 25.0,
+      "top3_pct": 4.8
+    },
+    {
+      "name": "Jan Christens",
+      "top3_pct": 16.7
+    },
+    {
+      "name": "Jonathan Milan",
+      "top3_pct": 4.8
+    },
+    {
+      "name": "Alberto Bettiol",
+      "top3_pct": 3.8,
+      "top10_pct": 22.2
+    },
+    {
+      "name": "Andreas Leknessund",
+      "top3_pct": 3.8,
+      "top10_pct": 15.4
+    },
+    {
+      "name": "Arnaud De Lie",
+      "top3_pct": 3.8
+    },
+    {
+      "name": "Davide Ballerini",
+      "top3_pct": 3.8,
+      "top10_pct": 15.4
+    },
+    {
+      "name": "Diego Ulissi",
+      "top3_pct": 3.8
+    },
+    {
+      "name": "Ethan Vernon",
+      "top3_pct": 3.8
+    },
+    {
+      "name": "Santiago Buitrago",
+      "top10_pct": 20.0
+    },
+    {
+      "name": "Jai Hindley",
+      "top10_pct": 16.7
+    },
+    {
+      "name": "Alessandro Pinarello",
+      "top10_pct": 14.3
+    },
+    {
+      "name": "Gianmarco Garofoli",
+      "top10_pct": 14.3
     }
   ],
   "stage": 2,
-  "gathered_at": "2026-05-08T23:00:37.838647"
+  "gathered_at": "2026-05-09T10:12:04.841221"
 }

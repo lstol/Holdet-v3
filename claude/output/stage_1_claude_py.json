@@ -3,142 +3,186 @@
     {
       "label": "Team-bonus concentration",
       "riders": [
-        "Tobias Lund Andresen",
-        "Amanuel Ghebreigzabhier",
-        "Dries Van Gestel",
-        "Dylan Groenewegen",
-        "Johannes Staune-Mittet",
-        "Paul Magnier",
-        "Hartthijs de Vries",
-        "Jonathan Milan"
-      ],
-      "total_price": 50000000,
-      "ev_estimate": 885087,
-      "ev_breakdown": {
-        "stage_finish": 495953,
-        "captain_bonus": 154915,
-        "team_bonus": 142160,
-        "depth_bonus": 92059,
-        "gc_bonus": 0
-      },
-      "cdf": {
-        "p25": 780000,
-        "p50": 905000,
-        "p75": 1000000,
-        "p90": 1070000
-      },
-      "forward_pressure": {
-        "n2": "medium",
-        "n3": "medium"
-      },
-      "rationale": "Team-bonus concentration: anchored by Jonathan Milan & Paul Magnier. Expected 4.0 riders in top-15, analytical finish EV 476k."
-    },
-    {
-      "label": "Team-bonus concentration",
-      "riders": [
-        "Oliver Naesen",
-        "Dylan Groenewegen",
-        "Tobias Lund Andresen",
-        "Ayco Bastiaens",
+        "Matteo Malucelli",
         "Jonathan Milan",
-        "Paul Magnier",
-        "Tomáš Kopecký",
-        "Amanuel Ghebreigzabhier"
-      ],
-      "total_price": 50000000,
-      "ev_estimate": 882844,
-      "ev_breakdown": {
-        "stage_finish": 494556,
-        "captain_bonus": 154876,
-        "team_bonus": 141350,
-        "depth_bonus": 92062,
-        "gc_bonus": 0
-      },
-      "cdf": {
-        "p25": 775000,
-        "p50": 905000,
-        "p75": 1000000,
-        "p90": 1065000
-      },
-      "forward_pressure": {
-        "n2": "medium",
-        "n3": "medium"
-      },
-      "rationale": "Team-bonus concentration: anchored by Jonathan Milan & Paul Magnier. Expected 4.0 riders in top-15, analytical finish EV 476k."
-    },
-    {
-      "label": "Team-bonus concentration",
-      "riders": [
-        "Tobias Lund Andresen",
-        "Hartthijs de Vries",
-        "Dylan Groenewegen",
+        "Luca Mozzato",
+        "Tord Gudmestad",
         "Amanuel Ghebreigzabhier",
-        "Oliver Naesen",
-        "Jonathan Milan",
-        "Fabio Van den Bossche",
+        "Tobias Lund Andresen",
+        "Matteo Moschetti",
         "Paul Magnier"
       ],
       "total_price": 50000000,
-      "ev_estimate": 882173,
+      "ev_estimate": 1699521,
       "ev_breakdown": {
-        "stage_finish": 494217,
-        "captain_bonus": 154768,
-        "team_bonus": 140454,
-        "depth_bonus": 92734,
-        "gc_bonus": 0
+        "stage_finish": 485998,
+        "sprint_points": 310028,
+        "jersey_bonus": 32265,
+        "gc_bonus": 235926,
+        "kom_points": 21149,
+        "captain_bonus": 399926,
+        "team_bonus": 114554,
+        "depth_bonus": 99673
       },
       "cdf": {
-        "p25": 770000,
-        "p50": 905000,
-        "p75": 1005000,
-        "p90": 1070000
+        "p25": 1429000,
+        "p50": 1736000,
+        "p75": 1982000,
+        "p90": 2170000
+      },
+      "forward_pressure": {
+        "n2": "low",
+        "n3": "medium"
+      },
+      "rationale": "Team-bonus concentration: anchored by Jonathan Milan & Paul Magnier. Expected 4.8 riders in top-15, analytical finish EV 560k."
+    },
+    {
+      "label": "Budget-depth sprint",
+      "riders": [
+        "Amanuel Ghebreigzabhier",
+        "Jonathan Milan",
+        "Matteo Malucelli",
+        "Matteo Moschetti",
+        "Paul Magnier",
+        "Fabio Van den Bossche",
+        "Madis Mihkels",
+        "Tord Gudmestad"
+      ],
+      "total_price": 44000000,
+      "ev_estimate": 1477897,
+      "ev_breakdown": {
+        "stage_finish": 394187,
+        "sprint_points": 258930,
+        "jersey_bonus": 28590,
+        "gc_bonus": 192462,
+        "kom_points": 18342,
+        "captain_bonus": 396800,
+        "team_bonus": 123906,
+        "depth_bonus": 64679
+      },
+      "cdf": {
+        "p25": 1195000,
+        "p50": 1509000,
+        "p75": 1750000,
+        "p90": 1953000
       },
       "forward_pressure": {
         "n2": "medium",
         "n3": "medium"
       },
-      "rationale": "Team-bonus concentration: anchored by Jonathan Milan & Paul Magnier. Expected 4.0 riders in top-15, analytical finish EV 476k."
+      "rationale": "Budget-depth sprint: anchored by Jonathan Milan & Paul Magnier. Expected 4.0 riders in top-15, analytical finish EV 465k."
     },
     {
       "label": "Team-bonus concentration",
       "riders": [
-        "Paul Magnier",
-        "Dylan Groenewegen",
+        "Matteo Malucelli",
+        "Luca Mozzato",
         "Jonathan Milan",
-        "Amanuel Ghebreigzabhier",
-        "Tobias Lund Andresen",
-        "Fabio Van den Bossche",
-        "Tomáš Kopecký",
-        "Rasmus Søjberg Pedersen"
+        "Erlend Blikra",
+        "Davide Ballerini",
+        "Paul Magnier",
+        "Madis Mihkels",
+        "Matteo Moschetti"
       ],
       "total_price": 50000000,
-      "ev_estimate": 881675,
+      "ev_estimate": 1477129,
       "ev_breakdown": {
-        "stage_finish": 494293,
-        "captain_bonus": 154493,
-        "team_bonus": 140586,
-        "depth_bonus": 92303,
-        "gc_bonus": 0
+        "stage_finish": 418029,
+        "sprint_points": 268371,
+        "jersey_bonus": 29155,
+        "gc_bonus": 200309,
+        "kom_points": 18643,
+        "captain_bonus": 397981,
+        "team_bonus": 66940,
+        "depth_bonus": 77700
       },
       "cdf": {
-        "p25": 775000,
-        "p50": 905000,
-        "p75": 1000000,
-        "p90": 1065000
+        "p25": 1204000,
+        "p50": 1500000,
+        "p75": 1745000,
+        "p90": 1948000
       },
       "forward_pressure": {
-        "n2": "medium",
+        "n2": "low",
         "n3": "medium"
       },
-      "rationale": "Team-bonus concentration: anchored by Jonathan Milan & Paul Magnier. Expected 4.0 riders in top-15, analytical finish EV 476k."
+      "rationale": "Team-bonus concentration: anchored by Jonathan Milan & Paul Magnier. Expected 5.0 riders in top-15, analytical finish EV 565k."
+    },
+    {
+      "label": "No-Milan upset",
+      "riders": [
+        "Dries Van Gestel",
+        "Matteo Malucelli",
+        "Matteo Moschetti",
+        "Paul Magnier",
+        "Dylan Groenewegen",
+        "Madis Mihkels",
+        "Luca Mozzato",
+        "Tobias Lund Andresen"
+      ],
+      "total_price": 50000000,
+      "ev_estimate": 1356352,
+      "ev_breakdown": {
+        "stage_finish": 431095,
+        "sprint_points": 237525,
+        "jersey_bonus": 17095,
+        "gc_bonus": 196943,
+        "kom_points": 13285,
+        "captain_bonus": 295594,
+        "team_bonus": 65935,
+        "depth_bonus": 98880
+      },
+      "cdf": {
+        "p25": 1069000,
+        "p50": 1334000,
+        "p75": 1636000,
+        "p90": 1895000
+      },
+      "forward_pressure": {
+        "n2": "low",
+        "n3": "medium"
+      },
+      "rationale": "No-Milan upset: anchored by Paul Magnier & Tobias Lund Andresen. Expected 5.0 riders in top-15, analytical finish EV 552k."
     }
   ],
   "captain": {
     "name": "Jonathan Milan",
-    "rationale": "Jonathan Milan has the highest stage-finish EV in the team (~154k captain bonus, 95% top-3 probability). Doubling positive outcomes captures maximum right-tail upside."
+    "rationale": "Jonathan Milan has the highest total EV in the team (~358k doubled as captain, 74% top-3). Includes sprint points, jersey, and GC bonus upside."
   },
   "tier_a": [
-    "Tobias Lund Andresen",
-    "Oliver Naesen"
-  ]
+    "Matteo Malucelli",
+    "Amanuel Ghebreigzabhier"
+  ],
+  "budget": 50000000,
+  "stage_config": {
+    "sprint_type": "A",
+    "sprint_points": [
+      50,
+      35,
+      25,
+      18,
+      14,
+      12,
+      10,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "n_intermediate_sprints": 1,
+    "climbs": [
+      {
+        "cat": 4,
+        "at_finish": false
+      },
+      {
+        "cat": 4,
+        "at_finish": false
+      }
+    ]
+  }
 }

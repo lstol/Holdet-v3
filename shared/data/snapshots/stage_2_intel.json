@@ -1,56 +1,44 @@
 {
   "stage": 2,
   "intel": {
-    "_gathered_at": "2026-05-08T23:17:41.004301",
-    "gathered_at": "2026-05-08T23:17:41.001068",
+    "_gathered_at": "2026-05-09T10:12:45.759959",
+    "gathered_at": "2026-05-09T10:12:45.756948",
     "key_signals": [
       {
         "direction": "up",
-        "rider": "Corbin Strong",
-        "signal": "Highest-ranked favourite by TV2 expert for stage with puncheur finish",
-        "strength": "strong"
-      },
-      {
-        "direction": "up",
         "rider": "Giulio Ciccone",
-        "signal": "Feltet.dk top pick with punch for finish climb and superior descending ability",
+        "signal": "Has the punch needed for the finish climb and excels on descents; expected Lidl-Trek retaliation after Milan's Stage 1 disappointment",
         "strength": "strong"
       },
       {
         "direction": "up",
         "rider": "Andrea Vendrame",
-        "signal": "Both sources favour him; proven on similar Italian terrain stages; excels on short punchy climbs",
+        "signal": "Proven master of short brutal finale climbs in Italy's Grand Tours (won similar stage at 2024 Giro); excellent on technical cobblestone sections",
         "strength": "strong"
+      },
+      {
+        "direction": "up",
+        "rider": "Corbin Strong",
+        "signal": "Top-rated by TV2/Axelgaard with 5-star designation for winning potential on this stage profile",
+        "strength": "moderate"
       },
       {
         "direction": "down",
         "rider": "Jonathan Milan",
-        "signal": "Underperformed on stage 1; TV2 rates him 1-star despite sprinter background; Feltet expects Lidl-Trek to pivot to Ciccone",
+        "signal": "Finished unplaced Stage 1 despite possession of maglia rosa; down-weighted by both sources after disappointing sprint execution",
         "strength": "strong"
-      },
-      {
-        "direction": "neutral",
-        "rider": "Antonio Morgado",
-        "signal": "TV2 4-star rating in competitive middle tier; credible puncheur option",
-        "strength": "moderate"
-      },
-      {
-        "direction": "neutral",
-        "rider": "Filippo Ganna",
-        "signal": "TV2 4-star but primarily time-trial specialist; difficult stage for his profile",
-        "strength": "moderate"
-      },
-      {
-        "direction": "neutral",
-        "rider": "Ben Turner",
-        "signal": "TV2 3-star; mentioned as part of strong supporting cast",
-        "strength": "weak"
       },
       {
         "direction": "down",
         "rider": "Tobias Lund",
-        "signal": "Feltet.dk questions if traditional sprinters can survive the final climb",
+        "signal": "Considered capable hard sprinter but uncertain if legs will survive tough finale after Stage 1 crash damage; better lead-out than result",
         "strength": "moderate"
+      },
+      {
+        "direction": "neutral",
+        "rider": "Paul Magnier",
+        "signal": "Stage 1 winner with maglia rosa but no explicit favoring for Stage 2's climbing demands; classified as 2-star by TV2",
+        "strength": "weak"
       }
     ],
     "source_ratings": [
@@ -311,13 +299,11 @@
       "TV2/Axelgaard",
       "Feltet.dk"
     ],
-    "sources_not_found": [
-      "Inner Ring"
-    ],
+    "sources_not_found": [],
     "stage": 2,
-    "stage_notes": "Long 221 km stage from Burgas to Veliko Tarnovo features two mid-stage Category 3 climbs, then a decisive 1km-from-finish climb on cobbles (800m at ~9%). Stage design heavily favours puncheurs and climbers with technical descending skills over pure sprinters; breakaway unlikely to hold given terrain and difficulty.",
-    "summary": "This demanding 221 km Bulgarian stage eliminates traditional sprinters in favour of climbing puncheurs, with Corbin Strong, Giulio Ciccone, and Andrea Vendrame emerging as primary contenders. Tactical advantage lies with teams capable of aggressive finale positioning rather than controlling the breakaway, particularly given the severe finishing climb on cobblestones.",
+    "stage_notes": "Long 221 km hilly stage ending with two categorized climbs followed by brutal 800m finishing cobblestone ramp at 9%. Stage will likely split field on final climb (10km to go), creating small groups for tactical finale; technical descent descent before finish may allow skilled descenders advantage.",
+    "summary": "A punchy, technical finish will favor climbers and puncheurs over pure sprinters, with Vendrame and Ciccone emerging as co-favorites despite TV2's preference for Corbin Strong. Milan's Stage 1 disappointment combined with heavy field-selection on the climbs makes this unpredictable despite previous Giro patterns favoring sprinters.",
     "weather": ""
   },
-  "gathered_at": "2026-05-08T23:17:41.031642"
+  "gathered_at": "2026-05-09T10:12:45.788250"
 }
