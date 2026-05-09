@@ -861,17 +861,16 @@ function renderStageResults(data) {
     <table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;">
       <thead>
         <tr style="background:var(--color-surface-2);border-bottom:1px solid var(--color-border);">
-          <th style="padding:5px 10px;text-align:left;font-size:11px;color:var(--color-text-2);font-weight:500;width:20%;">Rider</th>
-          <th style="padding:5px 8px;text-align:center;font-size:11px;color:var(--color-text-2);font-weight:500;width:7%;">Finish</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">Stage</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">Sprint</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">Jersey</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">GC</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">Team</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:8%;">Value</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Cap.</th>
+          <th style="padding:5px 10px;text-align:left;font-size:11px;color:var(--color-text-2);font-weight:500;width:22%;">Rider</th>
+          <th style="padding:5px 8px;text-align:center;font-size:11px;color:var(--color-text-2);font-weight:500;width:8%;">Finish</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Stage</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Sprint</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Jersey</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">GC</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Team</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">Value</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:12%;">Cap.</th>
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:8%;">Total</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:12%;">New Rider Value</th>
         </tr>
       </thead>
       <tbody>
@@ -901,10 +900,6 @@ function renderStageResults(data) {
             <td style="padding:5px 8px;text-align:right;font-weight:500;
                        color:${r.total>0?'var(--color-success)':r.total<0?'var(--color-danger)':'var(--color-text-2)'};">
               ${fmt(r.total)}
-            </td>
-            <td style="padding:5px 8px;text-align:right;
-                       color:${r.stage_pts>0?'var(--color-success)':r.stage_pts<0?'var(--color-danger)':'var(--color-text-3)'};">
-              ${fmt(r.stage_pts)}
             </td>
           </tr>`;
         }).join('')}
