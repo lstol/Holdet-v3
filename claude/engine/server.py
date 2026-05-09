@@ -383,15 +383,44 @@ def run_optimizer_py():
     intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
     intel_data = json.load(open(intel_path)) if os.path.exists(intel_path) else {}
 
+    # Bank balance still comes from the target-stage holdet snapshot.
     snapshot_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_holdet.json')
-    if os.path.exists(snapshot_path):
-        snapshot = json.load(open(snapshot_path))
-    else:
-        _log(f"run-optimizer-py: no holdet snapshot for stage {stage} — using empty current_team (zero transfer cost)")
-        snapshot = {}
+    snapshot = json.load(open(snapshot_path)) if os.path.exists(snapshot_path) else {}
     budget = int(snapshot.get('bank_balance', 50_000_000))
-    current_team_names = set(snapshot.get('team_composition', []))
-    current_team = [r for r in active_riders if r['name'] in current_team_names] or None
+
+    # Current team is the team that just raced — pull from previous stage's results.json.
+    # Holdet API spells names exactly as riders.json should, but historically a few rows
+    # diverge in case (e.g. "Dries van Gestel" vs "Dries Van Gestel"), so we fall back
+    # case-insensitively and surface anything that still doesn't match.
+    current_team = None
+    name_match_warnings = []
+    prev_stage = stage - 1
+    if prev_stage >= 1:
+        results_path = os.path.join(SNAPSHOT_DIR, f'stage_{prev_stage}_results.json')
+        if os.path.exists(results_path):
+            results_doc = json.load(open(results_path))
+            prev_names = [r.get('name', '') for r in results_doc.get('rider_results', []) if r.get('name')]
+
+            by_exact = {r['name']: r for r in active_riders}
+            by_lower = {r['name'].lower(): r for r in active_riders}
+
+            matched = []
+            for n in prev_names:
+                if n in by_exact:
+                    matched.append(by_exact[n])
+                elif n.lower() in by_lower:
+                    real = by_lower[n.lower()]
+                    matched.append(real)
+                    _log(f"run-optimizer stage={stage} case-insensitive match '{n}' → '{real['name']}'")
+                else:
+                    name_match_warnings.append(n)
+                    app.logger.warning(f"run-optimizer stage={stage}: '{n}' from stage_{prev_stage}_results.json not in active riders")
+                    _log(f"run-optimizer stage={stage} WARNING: '{n}' from stage_{prev_stage}_results.json not in active riders")
+
+            current_team = matched or None
+            _log(f"run-optimizer stage={stage} current_team from stage_{prev_stage}_results.json: {len(matched)}/{len(prev_names)} matched")
+        else:
+            _log(f"run-optimizer stage={stage}: stage_{prev_stage}_results.json missing — empty current_team (zero transfer cost)")
 
     app.logger.info(f"run-optimizer-py stage={stage} budget={budget:,}")
     _log(f"run-optimizer-py stage={stage} budget={budget:,}")
@@ -435,6 +464,12 @@ def run_optimizer_py():
             'captain': teams[0]['captain'] if teams else {},
             'budget':  budget,
             'stage':   stage,
+            'current_team': [
+                {'name': r['name'], 'team': r.get('team', ''),
+                 'price': r.get('price', 0), 'type': r.get('type', '')}
+                for r in (current_team or [])
+            ],
+            'name_match_warnings': name_match_warnings,
         }
 
         out_path = os.path.join(BASE_DIR, 'claude', 'output', f'stage_{stage}_claude_py.json')
