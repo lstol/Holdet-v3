@@ -906,6 +906,7 @@ function renderStageResults(data) {
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Jersey</th>
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">GC</th>
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Team</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">Value</th>
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:12%;">Cap.</th>
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:8%;">Total</th>
         </tr>
@@ -916,6 +917,9 @@ function renderStageResults(data) {
           const isDNF = r.finish === 'DNF';
           const finishColor = r.finish === '1st' ? 'var(--color-success)'
                             : isDNF ? 'var(--color-danger)' : 'var(--color-text)';
+          const riderInfo = (S.riders || []).find(x => x.name.toLowerCase() === r.name.toLowerCase());
+          const price = riderInfo ? (riderInfo.price || riderInfo.startPrice || 0) : 0;
+          const priceStr = price ? (price / 1e6).toFixed(1) + 'M' : '—';
           return `<tr style="border-top:1px solid rgba(43,48,88,.4);${isDNF?'opacity:.5;':''}">
             <td style="padding:5px 10px;font-weight:${isCap?600:400};overflow:hidden;
                        text-overflow:ellipsis;white-space:nowrap;">
@@ -927,6 +931,7 @@ function renderStageResults(data) {
             <td style="padding:5px 8px;text-align:right;">${fmt(r.jersey_bonus)}</td>
             <td style="padding:5px 8px;text-align:right;">${fmt(r.gc_bonus)}</td>
             <td style="padding:5px 8px;text-align:right;">${fmt(r.team_bonus)}</td>
+            <td style="padding:5px 8px;text-align:right;color:var(--color-text-2);">${priceStr}</td>
             <td style="padding:5px 8px;text-align:right;color:var(--color-warning);">
               ${r.captain_bonus ? fmt(r.captain_bonus) : '—'}
             </td>

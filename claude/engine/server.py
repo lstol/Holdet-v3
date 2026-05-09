@@ -385,10 +385,14 @@ def run_optimizer_py():
     intel_data = json.load(open(intel_path)) if os.path.exists(intel_path) else {}
 
     snapshot_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_holdet.json')
-    snapshot = json.load(open(snapshot_path)) if os.path.exists(snapshot_path) else {}
+    if os.path.exists(snapshot_path):
+        snapshot = json.load(open(snapshot_path))
+    else:
+        _log(f"run-optimizer-py: no holdet snapshot for stage {stage} — using empty current_team (zero transfer cost)")
+        snapshot = {}
     budget = int(snapshot.get('bank_balance', 50_000_000))
     current_team_names = set(snapshot.get('team_composition', []))
-    current_team = [r for r in active_riders if r['name'] in current_team_names]
+    current_team = [r for r in active_riders if r['name'] in current_team_names] or None
 
     app.logger.info(f"run-optimizer-py stage={stage} budget={budget:,}")
     _log(f"run-optimizer-py stage={stage} budget={budget:,}")
