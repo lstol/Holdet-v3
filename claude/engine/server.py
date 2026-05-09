@@ -370,6 +370,7 @@ def run_optimizer_py():
     sliders   = data.get('sliders', {})
     force_in  = data.get('force_in', [])
     force_out = data.get('force_out', [])
+    use_race_type = bool(data.get('use_race_type_adjustment', False))
 
     odds_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
     if os.path.exists(odds_path):
@@ -434,10 +435,11 @@ def run_optimizer_py():
         scoring      = load_stage_scoring()
         stage_config = get_stage_config(stage, scoring)
 
-        # Current stage: real odds + intel
+        # Current stage: real odds + intel (+ optional race-type adjustment from n1 slider)
         probs_current = build_probabilities(
             active_riders, odds, intel_data, sliders.get('n1', {}),
-            stage_config=stage_config, scoring=scoring
+            stage_config=stage_config, scoring=scoring,
+            use_race_type=use_race_type,
         )
 
         # Forward stages: slider-based inference only (no odds)

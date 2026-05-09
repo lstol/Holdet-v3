@@ -203,6 +203,12 @@ input[type=range]::-webkit-slider-thumb {
 .sum-display.ok { color: var(--color-success); background: rgba(62,207,142,.08); }
 .sum-display.bad { color: var(--color-danger); background: rgba(240,77,94,.1); }
 
+.slider-panel.dimmed .slider-row,
+.slider-panel.dimmed .sum-display { opacity: 0.5; }
+.race-type-toggle { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--color-text-2); cursor: pointer; }
+.race-type-toggle input { margin: 0; cursor: pointer; }
+.slider-panel-title.with-toggle { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
 .weight-row { margin-bottom: 8px; }
 .weight-row label { display: flex; justify-content: space-between; font-size: 11px; color: var(--color-text-2); margin-bottom: 3px; }
 .weight-row label span { font-family: var(--font-mono); color: var(--color-text); }
@@ -694,6 +700,7 @@ const S = {
   bankBalance: 50000000,
   mockMode: false,
   dataTimestamp: null,
+  useRaceTypeAdjustment: false,
 };
 
 const SERVER = 'http://localhost:5050';
@@ -1087,7 +1094,21 @@ function renderSliders() {
     const labels = stageNums.map(n => n <= 21 ? `Stage ${n}` : '—');
     const div = document.createElement('div');
     div.className = 'slider-panel';
-    div.innerHTML = `<div class="slider-panel-title">${labels[ki]}</div>` +
+    if (key === 'n1' && !S.useRaceTypeAdjustment) div.classList.add('dimmed');
+
+    const titleHtml = key === 'n1'
+      ? `<div class="slider-panel-title with-toggle">
+           <span>${labels[ki]}</span>
+           <label class="race-type-toggle" title="When ticked, n1 sliders apply a per-rider multiplier to bookmaker odds.">
+             <input type="checkbox" id="race-type-tickbox"
+                    ${S.useRaceTypeAdjustment ? 'checked' : ''}
+                    onchange="toggleRaceType(this.checked)">
+             Adjust odds by race type
+           </label>
+         </div>`
+      : `<div class="slider-panel-title">${labels[ki]}</div>`;
+
+    div.innerHTML = titleHtml +
       ['bunch_sprint','reduced_sprint','breakaway','gc'].map(type => {
         const names = {
           bunch_sprint:   'Bunch sprint',
@@ -1096,7 +1117,9 @@ function renderSliders() {
           gc:             'GC',
         };
         const v = S.sliders[key][type];
-        return `<div class="slider-row">
+        const dimTitle = key === 'n1' && !S.useRaceTypeAdjustment
+          ? ' title="Tick the box to apply"' : '';
+        return `<div class="slider-row"${dimTitle}>
           <label>${names[type]} <span id="lbl-${key}-${type}">${v}%</span></label>
           <input type="range" min="0" max="100" value="${v}" id="sl-${key}-${type}"
             oninput="updateSlider('${key}','${type}',+this.value)">
@@ -1161,6 +1184,12 @@ function updateSlider(key, type, val) {
   updateSumDisplay(key);
   renderTable();
   localStorage.setItem('holdet_sliders', JSON.stringify(S.sliders));
+}
+
+function toggleRaceType(checked) {
+  S.useRaceTypeAdjustment = !!checked;
+  localStorage.setItem('holdet_use_race_type', S.useRaceTypeAdjustment ? '1' : '0');
+  renderSliders();
 }
 
 function updateSumDisplay(key) {
@@ -1718,6 +1747,7 @@ async function runPyOptimizer() {
         sliders: S.sliders,
         force_in:  [...S.forceIn].map(id => { const r = S.riders.find(x => (x.rider_id || x.holdet_id) == id); return r ? r.name : id; }),
         force_out: [...S.forceOut].map(id => { const r = S.riders.find(x => (x.rider_id || x.holdet_id) == id); return r ? r.name : id; }),
+        use_race_type_adjustment: S.useRaceTypeAdjustment,
       }),
     });
     clearTimeout(abortTimeout);
@@ -2015,6 +2045,7 @@ async function init() {
     const migrated = migrateSliders(stored);
     if (migrated) S.sliders = migrated;
   } catch(_) {}
+  S.useRaceTypeAdjustment = localStorage.getItem('holdet_use_race_type') === '1';
   const savedWeights = localStorage.getItem('holdet_expert_weights');
   if (savedWeights) { try { S.expertSources = JSON.parse(savedWeights); } catch(_) {} }
   renderSliders();

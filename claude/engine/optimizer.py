@@ -214,7 +214,8 @@ def add_stage_evs(probs, stage_config=None, scoring=None):
 # ── Step 1: Build probabilities ───────────────────────────────────────────────
 
 def build_probabilities(all_riders, odds, intel, sliders=None,
-                        stage_config=None, scoring=None):
+                        stage_config=None, scoring=None,
+                        use_race_type=False):
     """
     Returns dict: {rider_name: {win, top3, top10, top15, finish_probs,
                                 finish_ev, team_bonus_ev, p2, p3, p_top15,
@@ -229,6 +230,12 @@ def build_probabilities(all_riders, odds, intel, sliders=None,
     Dynamic EPS: non-odds riders collectively get ~20% of probability mass so
     the simulation has realistic variance (peloton riders occasionally infiltrate
     the top 15, giving depth-bonus uncertainty).
+
+    use_race_type: if True and the n1 sliders are non-uniform, multiply each
+    rider's win/top3/top10/top15 by a SCENARIO_TO_TERRAIN-derived multiplier
+    and renormalise each bucket back to its pre-multiplier sum (preserves
+    bookmaker overround). Tickbox-gated; OFF by default — same behaviour as
+    pre-F2a.
     """
     # Odds lookup — support market top3/top10 where available
     odds_map      = {}   # name → win prob (fraction)
@@ -314,6 +321,66 @@ def build_probabilities(all_riders, odds, intel, sliders=None,
             'team': _norm_team(r.get('team', '')),
             'name': name,
         }
+
+    # ── Race-type odds adjustment (n1 slider, tickbox-gated) ──────────────────
+    if use_race_type and sliders:
+        s = {k: sliders.get(k, 0) / 100.0
+             for k in ('bunch_sprint', 'reduced_sprint', 'breakaway', 'gc')}
+        # Uniform sliders → multiplier = 1.0 for all riders → no-op
+        if not all(abs(v - 0.25) < 1e-6 for v in s.values()):
+            ta_by_name = {r['name']: r.get('terrain_affinity', {}) for r in all_riders}
+
+            def _scenario_score(ta, weights):
+                return sum(
+                    weights[bucket] * sum(
+                        SCENARIO_TO_TERRAIN[bucket][dim] * ta.get(dim, 0)
+                        for dim in SCENARIO_TO_TERRAIN[bucket]
+                    )
+                    for bucket in weights
+                )
+
+            uniform = {k: 0.25 for k in s}
+            mults = {}
+            for name, ta in ta_by_name.items():
+                baseline = _scenario_score(ta, uniform)
+                if baseline < 1e-6:
+                    mults[name] = 1.0
+                else:
+                    mults[name] = max(0.6, min(1.5, _scenario_score(ta, s) / baseline))
+
+            # Capture pre-multiplier sums per bucket; scale; renormalise
+            for key in ('win', 'top3', 'top10', 'top15'):
+                pre_sum = sum(p[key] for p in result.values())
+                for n, p in result.items():
+                    p[key] *= mults.get(n, 1.0)
+                post_sum = sum(p[key] for p in result.values())
+                if post_sum < 1e-9 or pre_sum < 1e-9:
+                    continue
+                scale = pre_sum / post_sum
+                for p in result.values():
+                    p[key] *= scale
+
+            # Recompute per-position finish_probs and finish_ev from rescaled values
+            for p in result.values():
+                pw, top3, top10, top15 = p['win'], p['top3'], p['top10'], p['top15']
+                fp = [0.0] * 15
+                fp[0] = pw
+                d23   = max(0.0, top3  - pw)  / 2
+                d410  = max(0.0, top10 - top3) / 7
+                d1115 = max(0.0, top15 - top10) / 5
+                for i in range(1, 3):   fp[i] = d23
+                for i in range(3, 10):  fp[i] = d410
+                for i in range(10, 15): fp[i] = d1115
+                p['finish_probs'] = fp
+                p['p2']           = fp[1]
+                p['p3']           = fp[2]
+                p['p_top15']      = top15
+                p['finish_ev']    = (
+                    pw      * _FP_W1
+                    + d23*2 * _FP_W23
+                    + d410*7* _FP_W4_10
+                    + d1115*5* _FP_W11_15
+                )
 
     add_stage_evs(result, stage_config=stage_config, scoring=scoring)
     return result
