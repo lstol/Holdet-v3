@@ -596,42 +596,6 @@ input[type=range]::-webkit-slider-thumb {
   </div>
   <div id="stage-results-panel" style="display:none;margin-top:8px;"></div>
 
-  <!-- ── Current team ────────────────────────────────────────── -->
-  <!-- ── Current team panel ────────────────────────────────────── -->
-  <div class="section" id="current-team-section">
-    <div class="section-header">
-      <h2>Current team</h2>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <span id="current-team-status"
-              style="font-size:11px;color:var(--color-text-2);">Not loaded</span>
-        <button class="btn btn-ghost btn-sm" onclick="toggleTeamEditor()">
-          <i class="ti ti-pencil"></i> Edit
-        </button>
-      </div>
-    </div>
-
-    <div id="current-team-display"></div>
-
-    <div id="team-editor" style="display:none;margin-top:8px;background:var(--color-surface);
-         border:1px solid var(--color-border);border-radius:var(--radius-md);padding:12px;">
-      <div style="font-size:11px;color:var(--color-text-2);margin-bottom:6px;">
-        One rider name per line (exact match to rider table). 8 riders required.
-      </div>
-      <textarea id="team-editor-input" rows="9"
-        style="width:100%;font-family:var(--font-mono);font-size:12px;padding:6px;resize:vertical;"
-        placeholder="Jonathan Milan&#10;Paul Magnier&#10;Mads Pedersen&#10;..."></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap;">
-        <span style="font-size:11px;color:var(--color-text-2);">Captain:</span>
-        <input type="text" id="team-editor-captain" placeholder="Exact rider name"
-               style="width:200px;padding:4px 8px;">
-        <button class="btn btn-primary btn-sm" onclick="saveManualTeam()">Save team</button>
-        <button class="btn btn-ghost btn-sm" onclick="toggleTeamEditor()">Cancel</button>
-      </div>
-      <div id="team-editor-error" style="display:none;margin-top:6px;font-size:11px;
-           color:var(--color-danger);"></div>
-    </div>
-  </div>
-
   <!-- ── Candidate teams ─────────────────────────────────────── -->
   <div class="section">
     <div id="candidates-panel">
@@ -814,7 +778,6 @@ function setTargetStage(n) {
   loadSavedIntel();
   loadSavedOutput();
   loadSavedIngemann();
-  loadCurrentTeam();
   loadStageResults();
 }
 
@@ -983,126 +946,6 @@ async function gatherIngemann() {
     btn.textContent = `Error: ${e.message.slice(0, 30)}`;
     btn.disabled = false;
   }
-}
-
-/* ── Current team ────────────────────────────────────────────────────── */
-function toggleTeamEditor() {
-  const editor = $('team-editor');
-  if (editor.style.display === 'none') {
-    if (window.CURRENT_TEAM_DATA?.riders?.length) {
-      $('team-editor-input').value =
-        window.CURRENT_TEAM_DATA.riders.map(r => r.name || r).join('\n');
-      $('team-editor-captain').value = window.CURRENT_TEAM_DATA.captain || '';
-    }
-    editor.style.display = 'block';
-  } else {
-    editor.style.display = 'none';
-  }
-  $('team-editor-error').style.display = 'none';
-}
-
-function saveManualTeam() {
-  const lines   = $('team-editor-input').value.split('\n').map(l => l.trim()).filter(Boolean);
-  const captain = $('team-editor-captain').value.trim();
-  const errEl   = $('team-editor-error');
-
-  if (lines.length !== 8) {
-    errEl.textContent = `Need exactly 8 riders — got ${lines.length}`;
-    errEl.style.display = 'block';
-    return;
-  }
-  errEl.style.display = 'none';
-
-  const riders = lines.map(name => {
-    const match = S.riders.find(r => r.name.toLowerCase() === name.toLowerCase());
-    return match ? match : { name, price: 0, team: '' };
-  });
-
-  window.CURRENT_TEAM_DATA = {
-    riders, captain,
-    stage:  Math.max(0, targetStage - 1),
-    found:  true,
-    source: 'manual',
-  };
-
-  try {
-    localStorage.setItem(
-      `holdet_current_team_${targetStage}`,
-      JSON.stringify(window.CURRENT_TEAM_DATA)
-    );
-  } catch(_) {}
-
-  fetch(`${SERVER}/save-current-team`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ stage: targetStage, team: riders.map(r => r.name), captain }),
-  }).catch(() => {});
-
-  $('team-editor').style.display = 'none';
-  renderCurrentTeam();
-}
-
-function renderCurrentTeam() {
-  const data   = window.CURRENT_TEAM_DATA;
-  const el     = $('current-team-display');
-  const status = $('current-team-status');
-
-  if (!data?.riders?.length) {
-    el.innerHTML = '';
-    status.textContent = 'Not loaded — click Edit to enter manually';
-    return;
-  }
-
-  const src     = data.source === 'manual' ? 'manual' : 'scraped';
-  const capName = data.captain || '';
-  status.textContent = `${data.riders.length} riders · Stage ${data.stage} · ${src}`;
-
-  el.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;">` +
-    data.riders.map(r => {
-      const name  = r.name || r;
-      const isCap = name === capName;
-      const price = r.price ? (r.price / 1e6).toFixed(2) + 'M' : '—';
-      const odd   = S.oddsRows.find(x => x.name === name) || {};
-      const tier  = (parseFloat(odd.win) || 0) >= 1 ? 'A' : 'B';
-      return `<div style="background:var(--color-surface-2);
-                          border:1px solid ${isCap ? 'var(--color-warning)' : 'var(--color-border)'};
-                          border-radius:var(--radius-sm);padding:4px 10px;font-size:12px;">
-        ${isCap ? '⚡ ' : ''}${esc(name)}
-        <span style="color:var(--color-text-2);font-size:11px;margin-left:4px;">${price}</span>
-        <span style="font-size:10px;font-weight:600;margin-left:3px;
-                     color:${tier==='A'?'var(--color-warning)':'var(--color-text-3)'};">${tier}</span>
-      </div>`;
-    }).join('') + `</div>`;
-}
-
-async function loadCurrentTeam() {
-  // 1. localStorage first — manual entry survives reload
-  try {
-    const saved = localStorage.getItem(`holdet_current_team_${targetStage}`);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed?.riders?.length) {
-        window.CURRENT_TEAM_DATA = parsed;
-        renderCurrentTeam();
-        return;
-      }
-    }
-  } catch(_) {}
-
-  // 2. Server /current-team
-  try {
-    const res  = await fetch(`${SERVER}/current-team?target_stage=${targetStage}`);
-    const data = await res.json();
-    if (data.found && data.riders?.length > 0) {
-      window.CURRENT_TEAM_DATA = data;
-      renderCurrentTeam();
-      return;
-    }
-  } catch(_) {}
-
-  // 3. Nothing — show edit prompt
-  window.CURRENT_TEAM_DATA = null;
-  renderCurrentTeam();
 }
 
 async function loadSavedIngemann() {
@@ -2155,7 +1998,6 @@ async function init() {
   await loadSavedIntel();
   await loadSavedOutput();
   await loadSavedIngemann();
-  await loadCurrentTeam();
   await loadStageResults();
   updateHeader();
 }

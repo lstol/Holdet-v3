@@ -106,3 +106,33 @@ planned ff-merge.
 2. Server downtime is a cost — cluster pkill/restart steps at the END so the
    dashboard is unavailable for seconds, not minutes.
 3. Verify before you destroy. Read-only diagnosis first; mutations second.
+
+## B-tail — Removed redundant Current Team panel
+
+The dashboard had a separate "Current team" panel that read from a stale code
+path and rendered 7/8 (lost Dries Van Gestel to the same exact-match bug
+fixed in B). "How it unfolded" (#stage-results-panel, populated by
+renderStageResults from rider_results) already shows the same 8 Stage 1
+riders with stage points, so the dedicated panel is redundant.
+
+Removed from claude/dashboard/claude.html (158 lines deleted):
+- HTML: `<div id="current-team-section">` and its team-editor
+  (`#team-editor`, `#team-editor-input`, `#team-editor-captain`,
+  `#team-editor-error`, `#current-team-display`, `#current-team-status`).
+- JS functions: `toggleTeamEditor`, `saveManualTeam`, `renderCurrentTeam`,
+  `loadCurrentTeam`.
+- State: `window.CURRENT_TEAM_DATA` (only used by the four functions above).
+- Call sites: `loadCurrentTeam()` removed from `setTargetStage` and `init`.
+
+Kept (per handoff guidance):
+- Server endpoints `/current-team` and `/save-current-team` — other code may
+  use them; benign if dead.
+- `renderOptimizerOutput`'s read of `optimizer.current_team` — this is the
+  post-B data path that surfaces the team inside each candidate card.
+- "How it unfolded" / `renderStageResults` — replacement source of truth.
+
+Verification:
+- Served `claude.html` contains zero references to removed ids/functions.
+- launchctl kickstart -k restarted the agent; server up in 1s.
+- /run-optimizer stage=2 still returns 4 teams, current_team=8/8,
+  name_match_warnings=[], captain present.
