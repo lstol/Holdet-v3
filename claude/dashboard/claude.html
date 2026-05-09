@@ -679,9 +679,9 @@ const S = {
     { name: 'Feltet.dk',                  weight: 1.3 },
   ],
   sliders: {
-    n1: { sprint: 70, hilly: 20, hardgc: 5,  mixed: 5  },
-    n2: { sprint: 50, hilly: 30, hardgc: 10, mixed: 10 },
-    n3: { sprint: 30, hilly: 30, hardgc: 30, mixed: 10 },
+    n1: { bunch_sprint: 70, reduced_sprint: 20, gc: 5,  breakaway: 5  },
+    n2: { bunch_sprint: 50, reduced_sprint: 30, gc: 10, breakaway: 10 },
+    n3: { bunch_sprint: 30, reduced_sprint: 30, gc: 30, breakaway: 10 },
   },
   oddsRows: [],
   intelData: null,
@@ -1088,8 +1088,13 @@ function renderSliders() {
     const div = document.createElement('div');
     div.className = 'slider-panel';
     div.innerHTML = `<div class="slider-panel-title">${labels[ki]}</div>` +
-      ['sprint','hilly','hardgc','mixed'].map(type => {
-        const names = { sprint:'Sprint', hilly:'Hilly', hardgc:'Hard GC', mixed:'Mixed' };
+      ['bunch_sprint','reduced_sprint','breakaway','gc'].map(type => {
+        const names = {
+          bunch_sprint:   'Bunch sprint',
+          reduced_sprint: 'Reduced sprint',
+          breakaway:      'Breakaway',
+          gc:             'GC',
+        };
         const v = S.sliders[key][type];
         return `<div class="slider-row">
           <label>${names[type]} <span id="lbl-${key}-${type}">${v}%</span></label>
@@ -1120,7 +1125,7 @@ function renderSliders() {
 }
 
 function updateSlider(key, type, val) {
-  const types = ['sprint','hilly','hardgc','mixed'];
+  const types = ['bunch_sprint','reduced_sprint','breakaway','gc'];
   val = Math.round(val);
   S.sliders[key][type] = val;
 
@@ -1160,7 +1165,7 @@ function updateSlider(key, type, val) {
 
 function updateSumDisplay(key) {
   const sl = S.sliders[key];
-  const sum = sl.sprint + sl.hilly + sl.hardgc + sl.mixed;
+  const sum = sl.bunch_sprint + sl.reduced_sprint + sl.breakaway + sl.gc;
   const el = $(`sum-${key}`);
   el.textContent = `Sum: ${sum}%`;
   el.className = 'sum-display ' + (Math.abs(sum - 100) < 1 ? 'ok' : 'bad');
@@ -1634,7 +1639,7 @@ function buildOptimizerPrompt() {
 
   const slStr = key => {
     const sl = S.sliders[key];
-    return `Sprint ${sl.sprint}% / Hilly ${sl.hilly}% / Hard GC ${sl.hardgc}% / Mixed ${sl.mixed}%`;
+    return `Bunch sprint ${sl.bunch_sprint}% / Reduced sprint ${sl.reduced_sprint}% / Breakaway ${sl.breakaway}% / GC ${sl.gc}%`;
   };
 
   const oddsStr = S.oddsRows.length
@@ -1973,6 +1978,28 @@ async function loadStages() {
 }
 
 /* ── Init ────────────────────────────────────────────────────────────── */
+function migrateSliders(blob) {
+  if (!blob) return null;
+  const keymap = { sprint: 'bunch_sprint', hilly: 'reduced_sprint',
+                   hardgc: 'gc',           mixed: 'breakaway' };
+  let migrated = false;
+  for (const stage of ['n1','n2','n3']) {
+    if (!blob[stage]) continue;
+    const old = blob[stage];
+    const fresh = {};
+    for (const [k, v] of Object.entries(old)) {
+      fresh[keymap[k] || k] = v;
+    }
+    blob[stage] = fresh;
+    if (Object.keys(keymap).some(k => k in old)) migrated = true;
+  }
+  if (migrated) {
+    console.log('[migrateSliders] migrated old bucket names to new');
+    localStorage.setItem('holdet_sliders', JSON.stringify(blob));
+  }
+  return blob;
+}
+
 async function init() {
   await loadStages();
 
@@ -1983,8 +2010,11 @@ async function init() {
 
   initStageSelect();
   buildTypePills();
-  const savedSliders = localStorage.getItem('holdet_sliders');
-  if (savedSliders) { try { S.sliders = JSON.parse(savedSliders); } catch(_) {} }
+  try {
+    const stored = JSON.parse(localStorage.getItem('holdet_sliders') || 'null');
+    const migrated = migrateSliders(stored);
+    if (migrated) S.sliders = migrated;
+  } catch(_) {}
   const savedWeights = localStorage.getItem('holdet_expert_weights');
   if (savedWeights) { try { S.expertSources = JSON.parse(savedWeights); } catch(_) {} }
   renderSliders();

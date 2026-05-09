@@ -449,35 +449,42 @@ def compute_transfer_cost(current_team, target_team, probs_next=None):
     return cost
 
 
+# Slider bucket → which rider.terrain_affinity dimensions it favors.
+# The only "scenario hardcoding" — generic across riders.
+SCENARIO_TO_TERRAIN = {
+    'bunch_sprint':   {'sprint': 1.0},
+    'reduced_sprint': {'sprint': 0.5, 'mixed': 0.5},
+    'breakaway':      {'mixed': 1.0},
+    'gc':             {'climbing': 1.0},
+}
+
+
 def build_forward_probabilities(riders, sliders):
     """
     Approximate probability distribution for a future stage where no odds exist.
-    Uses stage type sliders × rider type weights.
+    Score each rider by combining slider weights × SCENARIO_TO_TERRAIN ×
+    rider.terrain_affinity, then renormalize to win probabilities.
     """
-    sprint = sliders.get('sprint', 0) / 100
-    hilly  = sliders.get('hilly',  0) / 100
-    gc     = sliders.get('gc', sliders.get('hardgc', 0)) / 100
-    mixed  = sliders.get('mixed',  0) / 100
-
-    TYPE_WIN_WEIGHT = {
-        'Sprinter':    sprint * 1.0 + hilly * 0.15 + mixed * 0.1,
-        'Puncheur':    hilly  * 0.8 + sprint * 0.2  + mixed * 0.3,
-        'GC-Climber':  gc     * 1.0 + hilly  * 0.5  + mixed * 0.4,
-        'All-rounder': mixed  * 0.6 + sprint * 0.2  + hilly * 0.3 + gc * 0.2,
-        'TTT Spec.':   mixed  * 0.5,
-        'Lead-out':    sprint * 0.1,
+    s = {
+        bucket: sliders.get(bucket, 0) / 100.0
+        for bucket in ('bunch_sprint', 'reduced_sprint', 'breakaway', 'gc')
     }
 
     raw = {}
     for r in riders:
-        rtype = r.get('type', 'All-rounder')
-        raw[r['name']] = max(0.001, TYPE_WIN_WEIGHT.get(rtype, 0.1))
+        ta = r.get('terrain_affinity', {})
+        score = 0.0
+        for bucket, weight in s.items():
+            if weight == 0:
+                continue
+            for dim, dim_weight in SCENARIO_TO_TERRAIN[bucket].items():
+                score += weight * dim_weight * ta.get(dim, 0)
+        raw[r['name']] = max(0.001, score)
 
     total = sum(raw.values())
     probs = {}
     for r in riders:
         w = raw[r['name']] / total
-        gc_penalty = gc > 0.5 and r.get('type') == 'Sprinter'
         p_top3  = min(0.95, w * 3.5)
         p_top10 = min(0.95, w * 8.0)
         p_top15 = min(0.95, w * 12.0)
@@ -506,7 +513,6 @@ def build_forward_probabilities(riders, sliders):
             'finish_probs': fp,
             'finish_ev':    finish_ev,
             'total_ev':     finish_ev,
-            'gc_penalty':   gc_penalty,
         }
     return probs
 

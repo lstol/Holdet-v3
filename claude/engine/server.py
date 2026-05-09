@@ -218,8 +218,9 @@ def _run_optimizer_claude_api_legacy():
 
     def sl(key):
         s = sliders.get(key, {})
-        return (f"Sprint {s.get('sprint',0)}%  Hilly {s.get('hilly',0)}%  "
-                f"Hard GC {s.get('hardgc',0)}%  Mixed {s.get('mixed',0)}%")
+        return (f"Bunch sprint {s.get('bunch_sprint',0)}%  "
+                f"Reduced sprint {s.get('reduced_sprint',0)}%  "
+                f"Breakaway {s.get('breakaway',0)}%  GC {s.get('gc',0)}%")
 
     # Only send Tier A riders (win_pct >= 1%) to the prompt — reduces tokens significantly
     tier_a = [r for r in active_riders
