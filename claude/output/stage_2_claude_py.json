@@ -6,15 +6,39 @@
       "description": "Maximise stage EV — best team for today",
       "riders": [
         {
+          "name": "Edoardo Zambanini",
+          "team": "Bahrain Victorious",
+          "price": 4000000,
+          "type": ""
+        },
+        {
           "name": "António Morgado",
           "team": "UAE Team Emirates XRG",
           "price": 4050000,
           "type": ""
         },
         {
+          "name": "Giulio Pellizzari",
+          "team": "Red Bull BORA hansgrohe",
+          "price": 9500000,
+          "type": ""
+        },
+        {
+          "name": "Andrea Vendrame",
+          "team": "Team Jayco AlUla",
+          "price": 5000000,
+          "type": ""
+        },
+        {
           "name": "Christian Scaroni",
           "team": "XDS Astana",
           "price": 5500000,
+          "type": ""
+        },
+        {
+          "name": "Jan Christen",
+          "team": "UAE Team Emirates XRG",
+          "price": 6000000,
           "type": ""
         },
         {
@@ -28,53 +52,29 @@
           "team": "NSN Cycling",
           "price": 6520000,
           "type": ""
-        },
-        {
-          "name": "Giulio Pellizzari",
-          "team": "Red Bull BORA hansgrohe",
-          "price": 9500000,
-          "type": ""
-        },
-        {
-          "name": "Jan Christen",
-          "team": "UAE Team Emirates XRG",
-          "price": 6000000,
-          "type": ""
-        },
-        {
-          "name": "Edoardo Zambanini",
-          "team": "Bahrain Victorious",
-          "price": 4000000,
-          "type": ""
-        },
-        {
-          "name": "Andrea Vendrame",
-          "team": "Team Jayco AlUla",
-          "price": 5000000,
-          "type": ""
         }
       ],
       "total_price": 48570000,
-      "ev_estimate": 1204610,
-      "ev_net": 718910,
+      "ev_estimate": 1213629,
+      "ev_net": 727929,
       "ev_breakdown": {
-        "stage_finish": 473018,
-        "sprint_points": 131035,
-        "jersey_bonus": 10300,
-        "gc_bonus": 204369,
-        "kom_points": 21817,
-        "captain_bonus": 160167,
-        "team_bonus": 70607,
-        "depth_bonus": 133295,
+        "stage_finish": 473763,
+        "sprint_points": 131291,
+        "jersey_bonus": 10445,
+        "gc_bonus": 204723,
+        "kom_points": 21852,
+        "captain_bonus": 166176,
+        "team_bonus": 71339,
+        "depth_bonus": 134040,
         "transfer_cost": -485700
       },
       "transfer_cost": 485700,
       "n_transfers": 8,
       "cdf": {
-        "p25": 890000,
-        "p50": 1187000,
-        "p75": 1509000,
-        "p90": 1796000
+        "p25": 902000,
+        "p50": 1200000,
+        "p75": 1522000,
+        "p90": 1793000
       },
       "captain": {
         "name": "António Morgado",
@@ -82,10 +82,10 @@
       },
       "forward": {
         "transfers_n1": 8,
-        "cost_n1": 421500,
+        "cost_n1": 474920,
         "transfers_n2": 5,
-        "cost_n2": 215000,
-        "total_forward_cost": 572000
+        "cost_n2": 151880,
+        "total_forward_cost": 581236
       },
       "rationale": "Maximise stage EV — best team for today"
     },
@@ -95,15 +95,21 @@
       "description": "Maximise riders in top 15 — targets non-linear depth bonus",
       "riders": [
         {
-          "name": "Giulio Pellizzari",
-          "team": "Red Bull BORA hansgrohe",
-          "price": 9500000,
+          "name": "Christian Scaroni",
+          "team": "XDS Astana",
+          "price": 5500000,
           "type": ""
         },
         {
-          "name": "Giulio Ciccone",
-          "team": "Lidl-Trek",
-          "price": 8000000,
+          "name": "Jan Christen",
+          "team": "UAE Team Emirates XRG",
+          "price": 6000000,
+          "type": ""
+        },
+        {
+          "name": "Giulio Pellizzari",
+          "team": "Red Bull BORA hansgrohe",
+          "price": 9500000,
           "type": ""
         },
         {
@@ -113,27 +119,21 @@
           "type": ""
         },
         {
-          "name": "António Morgado",
-          "team": "UAE Team Emirates XRG",
-          "price": 4050000,
-          "type": ""
-        },
-        {
-          "name": "Christian Scaroni",
-          "team": "XDS Astana",
-          "price": 5500000,
-          "type": ""
-        },
-        {
           "name": "Andrea Vendrame",
           "team": "Team Jayco AlUla",
           "price": 5000000,
           "type": ""
         },
         {
-          "name": "Jan Christen",
+          "name": "Giulio Ciccone",
+          "team": "Lidl-Trek",
+          "price": 8000000,
+          "type": ""
+        },
+        {
+          "name": "António Morgado",
           "team": "UAE Team Emirates XRG",
-          "price": 6000000,
+          "price": 4050000,
           "type": ""
         },
         {
@@ -144,26 +144,26 @@
         }
       ],
       "total_price": 48570000,
-      "ev_estimate": 1206261,
-      "ev_net": 720561,
+      "ev_estimate": 1195214,
+      "ev_net": 709514,
       "ev_breakdown": {
-        "stage_finish": 473156,
-        "sprint_points": 131784,
-        "jersey_bonus": 10475,
-        "gc_bonus": 204474,
-        "kom_points": 22070,
-        "captain_bonus": 160099,
-        "team_bonus": 71140,
-        "depth_bonus": 133062,
+        "stage_finish": 469151,
+        "sprint_points": 129573,
+        "jersey_bonus": 10245,
+        "gc_bonus": 202201,
+        "kom_points": 21531,
+        "captain_bonus": 160123,
+        "team_bonus": 70389,
+        "depth_bonus": 131999,
         "transfer_cost": -485700
       },
       "transfer_cost": 485700,
       "n_transfers": 8,
       "cdf": {
-        "p25": 885000,
-        "p50": 1191000,
-        "p75": 1508000,
-        "p90": 1799000
+        "p25": 881000,
+        "p50": 1176000,
+        "p75": 1497000,
+        "p90": 1785000
       },
       "captain": {
         "name": "António Morgado",
@@ -171,34 +171,22 @@
       },
       "forward": {
         "transfers_n1": 8,
-        "cost_n1": 421500,
+        "cost_n1": 474920,
         "transfers_n2": 5,
-        "cost_n2": 215000,
-        "total_forward_cost": 572000
+        "cost_n2": 151880,
+        "total_forward_cost": 581236
       },
       "rationale": "Maximise riders in top 15 — targets non-linear depth bonus"
     },
     {
       "label": "Low transfer cost",
       "strategy": "low-transfer",
-      "description": "Minimise transfers needed for stage n+1 (5 expected from optimal)",
+      "description": "Minimise transfers needed for stage n+1 (6 expected from optimal)",
       "riders": [
         {
           "name": "Corbin Strong",
           "team": "NSN Cycling",
           "price": 6520000,
-          "type": ""
-        },
-        {
-          "name": "António Morgado",
-          "team": "UAE Team Emirates XRG",
-          "price": 4050000,
-          "type": ""
-        },
-        {
-          "name": "Kaden Groves",
-          "team": "Alpecin-Premier Tech",
-          "price": 8509000,
           "type": ""
         },
         {
@@ -214,9 +202,21 @@
           "type": ""
         },
         {
+          "name": "António Morgado",
+          "team": "UAE Team Emirates XRG",
+          "price": 4050000,
+          "type": ""
+        },
+        {
           "name": "Jasper Stuyven",
           "team": "Soudal Quick-Step",
           "price": 4145000,
+          "type": ""
+        },
+        {
+          "name": "Davide Ballerini",
+          "team": "XDS Astana",
+          "price": 4000000,
           "type": ""
         },
         {
@@ -226,33 +226,33 @@
           "type": ""
         },
         {
-          "name": "Davide Ballerini",
-          "team": "XDS Astana",
-          "price": 4000000,
+          "name": "Kaden Groves",
+          "team": "Alpecin-Premier Tech",
+          "price": 8509000,
           "type": ""
         }
       ],
       "total_price": 49453000,
-      "ev_estimate": 846040,
-      "ev_net": 523800,
+      "ev_estimate": 840536,
+      "ev_net": 518296,
       "ev_breakdown": {
-        "stage_finish": 314926,
-        "sprint_points": 90781,
-        "jersey_bonus": 7420,
-        "gc_bonus": 138885,
-        "kom_points": 15392,
-        "captain_bonus": 161521,
-        "team_bonus": 60114,
-        "depth_bonus": 56999,
+        "stage_finish": 312987,
+        "sprint_points": 89903,
+        "jersey_bonus": 7147,
+        "gc_bonus": 138210,
+        "kom_points": 15182,
+        "captain_bonus": 160697,
+        "team_bonus": 59886,
+        "depth_bonus": 56523,
         "transfer_cost": -322240
       },
       "transfer_cost": 322240,
       "n_transfers": 6,
       "cdf": {
-        "p25": 571000,
-        "p50": 822000,
-        "p75": 1104000,
-        "p90": 1365000
+        "p25": 561000,
+        "p50": 818000,
+        "p75": 1096000,
+        "p90": 1358000
       },
       "captain": {
         "name": "António Morgado",
@@ -260,22 +260,34 @@
       },
       "forward": {
         "transfers_n1": 3,
-        "cost_n1": 82670,
+        "cost_n1": 136090,
         "transfers_n2": 5,
-        "cost_n2": 215000,
-        "total_forward_cost": 233170
+        "cost_n2": 151880,
+        "total_forward_cost": 242406
       },
-      "rationale": "Minimise transfers needed for stage n+1 (5 expected from optimal)"
+      "rationale": "Minimise transfers needed for stage n+1 (6 expected from optimal)"
     },
     {
       "label": "Two-stage lookahead",
       "strategy": "lookahead",
-      "description": "EV minus transfer costs n+1 (5) and n+2 (5)",
+      "description": "EV minus transfer costs n+1 (6) and n+2 (5)",
       "riders": [
         {
-          "name": "Giulio Ciccone",
-          "team": "Lidl-Trek",
-          "price": 8000000,
+          "name": "António Morgado",
+          "team": "UAE Team Emirates XRG",
+          "price": 4050000,
+          "type": ""
+        },
+        {
+          "name": "Giulio Pellizzari",
+          "team": "Red Bull BORA hansgrohe",
+          "price": 9500000,
+          "type": ""
+        },
+        {
+          "name": "Andrea Vendrame",
+          "team": "Team Jayco AlUla",
+          "price": 5000000,
           "type": ""
         },
         {
@@ -285,9 +297,15 @@
           "type": ""
         },
         {
-          "name": "Giulio Pellizzari",
-          "team": "Red Bull BORA hansgrohe",
-          "price": 9500000,
+          "name": "Jan Christen",
+          "team": "UAE Team Emirates XRG",
+          "price": 6000000,
+          "type": ""
+        },
+        {
+          "name": "Giulio Ciccone",
+          "team": "Lidl-Trek",
+          "price": 8000000,
           "type": ""
         },
         {
@@ -301,47 +319,29 @@
           "team": "NSN Cycling",
           "price": 6520000,
           "type": ""
-        },
-        {
-          "name": "Jan Christen",
-          "team": "UAE Team Emirates XRG",
-          "price": 6000000,
-          "type": ""
-        },
-        {
-          "name": "Andrea Vendrame",
-          "team": "Team Jayco AlUla",
-          "price": 5000000,
-          "type": ""
-        },
-        {
-          "name": "António Morgado",
-          "team": "UAE Team Emirates XRG",
-          "price": 4050000,
-          "type": ""
         }
       ],
       "total_price": 48715000,
-      "ev_estimate": 1176317,
-      "ev_net": 689167,
+      "ev_estimate": 1180467,
+      "ev_net": 693317,
       "ev_breakdown": {
-        "stage_finish": 459660,
-        "sprint_points": 126920,
-        "jersey_bonus": 9867,
-        "gc_bonus": 198337,
-        "kom_points": 21083,
-        "captain_bonus": 161598,
-        "team_bonus": 72290,
-        "depth_bonus": 126560,
+        "stage_finish": 461680,
+        "sprint_points": 128006,
+        "jersey_bonus": 10102,
+        "gc_bonus": 199635,
+        "kom_points": 21272,
+        "captain_bonus": 161052,
+        "team_bonus": 71695,
+        "depth_bonus": 127023,
         "transfer_cost": -487150
       },
       "transfer_cost": 487150,
       "n_transfers": 8,
       "cdf": {
-        "p25": 863000,
-        "p50": 1161000,
-        "p75": 1478000,
-        "p90": 1762000
+        "p25": 862000,
+        "p50": 1157000,
+        "p75": 1482000,
+        "p90": 1760000
       },
       "captain": {
         "name": "António Morgado",
@@ -349,12 +349,12 @@
       },
       "forward": {
         "transfers_n1": 7,
-        "cost_n1": 380050,
+        "cost_n1": 433470,
         "transfers_n2": 5,
-        "cost_n2": 215000,
-        "total_forward_cost": 530550
+        "cost_n2": 151880,
+        "total_forward_cost": 539786
       },
-      "rationale": "EV minus transfer costs n+1 (5) and n+2 (5)"
+      "rationale": "EV minus transfer costs n+1 (6) and n+2 (5)"
     }
   ],
   "captain": {

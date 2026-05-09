@@ -489,17 +489,8 @@ input[type=range]::-webkit-slider-thumb {
       <div class="stage-meta" id="h-stage-meta">—</div>
     </div>
     <div id="header-right">
-      <div class="stat-pill">
-        <span class="label">Bank</span>
-        <span class="value" id="h-bank">50.00M</span>
-      </div>
-      <div class="stat-pill">
-        <span class="label">Data</span>
-        <span class="value" id="h-data-status">Not loaded</span>
-        <span id="h-data-note" style="font-size:10px;color:var(--color-text-3);"></span>
-      </div>
       <button class="btn btn-ghost" id="refresh-btn" onclick="refreshData()">
-        <i class="ti ti-refresh"></i> Refresh
+        <i class="ti ti-refresh"></i> Refresh riders
       </button>
     </div>
   </header>
@@ -705,9 +696,6 @@ const S = {
   typeFilter: 'All',
   sortCol: 'price',
   sortDir: 'desc',
-  bankBalance: 50000000,
-  mockMode: false,
-  dataTimestamp: null,
   useRaceTypeAdjustment: false,
 };
 
@@ -800,10 +788,7 @@ async function loadSnapshot() {
   try {
     const res  = await fetch(`${SERVER}/snapshot?stage=${targetStage}`);
     const data = await res.json();
-    if (data.found) {
-      S.bankBalance = data.bank_balance || 50_000_000;
-      updateHeader();
-    }
+    if (data.found) updateHeader();
   } catch(_) {}
 }
 
@@ -1074,22 +1059,6 @@ function updateHeader() {
   if (titleEl) titleEl.textContent = st.stage_name || `Stage ${st.stage_number}`;
   const terrain = st.is_ttt ? 'TTT' : st.is_itt ? 'ITT' : (st.terrain_classification || '—');
   $('h-stage-meta').textContent = `${st.date || '—'} · ${st.start_city || '?'} › ${st.finish_city || '?'} · ${st.distance_km || '?'}km · ${terrain}`;
-  $('h-bank').textContent = fmt_price(S.bankBalance);
-
-  const statusEl = $('h-data-status');
-  if (S.mockMode) {
-    statusEl.className = 'value mock';
-    statusEl.textContent = 'MOCK';
-    $('h-data-note').innerHTML = '<span class="mock-badge">MOCK DATA</span>';
-  } else if (S.dataTimestamp) {
-    statusEl.className = 'value ok';
-    statusEl.textContent = S.dataTimestamp.slice(11,19) + 'Z';
-    $('h-data-note').textContent = S.dataTimestamp.slice(0,10);
-  } else {
-    statusEl.className = 'value';
-    statusEl.textContent = 'Not loaded';
-    $('h-data-note').textContent = '';
-  }
 }
 
 /* ── Sliders ─────────────────────────────────────────────────────────── */
@@ -1916,8 +1885,8 @@ function renderOptimizerOutput(data) {
         <div class="tc-ev-title">EV breakdown</div>
         ${evBarsHtml(bd, total)}
         <div class="ev-total-row">
-          <span>Total</span>
-          <span class="ev-total-val">${fmt(team.ev_estimate)}</span>
+          <span>Net EV</span>
+          <span class="ev-total-val">${fmt(team.ev_net !== undefined ? team.ev_net : team.ev_estimate)}</span>
         </div>
         ${transferAdjHtml(team)}
       </div>
@@ -2034,12 +2003,9 @@ async function loadRiders() {
     console.log('[loadRiders] source: snapshot, riders:', (data.riders||[]).length);
     S.riders = (data.riders || []).map(r => ({ ...r, _type: deriveType(r) }));
     console.log('[loadRiders] S.riders set:', S.riders.length, 'first:', S.riders[0]?.name, S.riders[0]?._type);
-    S.dataTimestamp = data.timestamp || null;
-    S.mockMode = false;
   } catch(e) {
     console.error('[loadRiders] failed:', e);
     S.riders = [];
-    S.mockMode = true;
   }
   renderTable();
 }
