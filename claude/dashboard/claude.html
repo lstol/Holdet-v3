@@ -428,6 +428,14 @@ input[type=range]::-webkit-slider-thumb {
 .ev-total-row { display: flex; justify-content: space-between; margin-top: 3px; padding-top: 4px;
   border-top: 1px solid var(--color-border); font-size: 12px; font-weight: 600; }
 .ev-total-row .ev-total-val { color: var(--color-success); font-family: var(--font-mono); }
+.ev-fwd-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--color-text-2); margin-top: 3px; }
+.ev-fwd-row .ev-fwd-val { color: #e05050; font-family: var(--font-mono); }
+.ev-fwd-row .ev-fwd-ann { color: var(--color-text-3); font-size: 10px; margin-left: 3px; }
+.ev-fwd-row.missing .ev-fwd-val { color: var(--color-text-3); }
+.ev-adj-row { display: flex; justify-content: space-between; margin-top: 3px; padding-top: 4px;
+  border-top: 1px solid var(--color-border); font-size: 12px; font-weight: 600; }
+.ev-adj-row .ev-adj-val { color: var(--color-success); font-family: var(--font-mono); }
+.team-card.adj-best { box-shadow: inset 0 0 0 1px var(--color-success); }
 .tc-meta {
   padding: 6px 10px;
   border-top: 1px solid var(--color-border);
@@ -1831,6 +1839,33 @@ function renderOptimizerOutput(data) {
     </div>`;
   }
 
+  function transferAdjHtml(team) {
+    const fwd  = team.forward || {};
+    const c1   = fwd.cost_n1, c2 = fwd.cost_n2;
+    const t1   = fwd.transfers_n1, t2 = fwd.transfers_n2;
+    const haveBoth = c1 != null && c2 != null;
+    const netEV  = team.ev_net !== undefined ? team.ev_net : team.ev_estimate;
+    const adjEV  = haveBoth ? netEV - c1 - 0.7 * c2 : null;
+    const fwd1Val = c1 != null ? `−${fmt(c1)}${t1 != null ? ` (${t1} tr)` : ''}` : '—';
+    const fwd2Val = c2 != null ? `−${fmt(c2)}${t2 != null ? ` (${t2} tr)` : ''}` : '—';
+    const adjVal  = adjEV != null ? fmt(adjEV) : '—';
+    const cls1 = c1 != null ? '' : ' missing';
+    const cls2 = c2 != null ? '' : ' missing';
+    return `
+        <div class="ev-fwd-row${cls1}">
+          <span>Forward n+1</span>
+          <span class="ev-fwd-val">${fwd1Val}</span>
+        </div>
+        <div class="ev-fwd-row${cls2}">
+          <span>Forward n+2</span>
+          <span class="ev-fwd-val">${fwd2Val}<span class="ev-fwd-ann">× 0.7</span></span>
+        </div>
+        <div class="ev-adj-row">
+          <span>Transfer-adj EV</span>
+          <span class="ev-adj-val">${adjVal}</span>
+        </div>`;
+  }
+
   function buildCard(team, idx, isIngemann) {
     const bd    = team.ev_breakdown || {};
     const cdf   = team.cdf || {};
@@ -1870,7 +1905,8 @@ function renderOptimizerOutput(data) {
         + ` <span style="color:var(--color-success);">${fmt(netEV)}</span>`
       : `<span style="color:var(--color-success);">${fmt(team.ev_estimate)}</span>`;
 
-    return `<div class="team-card${idx===0&&!isIngemann?' selected':''}" data-idx="${idx}" style="${borderStyle}">
+    const adjBestCls = (!isIngemann && idx === adjBestIdx) ? ' adj-best' : '';
+    return `<div class="team-card${idx===0&&!isIngemann?' selected':''}${adjBestCls}" data-idx="${idx}" style="${borderStyle}">
       <div class="tc-head">
         <div class="tc-label">${labelPrefix}${esc(team.label || team.strategy || '')}</div>
         <div class="tc-ev">${evHtml}<span class="tc-price">${priceStr}</span></div>
@@ -1883,6 +1919,7 @@ function renderOptimizerOutput(data) {
           <span>Total</span>
           <span class="ev-total-val">${fmt(team.ev_estimate)}</span>
         </div>
+        ${transferAdjHtml(team)}
       </div>
       <div class="tc-meta">
         <div class="tc-cdf">p25:${fmt(cdf.p25)} p50:${fmt(cdf.p50)} p75:${fmt(cdf.p75)} p90:${fmt(cdf.p90)}</div>
@@ -1895,6 +1932,20 @@ function renderOptimizerOutput(data) {
 
   area.className = '';
   let html = '';
+
+  // Compute index of optimizer team with highest transfer-adjusted EV
+  // (informational highlight only — does not reorder cards).
+  const adjBestIdx = (() => {
+    const adj = (data.teams || []).map(t => {
+      const f = t.forward || {};
+      if (f.cost_n1 == null || f.cost_n2 == null) return null;
+      const net = t.ev_net !== undefined ? t.ev_net : t.ev_estimate;
+      return net - f.cost_n1 - 0.7 * f.cost_n2;
+    });
+    let best = -Infinity, bestIdx = -1;
+    adj.forEach((v, i) => { if (v != null && v > best) { best = v; bestIdx = i; } });
+    return bestIdx;
+  })();
 
   // Ingemann leftmost
   if (window.INGEMANN_DATA) {
