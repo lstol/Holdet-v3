@@ -215,14 +215,14 @@ input[type=range]::-webkit-slider-thumb {
 
 /* ── Intelligence ───────────────────────────────────────────────── */
 #intel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.intel-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; }
+.intel-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; height: 500px; }
 .intel-panel-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-2); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
 
 /* Odds table */
 #odds-parse-status { font-size: 10px; margin-bottom: 6px; min-height: 14px; }
 .parse-ok  { color: var(--color-success); }
 .parse-err { color: var(--color-warning); }
-#odds-table-wrap { overflow-x: auto; max-height: 200px; overflow-y: auto; }
+#odds-table-wrap { overflow-x: auto; flex: 1; min-height: 0; overflow-y: auto; }
 #intel-display { font-size: 12px; flex: 1; overflow-y: auto; }
 /* Paste zones row */
 .odds-paste-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 6px; }
