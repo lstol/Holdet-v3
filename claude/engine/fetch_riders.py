@@ -590,6 +590,16 @@ def fetch_stage_results(stage: int) -> dict:
         out = SNAPSHOT_DIR / f"stage_{stage}_results.json"
         out.write_text(json.dumps(result, indent=2, ensure_ascii=False))
         print(f"  Saved → {out}")
+
+        holdet_snap = SNAPSHOT_DIR / f"stage_{stage}_holdet.json"
+        if not holdet_snap.exists():
+            holdet_snap.write_text(json.dumps({
+                "team_composition": [r["name"] for r in rider_results],
+                "bank_balance":     bank_balance,
+                "captain":          captain_name,
+                "stage":            stage,
+            }, indent=2, ensure_ascii=False))
+            print(f"  Wrote team snapshot → {holdet_snap}")
     else:
         print(f"  Stage {stage} not yet scored — no file written")
 

@@ -190,10 +190,9 @@ def refresh():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-# ── Run optimizer ────────────────────────────────────────────────────────────
+# ── Run optimizer (Claude API / legacy — kept for reference, not exposed) ─────
 
-@app.route('/run-optimizer', methods=['POST', 'OPTIONS'])
-def run_optimizer():
+def _run_optimizer_claude_api_legacy():
     if request.method == 'OPTIONS':
         return '', 204
     if not HAS_ANTHROPIC:
@@ -356,9 +355,9 @@ Generate 3-5 structurally distinct teams. Each exactly 8 riders, budget ≤50,00
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-# ── Run Python optimizer ─────────────────────────────────────────────────────
+# ── Run optimizer ────────────────────────────────────────────────────────────
 
-@app.route('/run-optimizer-py', methods=['POST', 'OPTIONS'])
+@app.route('/run-optimizer', methods=['POST', 'OPTIONS'])
 def run_optimizer_py():
     if request.method == 'OPTIONS':
         return '', 204
@@ -385,10 +384,14 @@ def run_optimizer_py():
     intel_data = json.load(open(intel_path)) if os.path.exists(intel_path) else {}
 
     snapshot_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_holdet.json')
-    snapshot = json.load(open(snapshot_path)) if os.path.exists(snapshot_path) else {}
+    if os.path.exists(snapshot_path):
+        snapshot = json.load(open(snapshot_path))
+    else:
+        _log(f"run-optimizer-py: no holdet snapshot for stage {stage} — using empty current_team (zero transfer cost)")
+        snapshot = {}
     budget = int(snapshot.get('bank_balance', 50_000_000))
     current_team_names = set(snapshot.get('team_composition', []))
-    current_team = [r for r in active_riders if r['name'] in current_team_names]
+    current_team = [r for r in active_riders if r['name'] in current_team_names] or None
 
     app.logger.info(f"run-optimizer-py stage={stage} budget={budget:,}")
     _log(f"run-optimizer-py stage={stage} budget={budget:,}")

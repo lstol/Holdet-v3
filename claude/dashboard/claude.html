@@ -141,8 +141,6 @@ a { color: var(--color-primary); }
 .btn-ghost { background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-2); }
 .btn-ghost:hover { color: var(--color-text); border-color: var(--color-text-3); }
 .btn-sm { padding: 4px 8px; font-size: 11px; }
-#run-optimizer-py-btn { background: #1e2a3a; color: #6b8cba; border: 1px solid #2e4060; }
-#run-optimizer-py-btn:hover { background: #253448; color: #89aad4; }
 .btn:disabled { opacity: .45; cursor: default; }
 
 /* ── Carousel ───────────────────────────────────────────────────── */
@@ -643,9 +641,6 @@ input[type=range]::-webkit-slider-thumb {
           <button id="run-optimizer-btn" class="btn btn-primary" onclick="runPyOptimizer()">
             <i class="ti ti-player-play"></i> Run optimizer
           </button>
-          <button id="run-optimizer-py-btn" class="btn btn-secondary" onclick="runOptimizer()">
-            <i class="ti ti-cpu"></i> Run API optimizer ↗
-          </button>
         </div>
       </div>
       <div id="optimizer-output" class="placeholder">
@@ -906,6 +901,7 @@ function renderStageResults(data) {
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Jersey</th>
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">GC</th>
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Team</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">Value</th>
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:12%;">Cap.</th>
           <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:8%;">Total</th>
         </tr>
@@ -916,6 +912,9 @@ function renderStageResults(data) {
           const isDNF = r.finish === 'DNF';
           const finishColor = r.finish === '1st' ? 'var(--color-success)'
                             : isDNF ? 'var(--color-danger)' : 'var(--color-text)';
+          const riderInfo = (S.riders || []).find(x => x.name.toLowerCase() === r.name.toLowerCase());
+          const price = riderInfo ? (riderInfo.price || riderInfo.startPrice || 0) : 0;
+          const priceStr = price ? (price / 1e6).toFixed(1) + 'M' : '—';
           return `<tr style="border-top:1px solid rgba(43,48,88,.4);${isDNF?'opacity:.5;':''}">
             <td style="padding:5px 10px;font-weight:${isCap?600:400};overflow:hidden;
                        text-overflow:ellipsis;white-space:nowrap;">
@@ -927,6 +926,7 @@ function renderStageResults(data) {
             <td style="padding:5px 8px;text-align:right;">${fmt(r.jersey_bonus)}</td>
             <td style="padding:5px 8px;text-align:right;">${fmt(r.gc_bonus)}</td>
             <td style="padding:5px 8px;text-align:right;">${fmt(r.team_bonus)}</td>
+            <td style="padding:5px 8px;text-align:right;color:var(--color-text-2);">${priceStr}</td>
             <td style="padding:5px 8px;text-align:right;color:var(--color-warning);">
               ${r.captain_bonus ? fmt(r.captain_bonus) : '—'}
             </td>
@@ -1843,35 +1843,6 @@ ${formatIntelForPrompt()}
 `;
 }
 
-async function runOptimizer() {
-  const btn = $('run-optimizer-btn');
-  const outEl = $('optimizer-output');
-  btn.textContent = 'Running…';
-  btn.disabled = true;
-  outEl.className = '';
-  outEl.textContent = 'Calling optimizer…';
-  try {
-    const res = await fetch(`${SERVER}/run-optimizer`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        stage: targetStage,
-        sliders: S.sliders,
-        force_in:  [...S.forceIn].map(id => { const r = S.riders.find(x => (x.rider_id || x.holdet_id) == id); return r ? r.name : id; }),
-        force_out: [...S.forceOut].map(id => { const r = S.riders.find(x => (x.rider_id || x.holdet_id) == id); return r ? r.name : id; }),
-      }),
-    });
-    const data = await res.json();
-    if (data.status === 'error') throw new Error(data.message);
-    renderOptimizerOutput(data);
-  } catch(e) {
-    outEl.innerHTML = `<div style="color:var(--color-danger,#e05)">Error: ${e.message}</div>`;
-  } finally {
-    btn.innerHTML = '<i class="ti ti-player-play"></i> Run optimizer';
-    btn.disabled = false;
-  }
-}
-
 async function runPyOptimizer() {
   const btn = $('run-optimizer-py-btn');
   const outEl = $('optimizer-output');
@@ -1890,7 +1861,7 @@ async function runPyOptimizer() {
   const abortTimeout = setTimeout(() => controller.abort(), 120_000);
 
   try {
-    const res = await fetch(`${SERVER}/run-optimizer-py`, {
+    const res = await fetch(`${SERVER}/run-optimizer`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       signal: controller.signal,
