@@ -52,12 +52,26 @@ def _log_optimizer(msg: str) -> None:
 
 def compute_seed(stage, sliders, force_in, force_out, use_race_type_adjustment):
     """Hash the optimizer inputs to a 64-bit int. Stable against list-order
-    variation in force_in / force_out (they're sorted before hashing)."""
+    variation in force_in / force_out (they're sorted before hashing).
+
+    S17-2 Tier A: when the race-type adjustment is off, n1 sliders have no
+    effect on the current-stage probabilities consumed by build_probabilities
+    (verified by inspection of optimizer.py:348-403 — the entire adjustment
+    block is gated by `if use_race_type and sliders:`). Including n1 in the
+    seed payload then causes the SA to pick a different local optimum across
+    search-equivalent inputs purely via seed perturbation — that's the bug
+    surfaced by the S17-2 diagnostic and the three-basin behaviour observed
+    in S17-21 Phase 1.5. Drop n1 from the hash in that case; n2/n3 still
+    feed build_forward_probabilities so they stay in.
+    """
+    sliders_for_hash = dict(sliders or {})
+    if not use_race_type_adjustment and 'n1' in sliders_for_hash:
+        sliders_for_hash = {k: v for k, v in sliders_for_hash.items() if k != 'n1'}
     payload = json.dumps({
-        "stage":                   stage,
-        "sliders":                 sliders,
-        "force_in":                sorted(force_in or []),
-        "force_out":               sorted(force_out or []),
+        "stage":                    stage,
+        "sliders":                  sliders_for_hash,
+        "force_in":                 sorted(force_in or []),
+        "force_out":                sorted(force_out or []),
         "use_race_type_adjustment": bool(use_race_type_adjustment),
     }, sort_keys=True, default=str)
     return int(hashlib.sha256(payload.encode()).hexdigest()[:16], 16)
