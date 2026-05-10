@@ -11,16 +11,36 @@ Hard constraints (enforced throughout):
   - Max 2 riders from the same real-world team
 """
 
+import datetime
 import hashlib
 import json
 import logging
 import math
+import os
 import re
 import random
 import time
 from collections import Counter, defaultdict
 
 import numpy as np
+
+
+# ── Diagnostic log (mirrors server.py's _log into claude/logs/server.log) ─
+_OPT_LOG_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    'claude', 'logs', 'server.log'
+)
+
+
+def _log_optimizer(msg: str) -> None:
+    """Best-effort append to server.log. Used for S17-21 multi-start
+    diagnostics — internal-only, not surfaced to API or dashboard."""
+    try:
+        os.makedirs(os.path.dirname(_OPT_LOG_FILE), exist_ok=True)
+        with open(_OPT_LOG_FILE, 'a') as f:
+            f.write(f"[{datetime.datetime.utcnow().isoformat()}] {msg}\n")
+    except Exception:
+        pass
 
 
 # ── Determinism ───────────────────────────────────────────────────────────────
@@ -787,7 +807,8 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
     # Initial solution
     team = get_valid_random_team(forced, pool, budget, rng=rng)
     if team is None:
-        return None, 0.0
+        return None, 0.0, {'iters': 0, 'accepts': 0, 'rejects': 0, 'skips': 0,
+                           'acceptance_rate': 0.0}
 
     # Mutable state
     current_score = compute_objective(team, probs, all_riders, objective,
@@ -795,6 +816,11 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
                                       current_team=current_team)
     best_team     = team[:]
     best_score    = current_score
+
+    # S17-21 multi-start diagnostics: count proposal outcomes per chain.
+    accepts = 0    # delta>0 OR Boltzmann-accepted moves
+    rejects = 0    # valid proposals that were Boltzmann-rejected
+    skips   = 0    # proposals invalidated before scoring (already-in-team / budget / team-cap)
 
     T       = 200_000.0
     cooling = 0.99997
@@ -833,6 +859,7 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
             new_rider = pool[rng.randrange(pool_len)]
 
         if any(new_rider['name'] == r['name'] for r in team):
+            skips += 1
             T *= cooling
             i += 1
             continue
@@ -841,6 +868,7 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
         new_team[out_pos] = new_rider
 
         if not is_valid(new_team, budget):
+            skips += 1
             T *= cooling
             i += 1
             continue
@@ -851,18 +879,29 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
         delta     = new_score - current_score
 
         if delta > 0 or rng.random() < math.exp(delta / max(T, 0.01)):
+            accepts += 1
             team          = new_team
             current_score = new_score
             if new_score > best_score:
                 best_score = new_score
                 best_team  = team[:]
+        else:
+            rejects += 1
 
         T *= cooling
         i += 1
 
     # Always return the true analytical EV (even for depth chains) for fair comparison
     best_ev = compute_team_ev(best_team, probs)
-    return best_team, best_ev
+    decisions = accepts + rejects
+    diags = {
+        'iters':            i,
+        'accepts':          accepts,
+        'rejects':          rejects,
+        'skips':            skips,
+        'acceptance_rate':  (accepts / decisions) if decisions else 0.0,
+    }
+    return best_team, best_ev, diags
 
 
 # ── Step 6: Team characterisation ────────────────────────────────────────────
@@ -959,63 +998,138 @@ def generate_candidate_teams(candidates, probabilities,
         seed=seed,
     )
 
-    # Per-strategy sub-seeds: XOR mask preserves divergent SA trajectories
-    # while keeping each chain reproducible. Falls back to legacy fixed seeds
-    # when no base seed is supplied.
-    def _sub(legacy, mask):
-        return (seed ^ mask) if seed is not None else legacy
+    # ── S17-21 multi-start configuration ──────────────────────────────────
+    # N=5 chains per strategy. Sub-seeds use a high-byte strategy mask so
+    # they don't collide with the existing seed scheme (forward 0xA/0xB,
+    # proxy/eval 0xF). Per-strategy chain seed = base ^ (strategy_xor << 8)
+    # ^ chain_xor.
+    N_CHAINS = 5
+    _CHAIN_XOR_MASKS = (0xC0, 0xC1, 0xC2, 0xC3, 0xC4)
+    # Shared simulate_stage evaluation seed: ensures all N candidate teams
+    # within a strategy are scored on the same Plackett-Luce random samples
+    # for a fair EV-best comparison. Reuses the 0xF mask (independent from
+    # the proxy fast_optimize call which also uses 0xF — different code path,
+    # different RNG instance).
+    eval_seed_shared = (seed ^ 0xF) if seed is not None else None
 
     strategies = [
         {
             'name': 'optimal', 'label': 'Optimal',
             'description': 'Maximise stage EV — best team for today',
-            'seed': _sub(42, 0x1), 'objective': 'ev', 'max_budget': budget,
+            'strategy_xor': 0x1, 'legacy_seed': 42,
+            'objective': 'ev', 'max_budget': budget,
             'n_iter': 200_000, 'max_seconds': 5,
         },
         {
             'name': 'depth', 'label': 'Depth maximiser',
             'description': 'Maximise riders in top 15 — targets non-linear depth bonus',
-            'seed': _sub(123, 0x2), 'objective': 'depth', 'max_budget': budget,
+            'strategy_xor': 0x2, 'legacy_seed': 123,
+            'objective': 'depth', 'max_budget': budget,
             'n_iter': 200_000, 'max_seconds': 5,
         },
         {
             'name': 'low-transfer', 'label': 'Low transfer cost',
             'description': f'Minimise transfers needed for stage n+1 ({n_tr_n1} expected from optimal)',
-            'seed': _sub(777, 0x3), 'objective': 'low_transfer', 'max_budget': budget,
+            'strategy_xor': 0x3, 'legacy_seed': 777,
+            'objective': 'low_transfer', 'max_budget': budget,
             'n_iter': 200_000, 'max_seconds': 5,
         },
         {
             'name': 'lookahead', 'label': 'Two-stage lookahead',
             'description': f'EV minus transfer costs n+1 ({n_tr_n1}) and n+2 ({n_tr_n2})',
-            'seed': _sub(2026, 0x4), 'objective': 'lookahead', 'max_budget': budget,
+            'strategy_xor': 0x4, 'legacy_seed': 2026,
+            'objective': 'lookahead', 'max_budget': budget,
             'n_iter': 200_000, 'max_seconds': 5,
         },
     ]
 
     results = []
     for strategy in strategies:
-        team, _ = simulated_annealing(
-            candidates, probabilities, force_in, force_out,
-            budget=strategy['max_budget'],
-            n_iter=strategy['n_iter'],
-            max_seconds=strategy['max_seconds'],
-            seed=strategy['seed'],
-            objective=strategy['objective'],
-            verbose=(strategy['name'] == 'optimal'),
-            cost_n1=cost_n1,
-            cost_n2=cost_n2,
-            team_n1=team_n1,
-            team_n2=team_n2,
-            current_team=current_team,
+        # Build the per-strategy chain seeds. Multi-start when a base seed is
+        # supplied (the realistic path from server.py /run-optimizer); legacy
+        # single-chain fallback when called without a seed.
+        chain_seeds = (
+            [seed ^ (strategy['strategy_xor'] << 8) ^ m for m in _CHAIN_XOR_MASKS]
+            if seed is not None
+            else [strategy['legacy_seed']]
         )
-        if team is None:
+
+        # Run each chain, then evaluate every chain's team with the shared
+        # simulate_stage seed so EVs are directly comparable.
+        chain_results = []
+        for ci, ch_seed in enumerate(chain_seeds):
+            team_ci, _ev_ci, sa_diags = simulated_annealing(
+                candidates, probabilities, force_in, force_out,
+                budget=strategy['max_budget'],
+                n_iter=strategy['n_iter'],
+                max_seconds=strategy['max_seconds'],
+                seed=ch_seed,
+                objective=strategy['objective'],
+                # Verbose only on the first chain of optimal — keeps log noise bounded.
+                verbose=(strategy['name'] == 'optimal' and ci == 0),
+                cost_n1=cost_n1,
+                cost_n2=cost_n2,
+                team_n1=team_n1,
+                team_n2=team_n2,
+                current_team=current_team,
+            )
+            if team_ci is None:
+                continue
+            team_ci = topup_team(team_ci, candidates, probabilities, all_riders,
+                                 strategy['max_budget'])
+            captain_ci = select_captain(team_ci, probabilities)
+            eval_seed_for_chain = (
+                eval_seed_shared if eval_seed_shared is not None else ch_seed
+            )
+            sim_ci = simulate_stage(team_ci, probabilities, captain_ci['name'],
+                                    all_riders=all_riders,
+                                    stage_config=stage_config, scoring=scoring,
+                                    seed=eval_seed_for_chain)
+            chain_results.append({
+                'index':    ci,
+                'seed':     ch_seed,
+                'team':     team_ci,
+                'captain':  captain_ci,
+                'sim':      sim_ci,
+                'ev':       int(sim_ci['mean']),
+                'sa_diags': sa_diags,
+                # Team identity: sorted holdet_ids when present, fallback to
+                # names. Used to detect convergence across chains.
+                'team_id':  tuple(sorted(
+                    str(r.get('holdet_id') if r.get('holdet_id') is not None else r.get('name', ''))
+                    for r in team_ci
+                )),
+            })
+
+        if not chain_results:
             continue
-        team = topup_team(team, candidates, probabilities, all_riders, strategy['max_budget'])
-        captain = select_captain(team, probabilities)
-        sim = simulate_stage(team, probabilities, captain['name'],
-                             all_riders=all_riders,
-                             stage_config=stage_config, scoring=scoring,
-                             seed=strategy['seed'])
+
+        # Pick the EV-best chain. Ties broken by lowest chain index for stability.
+        best_idx = max(range(len(chain_results)),
+                       key=lambda j: (chain_results[j]['ev'], -chain_results[j]['index']))
+        best     = chain_results[best_idx]
+
+        # ── Diagnostic log ────────────────────────────────────────────────
+        chain_evs         = [c['ev'] for c in chain_results]
+        ev_spread         = max(chain_evs) - min(chain_evs)
+        convergence_count = sum(1 for c in chain_results if c['team_id'] == best['team_id'])
+        diag = {
+            'strategy':            strategy['name'],
+            'n_chains_attempted':  len(chain_seeds),
+            'n_chains_succeeded':  len(chain_results),
+            'chosen_chain_index':  best['index'],
+            'convergence_count':   convergence_count,
+            'ev_spread':           ev_spread,
+            'chain_evs':           chain_evs,
+            'chain_acceptance':    [round(c['sa_diags']['acceptance_rate'], 3) for c in chain_results],
+            'chain_iters':         [c['sa_diags']['iters'] for c in chain_results],
+        }
+        _log_optimizer(f"sa-multistart {json.dumps(diag, default=str)}")
+
+        # Adopt the EV-best chain's outputs for the rest of the result-assembly.
+        team    = best['team']
+        captain = best['captain']
+        sim     = best['sim']
 
         actual_cost_n1 = compute_transfer_cost(team, team_n1 or []) if team_n1 else 0
         actual_cost_n2 = compute_transfer_cost(team_n1 or [], team_n2 or []) if team_n1 and team_n2 else 0
