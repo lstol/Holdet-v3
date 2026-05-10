@@ -11,6 +11,8 @@ Hard constraints (enforced throughout):
   - Max 2 riders from the same real-world team
 """
 
+import hashlib
+import json
 import logging
 import math
 import re
@@ -19,6 +21,27 @@ import time
 from collections import Counter, defaultdict
 
 import numpy as np
+
+
+# ── Determinism ───────────────────────────────────────────────────────────────
+#
+# S16-3: every RNG site below threads through an explicit seed derived from the
+# request payload. Identical inputs → bit-identical outputs. Per-strategy
+# sub-seeds (XOR mask) preserve the "four genuinely different SA trajectories"
+# property without leaking state across strategies.
+
+def compute_seed(stage, sliders, force_in, force_out, use_race_type_adjustment):
+    """Hash the optimizer inputs to a 64-bit int. Stable against list-order
+    variation in force_in / force_out (they're sorted before hashing)."""
+    payload = json.dumps({
+        "stage":                   stage,
+        "sliders":                 sliders,
+        "force_in":                sorted(force_in or []),
+        "force_out":               sorted(force_out or []),
+        "use_race_type_adjustment": bool(use_race_type_adjustment),
+    }, sort_keys=True, default=str)
+    return int(hashlib.sha256(payload.encode()).hexdigest()[:16], 16)
+
 
 # ── Scoring constants ─────────────────────────────────────────────────────────
 
@@ -451,14 +474,18 @@ def is_valid(team, budget=BUDGET):
 
 # ── Step 4: Random valid initial solution ─────────────────────────────────────
 
-def get_valid_random_team(forced, pool, budget):
+def get_valid_random_team(forced, pool, budget, rng=None):
     """
     Return a random valid team by shuffling pool and greedily filling.
     Returns None if no valid team found after many attempts.
+
+    rng: random.Random instance for deterministic shuffles. When None, falls
+    back to the global random module (legacy / direct-call path).
     """
+    shuffler = rng if rng is not None else random
     for _ in range(5_000):
         shuffled = pool[:]
-        random.shuffle(shuffled)
+        shuffler.shuffle(shuffled)
 
         team = list(forced)
         tc   = defaultdict(int)
@@ -593,7 +620,7 @@ def fast_optimize(candidates, probabilities, all_riders, force_in, force_out, bu
     pool   = [r for r in candidates
               if r['name'] not in excluded_set and r['name'] not in forced_set]
 
-    team = get_valid_random_team(forced, pool, budget)
+    team = get_valid_random_team(forced, pool, budget, rng=rng)
     if not team:
         return None
 
@@ -638,10 +665,14 @@ def fast_optimize(candidates, probabilities, all_riders, force_in, force_out, bu
 
 
 def estimate_forward_costs(current_team, candidates, all_riders,
-                            probs_n1, probs_n2, force_in, force_out, budget):
-    """Two-step transfer cost estimation using fast SA."""
-    team_n1 = fast_optimize(candidates, probs_n1, all_riders, force_in, force_out, budget, seed=42)
-    team_n2 = fast_optimize(candidates, probs_n2, all_riders, force_in, force_out, budget, seed=42)
+                            probs_n1, probs_n2, force_in, force_out, budget,
+                            seed=None):
+    """Two-step transfer cost estimation using fast SA. The two forward chains
+    use distinct sub-seeds so they don't run identical trajectories."""
+    seed_n1 = (seed ^ 0xA) if seed is not None else 42
+    seed_n2 = (seed ^ 0xB) if seed is not None else 42
+    team_n1 = fast_optimize(candidates, probs_n1, all_riders, force_in, force_out, budget, seed=seed_n1)
+    team_n2 = fast_optimize(candidates, probs_n2, all_riders, force_in, force_out, budget, seed=seed_n2)
 
     cost_n1 = compute_transfer_cost(current_team, team_n1 or [], probs_n1) if team_n1 else 0
     cost_n2 = compute_transfer_cost(team_n1 or [], team_n2 or [], probs_n2) if team_n1 and team_n2 else 0
@@ -740,7 +771,7 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
     pool_len     = len(pool)
 
     # Initial solution
-    team = get_valid_random_team(forced, pool, budget)
+    team = get_valid_random_team(forced, pool, budget, rng=rng)
     if team is None:
         return None, 0.0
 
@@ -876,7 +907,7 @@ def generate_candidate_teams(candidates, probabilities,
                               probs_n1, probs_n2,
                               force_in, force_out, budget,
                               stage_config, scoring, all_riders,
-                              current_team=None):
+                              current_team=None, seed=None):
     """
     Run four strategy-differentiated SA chains and return all four results.
     No deduplication — each strategy has a distinct objective.
@@ -886,6 +917,13 @@ def generate_candidate_teams(candidates, probabilities,
       depth        — maximise expected riders in top-15
       low-transfer — minimise transfer cost to n+1
       lookahead    — EV minus discounted two-stage transfer costs
+
+    seed: base seed (typically from compute_seed). Each strategy uses a
+    sub-seed (base_seed XOR strategy_idx) so strategies don't share an
+    SA trajectory while still being deterministic. None → legacy hard-coded
+    seeds (still deterministic per chain, but Plackett-Luce + initial-team
+    shuffle remain unseeded → drift between runs, S16-1 verification noted
+    0.7-2.1% non-determinism).
     """
     global rider_ev_cache
     rider_ev_cache = {
@@ -894,37 +932,46 @@ def generate_candidate_teams(candidates, probabilities,
     }
 
     # Forward cost estimation — use current team or fast-optimised proxy
+    proxy_seed = (seed ^ 0xF) if seed is not None else 0
     proxy = current_team or fast_optimize(
-        candidates, probabilities, all_riders, force_in, force_out, budget, seed=0
+        candidates, probabilities, all_riders, force_in, force_out, budget,
+        seed=proxy_seed,
     )
     cost_n1, cost_n2, n_tr_n1, n_tr_n2, team_n1, team_n2 = estimate_forward_costs(
         proxy or [], candidates, all_riders,
-        probs_n1, probs_n2, force_in, force_out, budget
+        probs_n1, probs_n2, force_in, force_out, budget,
+        seed=seed,
     )
+
+    # Per-strategy sub-seeds: XOR mask preserves divergent SA trajectories
+    # while keeping each chain reproducible. Falls back to legacy fixed seeds
+    # when no base seed is supplied.
+    def _sub(legacy, mask):
+        return (seed ^ mask) if seed is not None else legacy
 
     strategies = [
         {
             'name': 'optimal', 'label': 'Optimal',
             'description': 'Maximise stage EV — best team for today',
-            'seed': 42, 'objective': 'ev', 'max_budget': budget,
+            'seed': _sub(42, 0x1), 'objective': 'ev', 'max_budget': budget,
             'n_iter': 200_000, 'max_seconds': 5,
         },
         {
             'name': 'depth', 'label': 'Depth maximiser',
             'description': 'Maximise riders in top 15 — targets non-linear depth bonus',
-            'seed': 123, 'objective': 'depth', 'max_budget': budget,
+            'seed': _sub(123, 0x2), 'objective': 'depth', 'max_budget': budget,
             'n_iter': 200_000, 'max_seconds': 5,
         },
         {
             'name': 'low-transfer', 'label': 'Low transfer cost',
             'description': f'Minimise transfers needed for stage n+1 ({n_tr_n1} expected from optimal)',
-            'seed': 777, 'objective': 'low_transfer', 'max_budget': budget,
+            'seed': _sub(777, 0x3), 'objective': 'low_transfer', 'max_budget': budget,
             'n_iter': 200_000, 'max_seconds': 5,
         },
         {
             'name': 'lookahead', 'label': 'Two-stage lookahead',
             'description': f'EV minus transfer costs n+1 ({n_tr_n1}) and n+2 ({n_tr_n2})',
-            'seed': 2026, 'objective': 'lookahead', 'max_budget': budget,
+            'seed': _sub(2026, 0x4), 'objective': 'lookahead', 'max_budget': budget,
             'n_iter': 200_000, 'max_seconds': 5,
         },
     ]
@@ -950,7 +997,8 @@ def generate_candidate_teams(candidates, probabilities,
         captain = select_captain(team, probabilities)
         sim = simulate_stage(team, probabilities, captain['name'],
                              all_riders=all_riders,
-                             stage_config=stage_config, scoring=scoring)
+                             stage_config=stage_config, scoring=scoring,
+                             seed=strategy['seed'])
 
         actual_cost_n1 = compute_transfer_cost(team, team_n1 or []) if team_n1 else 0
         actual_cost_n2 = compute_transfer_cost(team_n1 or [], team_n2 or []) if team_n1 and team_n2 else 0
@@ -1028,7 +1076,7 @@ def select_captain(team_riders, all_probs):
 # ── Monte Carlo simulation (Plackett-Luce) ────────────────────────────────────
 
 def simulate_stage(team_riders, all_probs, captain_name, all_riders=None,
-                   n_sims=10_000, stage_config=None, scoring=None):
+                   n_sims=10_000, stage_config=None, scoring=None, seed=None):
     """
     Simulate n_sims stage outcomes using Plackett-Luce sampling.
 
@@ -1038,6 +1086,7 @@ def simulate_stage(team_riders, all_probs, captain_name, all_riders=None,
 
     stage_config: dict from stage_scoring.json['stages']['N']
     scoring:      full stage_scoring.json dict
+    seed:         int for the Plackett-Luce RNG. None → unseeded (legacy).
     Returns {'mean', 'cdf': {p25,p50,p75,p90}, 'breakdown': {...}}.
     """
     if stage_config is None:
@@ -1054,7 +1103,7 @@ def simulate_stage(team_riders, all_probs, captain_name, all_riders=None,
     climbs      = stage_config.get('climbs', [])
     sprint_type = stage_config.get('sprint_type', 'A')
 
-    rng = np.random.default_rng()
+    rng = np.random.default_rng(seed)
 
     field_names = list(all_probs.keys())
     field_probs = np.array([all_probs[n]['win'] for n in field_names], dtype=np.float64)

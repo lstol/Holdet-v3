@@ -469,11 +469,18 @@ def run_optimizer_py():
 
     try:
         from optimizer import (build_probabilities, build_forward_probabilities,
+                               compute_seed,
                                generate_candidate_teams, load_stage_scoring, get_stage_config,
                                select_captain)
 
         scoring      = load_stage_scoring()
         stage_config = get_stage_config(stage, scoring)
+
+        # S16-3: derive a deterministic seed from the request payload so
+        # identical inputs produce bit-identical outputs across runs. The
+        # seed is propagated to every RNG site in the optimizer pipeline
+        # (initial-team shuffle, SA exploration, Plackett-Luce sampling).
+        base_seed = compute_seed(stage, sliders, force_in, force_out, use_race_type)
 
         # Current stage: real odds + intel (+ optional race-type adjustment from n1 slider)
         probs_current = build_probabilities(
@@ -492,6 +499,7 @@ def run_optimizer_py():
             force_in, force_out, budget,
             stage_config, scoring, active_riders,
             current_team=current_team if current_team else None,
+            seed=base_seed,
         )
 
         if not teams:
@@ -1160,8 +1168,15 @@ def score_ingemann():
                 'requested': rider_names,
             }), 400
 
+        # S16-3: seed Plackett-Luce so Ingemann EV is stable across re-runs.
+        # Seed varies per stage + per team so different inputs produce
+        # different sample paths, but identical inputs are bit-identical.
+        from optimizer import compute_seed as _compute_seed_opt
+        sim_seed = _compute_seed_opt(stage, {'team': sorted(r['name'] for r in team),
+                                             'captain': captain_name}, [], [], False)
         sim = simulate_stage(team, probs, captain_name, all_riders=active,
-                             stage_config=stage_config, scoring=scoring)
+                             stage_config=stage_config, scoring=scoring,
+                             seed=sim_seed)
 
         result = {
             'label':       "Ingemann's Benchmark",
