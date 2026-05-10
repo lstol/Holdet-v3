@@ -1,126 +1,235 @@
-# Holdet v3 — Project Roadmap
+# Holdet v3 — Roadmap
 
-**Race:** Giro d'Italia 2026
-**Stage 1:** May 8 (Nessebar → Burgas, 147 km, flat sprint)
-**Last updated:** Session 5 (2026-05-08) — Playwright scrapers, four-strategy SA optimizer, Ingemann benchmark, stage state management
+Living document. Replaces the prior roadmap section in the v5 onboarding doc. Tracks completed work across sessions and future planned work.
 
----
-
-## Status
-
-| Area | Status |
-|------|--------|
-| Framing doc | ✅ Locked — `shared/rules/Giro_Fantasy_Optimizer_Framing.md` |
-| Scoring rules | ✅ Carried from v2 — `shared/rules/02_rules_payoff.md` |
-| Game strategy | ✅ Carried from v2 — `shared/rules/game_strategy.md` |
-| fetch_riders.py | ✅ Verified live against Holdet.dk — 184 active riders locked |
-| capture_cookie.py | ✅ Carried from v2 — `claude/engine/capture_cookie.py` |
-| Rider universe | ✅ 184 active riders — `shared/data/riders/giro_2026/riders.json` |
-| Repo structure | ✅ Clean — claude/ chatgpt/ shared/ layout, giro_2026/ subfolders |
-| expert_sources.yaml | ✅ Created — `claude/engine/expert_sources.yaml` (Claude-internal only) |
-| chatgpt/ scaffold | ✅ Created — explicit ChatGPT optimizer workspace under `chatgpt/src/` |
-| chatgpt/dashboard | ✅ Created — dark static cockpit + direct-file stage image loader |
-| chatgpt rider loader | ✅ Created — explicit Giro 2026 loader and dashboard rider artifact |
-| Dashboard | ✅ `claude/dashboard/claude.html` — fully wired, no server needed, opens as file:// |
-| build_dashboard.py | ✅ Embeds riders + stages as `window.RIDERS_DATA` / `window.STAGES_DATA` |
-| server.py | ✅ Full Flask app — /riders, /refresh, /parse-odds-image, /gather-intel, /save-weights |
-| claude/output/ | ✅ Created — per-stage Claude optimization output (never written to shared/) |
-| Stage images | ✅ 21 images at `shared/data/stage_images/giro_2026/stage-{N}.jpg`; served via GitHub raw URL |
-| giro_2026/ subfolder pattern | ✅ Canonical — riders/, stages/, stage_images/ all use race subfolders |
-| sessions/notes/decisions | ✅ Under `claude/` — Claude-specific, not shared |
-| decisions_log.md | ✅ `claude/decisions/decisions_log.md` — decisions from Sessions 1–4 |
-| Optimizer | ✅ Four-strategy SA optimizer — `claude/engine/optimizer.py` |
-| scraper.py | ✅ Playwright scrapers — TV2, Feltet, Inner Ring (with login) |
-| Ingemann benchmark | ✅ /gather-ingemann, /score-ingemann, /load-ingemann-scored |
-| Stage state management | ✅ targetStage selector, carousel sync, stage results panel |
-| Post-stage results | ✅ /stage-results endpoint — loads stage_N_results.json |
-| Snapshot schema | ✅ Specified in framing doc Section 12 |
-| Pre-race snapshot | ✅ `shared/data/snapshots/stage_1_holdet.json` — 184 riders, pre-race prices |
-| One-click refresh | ✅ `claude/engine/refresh.sh` + `HoldetRefresh.app` with `holdet://` URL scheme |
-| Column sorting | ✅ All columns sortable in rider table |
-| Stage carousel | ✅ All 21 stages in profile carousel |
-| Tier logic | ✅ TYPE_FIT matrix replaces terrain_affinity formula |
-| Slider auto-sum | ✅ Stage-type sliders auto-balance to 100% |
-| Odds table | ✅ Auto-populated top-30 by stage relevance (not just price) |
-| Odds image paste | ✅ Cmd+V Oddschecker screenshot → /parse-odds-image → odds table |
-| Stage 1 date | ✅ May 8, Nessebar → Burgas, 147km flat sprint |
-| LaunchAgent | ✅ Server auto-starts on login via com.holdet.server |
+**Project**: Holdet v3 (repo at `~/Claude/Holdet-v3/`)
+**Race target**: Tour de France 2026 (early July). Giro d'Italia 2026 is calibration.
+**Last updated**: May 10, 2026 (mid-Session 17, post-Sub-A close, Stage 3 racing).
 
 ---
 
-## Immediate — before Stage 1 (May 8)
+## Update protocol
 
-- [x] Scaffold repo structure into claude/ chatgpt/ shared/ layout (Session 2)
-- [x] Create `claude/engine/expert_sources.yaml` with default weights (Session 2b)
-- [x] Clean repo: remove duplicates, consolidate claude/, create chatgpt/ stub (Session 2c)
-- [x] Wire dashboard to read rider + stage data (build_dashboard.py injection, no server needed)
-- [x] Verify `claude/engine/fetch_riders.py` runs clean against live Holdet.dk
-- [x] Run pre-Stage 1 data fetch and commit `shared/data/snapshots/stage_1_holdet.json`
-- [x] One-click refresh: refresh.sh + HoldetRefresh.app + holdet:// URL scheme
-- [x] Odds: Cmd+V Oddschecker screenshot → /parse-odds-image (Session 5)
-- [ ] Claude gathers expert intel for Stage 1
-- [ ] Produce `stage_1_snapshot.json` for ChatGPT handoff
-- [x] ChatGPT onboarding: scaffold independent optimizer workspace and session log
-- [x] Define initial `stage_N_chatgpt.json` output writer scaffold
-- [x] Create local static ChatGPT expert cockpit with all core sections visible
-- [x] Load Giro 2026 rider universe into ChatGPT-local dashboard artifact
-- [ ] Replace ChatGPT dashboard mock data with `chatgpt/output/stage_N_chatgpt.json`
+- Update at the close of each handoff that completes scope, or when scope changes mid-session
+- Each item carries: ID, status, one-line description, optional notes
+- Status values: ✅ closed, 🟡 in flight, ⏳ queued, 💭 decision pending, ❌ withdrawn
+- When an item closes, add a brief "delivered" note (one line) capturing what actually shipped vs. originally planned — divergence is the learning artifact
 
 ---
 
-## Pre-race workflow (each stage)
+## Completed work
 
-1. `python3 claude/engine/fetch_riders.py` → `shared/data/snapshots/stage_N_holdet.json`
-2. Gather odds snapshot
-3. Gather expert intel (per `expert_sources.yaml`)
-4. Review Tier-A list in dashboard
-5. Review and adjust expert weights in dashboard
-6. Set stage-type sliders
-7. Lock `stage_N_snapshot.json` → commit for ChatGPT
-8. Run optimizer → CDF + candidate teams
-9. Compare Claude vs ChatGPT output
-10. Set captain, submit team
+### Session 1 — repo establishment (closed, ~2026-05-05/06)[^s1]
+
+- ✅ Holdet v3 repo established with structure carried from v2 (commit `2527374`).
+- ✅ Initial roadmap and Claude Code standing instructions added (commit `afa1fe7`).
+
+### Session 2 — repo restructure (closed, 2026-05-06; spans sub-files 2 / 2b / 2c / 2d / 2e / 2f)
+
+- ✅ Repo restructured into `claude/` / `chatgpt/` / `shared/` top-level layout.
+- ✅ `expert_sources.yaml` placed at `claude/engine/` (Claude-internal only).
+- ✅ `shared/rules/` declared single source of truth for rules + framing docs; framing doc Section 13 (System Architecture) added.
+- ✅ `claude/decisions/decisions_log.md`, `claude/notes/`, `claude/sessions/` established under `claude/`; ChatGPT scaffolds its own equivalents independently.
+- ✅ `claude/output/` added; convention "each system writes output to its own directory, never to `shared/`."
+- ✅ Stage images (21 files, `stage-1.jpg` → `stage-21.jpg`) tracked under `shared/data/stage_images/`. Dashboard switched to `<img>` with GitHub raw URL fallback for `file://` mode.
+- ✅ `shared/data/` reorganised into `giro_2026/` subfolders (`riders/giro_2026/`, `stages/giro_2026/`, `stage_images/giro_2026/`) — canonical pattern for multi-race support.
+- ✅ ChatGPT optimizer workspace scaffolded (`3e15312`).
+
+### Session 3 — initial dashboard + server (closed, 2026-05-06)[^s3]
+
+- ✅ `claude/dashboard/claude.html` — full single-page dashboard: header (stage title, bank, status, refresh), stage carousel for S1–S21, n+1/n+2/n+3 stage-type sliders with sum validator, expert-weight sliders, editable bookmaker odds table, intel notes textarea, candidate teams area, full 210-rider table with search + filter pills + dynamic Tier (A/B) + Force In/Out toggles + status badge.
+- ✅ `claude/engine/server.py` — local Flask server: `POST /refresh`, `POST /save-weights`, `GET /snapshot`, `GET /files/<path>`, `GET /dashboard`.
+
+### Session 4 — dashboard hardening + standalone mode (closed, 2026-05-07)
+
+- ✅ `build_dashboard.py` — embeds `window.RIDERS_DATA` and `window.STAGES_DATA` inline so the dashboard works as `file://` with no server needed.
+- ✅ `fetch_riders.py` verified live against Holdet.dk API; 184 active riders locked into `stage_1_holdet.json`. Two-mode filter (initial run filters active; subsequent runs preserve the locked set despite mid-race withdrawals).
+- ✅ One-click refresh: `claude/engine/refresh.sh`, `claude/tools/holdet-refresh.sh`, `HoldetRefresh.app` AppleScript app, `holdet://` URL scheme registered with `lsregister`.
+- ✅ Column sorting on all rider table columns (`COLS` / `getSortVal()` / `setSort()` / `renderTableHeader()`).
+- ✅ All 21 stages in carousel; previously stub showed only a subset.
+- ✅ `TYPE_FIT` matrix replaces unreliable `terrain_affinity` formula for tier assignment.
+- ✅ Slider auto-balance (proportional redistribution to sum 100%).
+- ✅ Stage-relevance odds table — top-30 ranked by `riderStageScore()` (type fit × current stage weights).
+- ✅ Decision: embed data, don't fetch. Dashboard works standalone; server.py kept for future optimizer use.
+
+### Session 5 — server rewrite + scrapers + four-strategy optimizer (closed, 2026-05-08; multi-part, two log files)[^s5]
+
+- ✅ `claude/engine/server.py` rewritten as proper Flask app on port 5050: CORS, dotenv, `sys.executable` subprocess, LaunchAgent auto-start (`claude/tools/com.holdet.server.plist`), logging to `claude/logs/`.
+- ✅ `POST /parse-odds-image` — vision endpoint accepting base64 screenshots → `claude-haiku-4-5-20251001` → JSON odds array. Cmd+V paste handler on `#odds-panel`.
+- ✅ Decision: odds via screenshot paste, not API. Every major bookmaker site is Cloudflare-protected; The Odds API has no cycling catalog; web_search hits rate limits. Vision-on-screenshot is the clean path. `/gather-odds` removed.
+- ✅ `claude/engine/scraper.py` — Playwright scrapers for TV2 (Axelgaard preview), Feltet (stage analysis + Ingemann team), Inner Ring (no login). `scrape_all_intel()` orchestrates concurrently.
+- ✅ `claude/engine/optimizer.py` — four-strategy SA optimizer: `compute_transfer_cost`, `build_forward_probabilities` (slider-based type inference), `estimate_forward_costs` with `fast_optimize`, `compute_objective` with 4 modes (`ev`, `depth`, `low_transfer`, `lookahead`), `generate_candidate_teams` (one SA chain per strategy).
+- ✅ `LOOKAHEAD_DISCOUNT = 0.7`, `TRANSFER_COST_RATE = 0.01` (1% buy price).
+- ✅ Decision: four strategies always returned (no dedup, no sort by EV) — preserves each strategy's distinct recommendation.
+- ✅ `POST /gather-intel` rewritten — Playwright scrape + single Haiku structuring call → `stage_N_intel.json`. `POST /gather-ingemann`, `POST /score-ingemann`, `GET /load-ingemann-scored` round trip for Ingemann benchmark card. `GET /current-team`, `GET /stage-results`.
+- ✅ Stage 1 date corrected (May 8 not May 9, Nessebar → Burgas).
+- ✅ Dashboard: `targetStage` separated from carousel display index; target-stage dropdown; `renderOptimizerOutput` redesigned with Ingemann card leftmost + four strategy cards with forward cost components.
+
+### Session 6 — state persistence + intel structuring (closed, 2026-05-08)
+
+- ✅ Slider persistence — `localStorage('holdet_sliders')` write/restore.
+- ✅ Odds bucket merging fix — win-paste handler zeroes only `r.win` (preserves `top3`/`top10` from prior pastes); server-side `/parse-odds-image` already merged on `stage_N_odds.json`.
+- ✅ Intel scraper improvements — TV2 search starts from Axelgaard's author profile; Feltet stage-analysis pattern simplified; multi-page cross-section search added.
+- ✅ Feltet login fixed — `/login` with `wait_until='load'` → dismiss "Tillad alle" → click `a[href*="/api/auth/login"]` → jppol.dk Auth0 OAuth flow → email + password screens. Confirmed working: 5,506 chars returned for stage 2 analysis.
+- ✅ Two-step `/gather-intel` — search prose first, structure JSON second (commits `a5716d2`, `b7b7c8a`, `3695491`).
+- ✅ "Session 6 remainder": slider labels show actual stage numbers based on `targetStage`; `loadCurrentTeam()` + current team card rendered in optimizer output as second-from-left.
+
+### Session 7 — stage selector polish (closed, 2026-05-08)
+
+- ✅ Header cleanup — removed "Preparing for" / "· Next stage: N" labels; just "Next stage" + dropdown.
+- ✅ Dropdown back to `<select>` with explicit colours (Safari was rendering frozen number-input).
+- ✅ `initStageSelect()` populates options 1–21 using `st.date > TODAY` (today's completed stage not re-targeted); `setTargetStage` guards against NaN/0/out-of-range.
+- ✅ `renderTable()` adds `r._type` guard (`const rtype = r._type || 'Lead-out'`) preventing TypeError when riders load without a type.
+
+### Session 8 — stabilisation fixes (closed, 2026-05-08)[^s8]
+
+- ✅ Several small fix commits between sessions 7 and 9 — refresh restored to riders-only, server-msg visibility, label wording, null-safe rider count, team URL revert to `BASE_URL`, SystemExit catch in `/refresh` to prevent server crash on auth failure, null-guard `h-stage-title` (root cause of empty rider table).
+
+### Session 9 — rider table diagnostics + manual team entry (closed, 2026-05-08)
+
+- ✅ Diagnostic logging in `loadRiders()` and `renderTable()` (per-row try/catch, `rid` fallback to `r.name`).
+- ✅ `fetch_team_as_dict()` URL fix — was using `BASE_URL` (API backend); switched to `https://holdet.dk/da/{cartridge}/me/fantasyteams/{fantasy_team_id}`.
+- ✅ Manual team entry panel — full section with "Current team" header, edit button, textarea (9 rows), captain input, Save/Cancel.
+- ✅ `loadCurrentTeam()` 3-tier fallback — localStorage → `/current-team` API → empty/edit prompt.
+- ✅ `POST /save-current-team` endpoint writes `team_composition` + `captain` into `stage_N_holdet.json`.
+
+### Session 10 — Stage 2 readiness (closed, 2026-05-08)[^s10]
+
+- ✅ Single commit `4393ccb session 10: stage 2 readiness — expert weights, optimizer, intel verified`. Verification pass before Stage 2 race; no functional changes captured in dedicated log.
+
+### Session 11 — five fixes (closed, 2026-05-08)
+
+- ✅ **Fix 1** — Carousel pill display-only: removed `setTargetStage()` from pill `onclick`; pills update display index without reloading optimizer/odds/intel.
+- ✅ **Fix 2** — Expert weights `localStorage` persistence (mirrors slider persistence pattern).
+- ✅ **Fix 3** — Inner Ring removed from `S.expertSources` and `expert_sources.yaml`. Scraper still fetches Inner Ring text but Haiku's prompt no longer assigns it a named weight.
+- ✅ **Fix 4** — Ingemann JSON extraction: regex `\{.*\}` (DOTALL) replaces strict `json.loads(raw.strip())`, plus tighter prompt ("No text before or after. No markdown fences").
+- ✅ **Fix 5** — Stage results from players API. Probing nexus `/api/games/{id}/rounds/*` revealed Next.js HTML, not JSON. Players API is the only real JSON endpoint; cumulative `points` field after stage scoring. New flow: fetch players API → cross-reference with team snapshot → write `stage_N_results.json`. `fetchStageResults()` calls `renderStageResults()` directly.
+- ✅ **Fix 5b** (cont) — `fetch_stage_results` falls back to live `fetch_team_as_dict()` call when snapshot's `team_composition` is empty; persists composition back into snapshot for subsequent calls.
+
+### Session 12 — Ingemann polish + transfer cost surfacing (closed, 2026-05-08)[^s12]
+
+- ✅ Single commit `75698a0 Session 12: ingemann body logging, rider name matching, placeholder card`.
+- ✅ `db5e3e5` — `transfer_cost` added to optimizer output and card display.
+
+### Sessions 13–14 — pre-S15 cleanup (closed, 2026-05-08/09)[^s13]
+
+- ✅ `6ddbf16` Removed API optimizer button; renamed `/run-optimizer-py` → `/run-optimizer`; fixed Holdet snapshot.
+- ✅ `1643e92` Fixed `runPyOptimizer`: button ref updated.
+- ✅ `bb71b7e session 15 snapshot: pre-merge state — stage 2 odds/intel/ingemann, riders refresh, Feltet weight 1.3→1.0` — Feltet weight in `expert_sources.yaml` adjusted to 1.0 here.
+
+### Session 15 — Stage 2 prep, multiple handoffs (closed, 2026-05-09)
+
+- ✅ **Handoff A** (read-only diagnostic) — Two real bugs surfaced:
+  - Current-stage slider was ignored (`build_probabilities` had `sliders=None` in signature but body never referenced it).
+  - Forward stages couldn't differentiate riders by type — `r.get('type', 'All-rounder')` always fell through because `riders.json` carries `terrain_affinity` not a top-level `type` key. Every rider got the same `TYPE_WIN_WEIGHT` scalar; renormalisation produced uniform 1/N. Forward fast_optimize chose undifferentiated teams.
+- ✅ **Handoff B** — Current team sourced from previous stage's `stage_{prev}_results.json` (post-stage scored rider list), not target-stage holdet snapshot. Case-insensitive fallback added (`Dries van Gestel` vs `Dries Van Gestel` had been silently dropping a rider 7/8). B-tail removed redundant manual Current Team panel; "How it unfolded" panel is the single source of truth.
+- ✅ **Handoff D₁** — Bank display removed from header; Refresh button renamed "Refresh riders"; EV breakdown row label "Total" renamed "Net EV"; `Σ(rendered_breakdown_rows) = ev_estimate − transfer_cost = ev_net` invariant verified across all four strategies.
+- ✅ **Handoff D₂** — Intel panel filled its rectangle (CSS flex column fix); Ingemann button repositioned; New Rider Value column added then dropped (commit `822f08d`); depth bonus reverse-map count fix in `fetch_riders.py` (snapshot stored `riders_in_top15: 0` because computation was buggy; patched writer + back-patched `stage_1_results.json`).
+- ✅ **Handoff F₁** — Slider buckets renamed across `optimizer.py` / `server.py` / `claude.html`: `sprint`/`hilly`/`hardgc`/`mixed` → `bunch_sprint`/`reduced_sprint`/`gc`/`breakaway`. Module-level `SCENARIO_TO_TERRAIN` introduced; `build_forward_probabilities` rewritten to score riders via `terrain_affinity` × scenario weights (revives forward lookahead).
+- ✅ **Handoff F₂a** — Race-type tickbox added to dashboard (`use_race_type_adjustment`, default OFF). When enabled with non-uniform n1 sliders, `build_probabilities` applies a `SCENARIO_TO_TERRAIN`-derived multiplier (`clamp(match/baseline, 0.6, 1.5)`) to `win`/`top3`/`top10`/`top15`, then renormalises each bucket to its pre-multiplier sum (preserves bookmaker overround). Recomputes `finish_probs`/`finish_ev` consistently.
+- ✅ **Handoff F₂b** — Forward costs and transfer-adjusted EV surfaced on every candidate card. Confirmed response shape: `team.ev_estimate`, `team.transfer_cost`, `team.ev_net = ev_estimate − transfer_cost`, `team.forward.{cost_n1, cost_n2, transfers_n1, transfers_n2, total_forward_cost}`. Established that transfer-adj EV = `ev_net − cost_n1 − 0.7 × cost_n2`. **Surfaced concern**: at certain inputs Low-transfer beats Lookahead on transfer-adj EV — Lookahead's internal objective ignores `tc_current`. Carried forward to S16-4. Also surfaced: `simulate_stage` uses unseeded `np.random.default_rng()` (~0.5% drift between identical-input runs). Carried forward to S16-3.
+
+### Session 16 (closed)
+
+- ✅ **S16-1** — Depth bonus curve corrected to authoritative `0/4/8/15/35/65/120/220/400` (k for 0-8 riders in top-15). Used by both forward EV and reverse-map; curves match but duplicated across `optimizer.py` and `fetch_riders.py` (cleanup deferred to S17-8).
+- ✅ **S16-2** — Ingemann scraper deprecated. Diagnosis: Feltet stopped publishing the girospillet column for Giro 2026. Stopping at diagnosis was correct (Feltet upstream issue, not scraper bug); fed clean S16-2c implementation.
+- ✅ **S16-2c** — `/paste-expert-team` endpoint built. Image paste → Haiku 4.5 vision → 8 riders + captain → `stage_N_ingemann.json`. Source-agnostic by design (Holdet UI, tweets, Discord, leader rosters). Schema unchanged so downstream code didn't change. Lifted name matcher (`match_rider_name` in `server.py`) added during this work.
+- ✅ **S16-3** — All RNG seeded. `compute_seed(stage, sliders, force_in, force_out, use_race_type_adjustment)` derives base seed; per-strategy XOR sub-seeds (`0x1..0x4` for strategies, `0xA/0xB` for forward chains, `0xF` for proxy). Identical inputs → bit-identical outputs.
+- ✅ **S16-4** — Lookahead objective refactored. Now optimizes `ev_estimate − tc_current − cost_n1 − 0.7 × cost_n2` directly, matching the user-facing transfer-adjusted EV metric. Pre-fix: Low-transfer was beating Lookahead because Lookahead's internal objective ignored `tc_current`.
+
+### Session 17 (in progress, May 10+)
+
+#### S17-1 — GC standing, jersey holding, dynamic bonus modeling
+The dominant Session 17 piece. Eliminates the optimizer's blind spot to GC standings and jersey holdings.
+
+- ✅ **S17-1 Sub-A Phase 1 Diagnostic** — Closed. Finding: Feltet scraper does NOT touch standings (user's prior premise was incorrect). README's claim of GC in `stage_N_holdet.json` was aspirational. Reframed Sub-A from "wire up existing scraper" to "build standings ingestion path from scratch."
+- ✅ **S17-1 Sub-B Phase 1 Diagnostic** — Closed. Finding: existing `gc_bonus`/`jersey_bonus` are heuristic over stage finish probability, not standings-aware. Two layers: pre-search EV annotation (`add_stage_evs` in `optimizer.py:181-234`) and Monte Carlo simulation (`simulate_stage` lines 1180-1191). Structural error surfaced: jersey bonus given to stage WINNER, not jersey HOLDER going into stage. Verdict: Sub-B requires standings-aware replacement, not extension.
+- ✅ **S17-1 Sub-A Phase 2** — Closed today. Delivered: `fetch_tv2_standings(stage)` in `scraper.py` + `POST /gather-standings` endpoint in `server.py`. Pulls four classifications (samlet/sprint/bjerg/ungdom) from TV2 per stage. `stage_2_standings.json` written. Verified: Silva at GC #1, holds rosa + bianca. Includes matcher upgrade (Rule X first-and-last word match + Rule Y word-level subset, lastname-only bug fix, `_NICKNAME_ALIASES` dict). All 5 original stop-condition unmatched names resolved (0/30 vs. original 5/30). Five remaining warnings beyond top-30 are deeper-scope (hyphen tokenisation, typo similarity, transliteration variants) — flagged in commit body, not addressed.
+
+#### Sub-B carving evolution (decision history, for future reference)
+Originally Sub-B (single ~2-3 day implementation). Mid-S17 evaluated B1/B2 split (jersey-only / GC re-ranking); **rejected** because the GC retention shortcut underlying the split proved invalid (breakaways routinely gap GC by 5+ minutes on "flat" stages). Merged back to single Sub-B. Architecture pivoted again when the user proposed reading GC volatility from intel rather than fitting rank-transition distributions — Sub-B Design Diagnostic added to characterize the intel pipeline before designing the standings-aware bonus.
 
 ---
 
-## Backlog (post-Stage 1)
+## In flight
 
-- [x] Build `claude/engine/optimizer.py` — four-strategy SA optimizer (Session 5)
-- [x] Playwright intel scrapers — TV2, Feltet, Inner Ring (Session 5)
-- [x] Ingemann benchmark scoring pipeline (Session 5)
-- [x] Stage state management — targetStage selector, post-stage results panel (Session 5)
-- [ ] CDF output rendering in dashboard Output tab
-- [ ] Forward transfer pressure display (n+2, n+3) in dashboard
-- [ ] Populate stage_N_results.json after each stage (post-stage results fetch)
-- [ ] chatgpt/dashboard/chatgpt.html — post-ChatGPT onboarding
-- [ ] compare.html dashboard — Claude vs ChatGPT comparison view (post-ChatGPT onboarding)
-- [ ] Post-stage data refresh (results, jerseys, GC standings)
-- [ ] Captain EV display alongside candidate teams
-- [ ] Depth bonus table display in Stage controls tab
-- [ ] Decide whether to introduce a React/shadcn/Tailwind/Recharts frontend stack for `chatgpt/dashboard/react/`
-- [ ] Pre-Tour de France: migrate to hosted frontend
+- 🟡 **S17-1 Sub-B Design Diagnostic** — Claude Code working. Architectural read of intel pipeline: how does `scrape_all_intel` flow into `build_probabilities`, and is there room for a structured stage-level `gc_volatility` field? Result shapes Sub-B implementation design.
 
 ---
 
-## Session log index
+## Future work
 
-| Session | Date | Summary |
-|---------|------|---------|
-| Session 1 | Pre-May 8 | Project setup, framing doc locked, dashboard shell designed |
-| Session 2 | 2026-05-06 | Repo restructured into claude/ chatgpt/ shared/ layout; framing doc Section 13 added |
-| Session 2b | 2026-05-06 | Fix: expert_sources.yaml moved to claude/engine/ — intelligence is never shared between systems |
-| Session 2c | 2026-05-06 | Clean repo: remove duplicates, create chatgpt/ stub, claude/dashboard/claude.html stub |
-| Session 2d | 2026-05-06 | Move sessions/notes/decisions under claude/; create decisions_log.md |
-| Session 3  | 2026-05-06 | Build claude/dashboard/claude.html (full expert dashboard) + server.py stub |
-| Session 2e | 2026-05-06 | claude/output/ created; stage images wired to dashboard; framing doc updated |
-| Session 2f | 2026-05-06 | giro_2026/ subfolder structure established; image display fixed; docs updated |
-| ChatGPT scaffold | 2026-05-06 | ChatGPT optimizer scaffold, tests, output writer, and static dashboard created |
-| ChatGPT dashboard preservation | 2026-05-06 | Proposed React expert dashboard preserved under `chatgpt/dashboard/react/` |
-| ChatGPT static cockpit | 2026-05-06 | Rebuilt `chatgpt/dashboard/index.html` as a no-build dark cockpit with all required sections visible |
-| ChatGPT Safari verification | 2026-05-06 | Dashboard verification narrowed to Safari/manual only; no Chrome or browser automation |
-| ChatGPT image fallback | 2026-05-07 | Stage carousel now tries four local image paths and displays resolved/attempted path diagnostics |
-| ChatGPT direct-file dashboard | 2026-05-07 | Dashboard image loader now prioritizes direct Safari file mode and includes `open_dashboard.command` |
-| ChatGPT rider loader | 2026-05-07 | Loaded authoritative Giro 2026 rider universe, validated IDs/prices/names, and exported dashboard artifact |
-| Session 4 | 2026-05-07 | Dashboard fully wired (file:// mode, no server); fetch_riders.py verified; 184-rider lock; one-click refresh via holdet:// URL scheme; column sort, 21-stage carousel, TYPE_FIT tier logic, slider auto-sum, stage-relevance odds table |
-| Session 5 | 2026-05-08 | Full server rewrite (Flask/5050, LaunchAgent); /parse-odds-image Cmd+V paste; /gather-intel web search; /gather-odds removed; stage date fixed |
-| Session 5 (cont.) | 2026-05-08 | Playwright scrapers (TV2/Feltet/Inner Ring), four-strategy SA optimizer, Ingemann benchmark pipeline, targetStage state management, post-stage results panel |
+### Session 17 — week 1 remainder (rest day May 11 → Stage 7, May 15)
+
+- ⏳ **S17-1 Sub-A2** — Dashboard wiring. Extend "Refresh riders" button to bundle `/gather-standings` for stage `N-1`. Failure semantics: Holdet failure blocking, TV2 failure non-blocking warning. Stage 1 edge: skip standings call cleanly (no previous stage). Rename button (e.g. "Refresh pre-stage data"). ~30 min. **Needed for testing — slot in soon.**
+- ⏳ **S17-1 Sub-B Implementation** — Design follows from Sub-B Design Diagnostic. Standings-aware bonus + intel-driven GC volatility signal. Verification: retroactive Stage 3 with `pre_stage_standings = stage_2_standings.json` should surface Silva at ~140k combined (rosa retention 25k + bianca retention 15k + GC #1 bonus ~100k).
+- ⏳ **S17-2** — Slider/race-type tickbox bug. Diagnose first. EV variance 1450k-1785k for same stage; recommendations partially trustworthy until fixed. Should land before Stage 4 prep (May 12) for confident EV reads.
+- ⏳ **S17-1 Sub-C** — Jersey acquisition probability for non-holders.
+- ⏳ **S17-1 Sub-D** — Verification: replay Stages 1-3 with full Sub-B model + actual standings. Calibrate retention probabilities.
+- ⏳ **S17-6** — Time trial bucket (5th `SCENARIO_TO_TERRAIN` category). **Hard deadline ~May 17** before Stage 8 prep when Stage 10 enters n+2 window. Cannot go to Tour without this.
+- ⏳ **S17-3** — Two-team support. Team selector toggle in dashboard header. Snapshot files namespaced per team. Shared race-level data unified.
+- 💭 **S17-12** — Ingemann observation window. Check if Stage 4 Feltet article appears post-rest-day. If not, manual paste is permanent. Observation only.
+
+### Session 17 — week 2 (Stage 8 → Stage 14, ~May 17-23)
+
+- ⏳ **S17-4** — Top-N teams scraper. Probe Holdet API for non-own team rosters (Freddy G's exposure confirms feasibility). Scrape top-50 per round into `shared/data/snapshots/top_teams/round_N.json`. Phase 3 (analysis) is post-Giro. Tour-prep unlock.
+- ⏳ **S17-5** — A/B decision log. Captures roster delta, captain delta, slider settings, optimizer recommendation, human override + reasoning, post-stage outcome, would-have-scored deltas. Backfill Stages 1-3 from session notes.
+- ⏳ **S17-15** — Axelgaard preview scraping for forward stages, Phase 1. Extend TV2 scraper for stage n+1, n+2. Store star ratings + stage classification ("Flad etape" / "Bjergetape") as forward intel signal. No optimizer changes yet.
+
+### Session 17 — stretch into Session 18
+
+- ⏳ **S17-7** — Dashboard depth-bonus footnote stale. Cosmetic or substantive — find out during S17-2 work.
+- ⏳ **S17-8** — `DEPTH_BONUS` extraction to shared constants module. Both `optimizer.py` and `fetch_riders.py` import from one source (and possibly JS depending on S17-7).
+- ⏳ **S17-9** — Race-type adjustment double-counting heuristic. Post-S17-2, address the deeper design issue: bookmaker odds already encode stage type, so multiplying Milan's win prob by 1.5× double-counts. Tooltip + dampener.
+- ⏳ **S17-10** — Wall-clock determinism. Replace `time.time()` early termination at `optimizer.py:627, 773` with iteration count.
+- 💭 **S17-11** — Retire Low-transfer card decision. Pending S17-4 data. Likely keep — Freddy G's conservative trading suggests yes.
+- ⏳ **S17-13** — Captain selection variance modeling. Add variance term or "captain confidence" parameter informed by S17-4 data.
+- ⏳ **S17-14** — Transfer-rate calibration vs. top-N. Compare optimizer's recommended transfer counts vs. actual top-10 transfer counts. Calibration analysis, not code.
+- ⏳ **S17-16** — Axelgaard preview integration, Phase 2. Use stage classification for forward slider auto-fill or hint. Use star ratings as forward EV priors in `build_forward_probabilities()`.
+- ⏳ **S17-17** — Stage 2 retroactive A/B post-mortem. Re-run optimizer on Stage 2 with corrected curve + seeded RNG; compare to actual Project Win The Giro picks. Calibrates how much was optimizer wisdom vs. human bias.
+
+### Session 18 — calibration and refinement (mid-Giro, post-Stage 9-10)
+
+- ⏳ **S18-1** — Mid-Giro re-baselining. Calibrate slider weights and expert weights (TV2 1.5 / Feltet 1.3 / Inner Ring 1.2 are pre-Giro guesses). Depth-bonus distribution sanity check — how often do real teams hit 5/6/7/8 in top-15?
+- ⏳ **S18-2** — Bank live in header (real-time Holdet API). Replaces D₁ removal from Session 15.
+- ⏳ **S18-3** — Most-picked panel from Holdet API. Crowd consensus signal. Different from S17-4 (top-N expert teams). Useful as fourth card if S17-11 retires Low-transfer.
+- ⏳ **S18-4** — Snapshot rename `stage_N_ingemann.json` → `stage_N_expert_team.json`. Cosmetic.
+- ⏳ **S18-5** — Dead-code cleanup pass. Remove `/current-team`, `/save-current-team`, `.stat-pill`, `.mock-badge`, scraper Ingemann functions (gated on S17-12 confirming Feltet silence through Stage 6).
+- 💭 **S18-6** — Crash-correlated risk modeling. Decision item, possibly no code. Document Stage 2 lesson (UAE-adjacent crash took out Strong/Morgado/Narvaez correlated). Make decision deliberate.
+
+### Pre-Tour (T-series, June 1 → early July, ~7 weeks)
+
+- ⏳ **T-1** — Post-Giro analysis. Mine S17-4 top-N data + S17-5 A/B log: optimizer blind spots (where top-50 agreed but optimizer disagreed), contested-judgement areas (where top-50 disagreed among themselves), captain choice patterns by stage type, transfer-rate patterns.
+- ⏳ **T-2** — Tour stage profile data ingestion. Standardize per-stage metadata (ProfileScore, finish gradient, etc.) so optimizer reasons from structured data, not user-set sliders alone.
+- ⏳ **T-3** — TT modeling polish. Validate S17-6 on Giro Stage 10. Refine TT-rider `terrain_affinity` values. Improve TT win-probability calibration.
+- ⏳ **T-4** — Team TT specifically. If Tour 2026 has team TT, scoring is fundamentally different (whole team scores together). Probably needs separate path in `simulate_stage`. Confirm Tour route first.
+- ⏳ **T-5** — Tour GC dynamics. S17-1 retention probabilities need Tour-specific calibration. Maillot jaune changes more often than Giro pink in Week 1.
+- ⏳ **T-6** — Backtest corrected optimizer against full Giro 2026. Replay every stage with full S17-1 model + actual standings + corrected curves + seeded RNG. Compare to (a) human team picks, (b) Freddy G picks, (c) optimal-in-hindsight team. Gap to optimal-in-hindsight = residual error budget.
+- ⏳ **T-7** — Tour-prep dashboard polish. Top-N consensus panel, jerseys + GC panel, Axelgaard forward previews, four-strategy cards, A/B log accessible.
+
+---
+
+## Out of scope
+
+- Live race tracking during stages (we're a pre-stage optimizer)
+- Multi-race system beyond Giro + Tour (Vuelta etc.)
+- Mobile app (localhost:5050 dashboard sufficient)
+- Architectural cleanup for its own sake (refactor, modularize, type hints) — defer indefinitely
+
+---
+
+## Footnotes
+
+[^s1]: No dedicated session log file at `claude/sessions/`. Reconstructed from git commits `2527374` (initial repo) and `afa1fe7` (roadmap + standing instructions).
+
+[^s3]: File at `claude/sessions/2026-05-06_4.md` carries the title "Session 3" — naming is by chronological position, not filename suffix. The same file pattern repeats elsewhere (e.g. `2026-05-06_3.md` is Session 2c).
+
+[^s5]: Two log files cover Session 5: `2026-05-08_5.md` (scraper + optimizer + Ingemann endpoints) and `2026-05-08_session5.md` (server rewrite, vision endpoint, intel structuring). Git history records 11 numbered "session 5 part X" commits across two days; the work was multi-part rather than two distinct sessions.
+
+[^s8]: No dedicated session log file. Reconstructed from a cluster of "fix:" commits between Session 7 and Session 9 (`fix: server-msg visibility…`, `fix: catch SystemExit in /refresh…`, `fix: null-safe rider-count…`, `fix: restore working rider loading…`, `fix: null-guard h-stage-title…`). Appears to have been a stabilisation pass without a dedicated retrospective.
+
+[^s10]: No dedicated session log file. Single commit `4393ccb session 10: stage 2 readiness — expert weights, optimizer, intel verified` on 2026-05-08. Stated as a verification pass before Stage 2; no functional changes captured beyond what the commit message implies.
+
+[^s12]: No dedicated session log file. Single commit `75698a0 Session 12: ingemann body logging, rider name matching, placeholder card`.
+
+[^s13]: Sessions 13 and 14 have no dedicated log files. Inferred from intermediate commits between Session 12 and Session 15: `db5e3e5` (transfer cost added to optimizer output), `6ddbf16` (API optimizer button removed; endpoint renamed), `1643e92` (button-ref fix), and the pre-Session-15 snapshot commit `bb71b7e` which records the Feltet weight change from 1.3 → 1.0. Whether these represent two distinct sessions or one bundled push is not recoverable from the logs.
