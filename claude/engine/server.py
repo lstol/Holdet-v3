@@ -13,6 +13,7 @@ import datetime
 from datetime import datetime as _dt
 import subprocess
 import time
+import unicodedata
 
 # ── Load .env FIRST — before any anthropic instantiation ─────────────────────
 from dotenv import load_dotenv
@@ -83,31 +84,40 @@ def call_with_retry(fn, max_retries=3):
             time.sleep(wait)
 
 
+def _ascii_fold(s: str) -> str:
+    """NFKD-decompose, drop combining marks, lowercase. So 'González' → 'gonzalez',
+    'Tjøtta' → 'tjotta'. Used by match_rider_name so ASCII-only paste input
+    (e.g. vision OCR dropping accents) still matches accented roster names."""
+    nfkd = unicodedata.normalize('NFKD', s)
+    return ''.join(c for c in nfkd if not unicodedata.combining(c)).lower()
+
+
 def match_rider_name(query: str, roster: list):
     """Match a free-form rider name (full, abbreviated 'J. Milan', or last-name only)
     against a roster of {'name': ...} dicts. Returns the matched rider dict or None.
 
-    Resolution order: exact (case-insensitive) → initial+lastname → lastname-only.
+    Resolution order: exact (accent-/case-insensitive) → initial+lastname → lastname-only.
+    All comparisons are ASCII-folded so 'D. Gonzalez' matches 'David González'.
     """
     q = query.strip()
     if not q:
         return None
-    exact = next((r for r in roster if r['name'].lower() == q.lower()), None)
+    qf = _ascii_fold(q)
+    exact = next((r for r in roster if _ascii_fold(r['name']) == qf), None)
     if exact:
         return exact
     parts = q.split()
     if len(parts) >= 2 and len(parts[0]) <= 3 and parts[0].endswith('.'):
-        initial  = parts[0][0].lower()
-        lastname = ' '.join(parts[1:]).lower()
+        initial  = _ascii_fold(parts[0][0])
+        lastname = _ascii_fold(' '.join(parts[1:]))
         candidates = [
             r for r in roster
-            if r['name'].lower().endswith(lastname)
-            and r['name'].split()[0][0].lower() == initial
+            if _ascii_fold(r['name']).endswith(lastname)
+            and _ascii_fold(r['name'].split()[0][0]) == initial
         ]
         if len(candidates) == 1:
             return candidates[0]
-    lastname_q = q.lower()
-    candidates = [r for r in roster if r['name'].lower().split()[-1] == lastname_q]
+    candidates = [r for r in roster if _ascii_fold(r['name'].split()[-1]) == qf]
     if len(candidates) == 1:
         return candidates[0]
     return None
