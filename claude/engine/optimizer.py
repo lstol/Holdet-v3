@@ -782,20 +782,27 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
                          budget=BUDGET, n_iter=200_000, seed=42,
                          max_seconds=3, objective='ev', verbose=False,
                          cost_n1=0, cost_n2=0, team_n1=None, team_n2=None,
-                         current_team=None):
+                         current_team=None,
+                         initial_temperature=200_000.0,
+                         cooling_rate=0.99997,
+                         biased_swap_prob=0.7):
     """
-    Single SA chain.  Returns (best_team_list, best_ev).
+    Single SA chain.  Returns (best_team_list, best_ev, diags).
 
     Search space: all riders subject to budget / team / count constraints.
     No tier filtering — cheap riders with team-bonus value appear naturally.
 
-    Temperature schedule: T₀ = 200,000, decay = 0.999993.
+    Temperature schedule: T = initial_temperature; decay each iter by cooling_rate.
     objective: 'ev' (default) or 'depth' (maximise expected top-15 count).
     Time-based safety stop: exits after max_seconds regardless of n_iter.
     verbose: log team snapshot at key iterations (used for first chain only).
 
-    Biased swap (70%): swap lowest-EV non-forced slot for a top-50-EV candidate.
-    Random swap (30%): pure exploration across full pool.
+    Biased swap (`biased_swap_prob`): swap lowest-EV non-forced slot for a top-50-EV
+    candidate. Random swap otherwise: pure exploration across full pool.
+
+    S17-22 hyperparameter override surface: initial_temperature, cooling_rate,
+    biased_swap_prob accept per-strategy overrides; defaults preserve the
+    pre-S17-22 behavior (so non-overridden strategies remain bit-identical).
     """
     rng = random.Random(seed)
 
@@ -836,8 +843,8 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
     rejects = 0    # valid proposals that were Boltzmann-rejected
     skips   = 0    # proposals invalidated before scoring (already-in-team / budget / team-cap)
 
-    T       = 200_000.0
-    cooling = 0.99997
+    T       = float(initial_temperature)
+    cooling = float(cooling_rate)
 
     start = time.time()
     i = 0
@@ -863,8 +870,8 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
         if n_forced >= 8:
             break
 
-        # Biased swap: 70% exploit (worst-for-top50), 30% explore (random)
-        if rng.random() < 0.7:
+        # Biased swap: `biased_swap_prob` exploit (worst-for-top50), rest explore (random)
+        if rng.random() < biased_swap_prob:
             out_pos   = min(range(n_forced, 8),
                             key=lambda idx: ev_cache.get(team[idx]['name'], 0))
             new_rider = top_n_pool[rng.randrange(top_n_len)]
@@ -1012,13 +1019,17 @@ def generate_candidate_teams(candidates, probabilities,
         seed=seed,
     )
 
-    # ── S17-21 multi-start configuration ──────────────────────────────────
-    # N=5 chains per strategy. Sub-seeds use a high-byte strategy mask so
-    # they don't collide with the existing seed scheme (forward 0xA/0xB,
-    # proxy/eval 0xF). Per-strategy chain seed = base ^ (strategy_xor << 8)
-    # ^ chain_xor.
-    N_CHAINS = 5
-    _CHAIN_XOR_MASKS = (0xC0, 0xC1, 0xC2, 0xC3, 0xC4)
+    # ── S17-22 multi-start Phase 2 configuration ──────────────────────────
+    # N=10 chains per strategy (uniform; Phase 1.5 N-curve diagnostic
+    # justified N=10 as the floor — saturation point for optimal/depth on
+    # Stage 3, with margin for stage types we haven't tested).
+    # Sub-seeds use a high-byte strategy mask so they don't collide with
+    # the existing seed scheme (forward 0xA/0xB, proxy/eval 0xF):
+    # chain_seed = base ^ (strategy_xor << 8) ^ chain_xor
+    # The 0xC0+i scheme is the seed-nesting property from Phase 1.5: first
+    # K chains of N=K' (K<K') are identical to a complete N=K run.
+    N_CHAINS = 10
+    _CHAIN_XOR_MASKS = tuple(0xC0 + i for i in range(N_CHAINS))
     # Shared simulate_stage evaluation seed: ensures all N candidate teams
     # within a strategy are scored on the same Plackett-Luce random samples
     # for a fair EV-best comparison. Reuses the 0xF mask (independent from
@@ -1026,6 +1037,12 @@ def generate_candidate_teams(candidates, probabilities,
     # different RNG instance).
     eval_seed_shared = (seed ^ 0xF) if seed is not None else None
 
+    # Per-strategy SA hyperparameter overrides (S17-22). Lookahead is
+    # Pattern B (Phase 1.5: thin-basin EV-best found 1/50 chains). Sweep
+    # results captured in the handoff report select these values.
+    # Other strategies use simulated_annealing defaults (initial_T=200_000,
+    # cooling=0.99997, biased_swap_prob=0.7) and remain bit-identical to
+    # Phase 1.5's N=10 run.
     strategies = [
         {
             'name': 'optimal', 'label': 'Optimal',
@@ -1033,6 +1050,7 @@ def generate_candidate_teams(candidates, probabilities,
             'strategy_xor': 0x1, 'legacy_seed': 42,
             'objective': 'ev', 'max_budget': budget,
             'n_iter': 200_000, 'max_seconds': 5,
+            'sa_overrides': {},
         },
         {
             'name': 'depth', 'label': 'Depth maximiser',
@@ -1040,6 +1058,7 @@ def generate_candidate_teams(candidates, probabilities,
             'strategy_xor': 0x2, 'legacy_seed': 123,
             'objective': 'depth', 'max_budget': budget,
             'n_iter': 200_000, 'max_seconds': 5,
+            'sa_overrides': {},
         },
         {
             'name': 'low-transfer', 'label': 'Low transfer cost',
@@ -1047,6 +1066,7 @@ def generate_candidate_teams(candidates, probabilities,
             'strategy_xor': 0x3, 'legacy_seed': 777,
             'objective': 'low_transfer', 'max_budget': budget,
             'n_iter': 200_000, 'max_seconds': 5,
+            'sa_overrides': {},
         },
         {
             'name': 'lookahead', 'label': 'Two-stage lookahead',
@@ -1054,6 +1074,11 @@ def generate_candidate_teams(candidates, probabilities,
             'strategy_xor': 0x4, 'legacy_seed': 2026,
             'objective': 'lookahead', 'max_budget': budget,
             'n_iter': 200_000, 'max_seconds': 5,
+            # S17-22 sweep at N=20 against Stage 3 reproducer (May 10):
+            # cooling_rate 0.99999 was the only config achieving conv > 1
+            # (2/20 vs baseline 1/20). Trades 22k ev_best for reproducibility
+            # — see ROADMAP S17-22 closure for the full sweep table.
+            'sa_overrides': {'cooling_rate': 0.99999},
         },
     ]
 
@@ -1071,6 +1096,7 @@ def generate_candidate_teams(candidates, probabilities,
         # Run each chain, then evaluate every chain's team with the shared
         # simulate_stage seed so EVs are directly comparable.
         chain_results = []
+        sa_overrides = strategy.get('sa_overrides') or {}
         for ci, ch_seed in enumerate(chain_seeds):
             team_ci, _ev_ci, sa_diags = simulated_annealing(
                 candidates, probabilities, force_in, force_out,
@@ -1085,6 +1111,7 @@ def generate_candidate_teams(candidates, probabilities,
                 cost_n2=cost_n2,
                 team_n1=team_n1,
                 team_n2=team_n2,
+                **sa_overrides,
                 current_team=current_team,
             )
             if team_ci is None:
@@ -1123,16 +1150,51 @@ def generate_candidate_teams(candidates, probabilities,
                        key=lambda j: (chain_results[j]['ev'], -chain_results[j]['index']))
         best     = chain_results[best_idx]
 
-        # ── Diagnostic log ────────────────────────────────────────────────
+        # ── S17-22 best-corroborated reporting ───────────────────────────
+        # Count chains per team identity. The "chosen" team is the EV-best;
+        # the "best-corroborated" team is the highest-EV team found by ≥2
+        # chains, falling back to chosen if no team has count ≥2.
         chain_evs         = [c['ev'] for c in chain_results]
         ev_spread         = max(chain_evs) - min(chain_evs)
-        convergence_count = sum(1 for c in chain_results if c['team_id'] == best['team_id'])
+        team_count        = Counter(c['team_id'] for c in chain_results)
+        chosen_team_count = team_count[best['team_id']]
+        # Highest-EV per team_id (each team's chains all share an EV under
+        # the shared simulate_stage seed, so any chain's EV is fine).
+        team_ev = {}
+        for c in chain_results:
+            team_ev[c['team_id']] = c['ev']
+        corroborated_ids = [tid for tid, cnt in team_count.items() if cnt >= 2]
+        if chosen_team_count >= 2:
+            corroboration_status      = 'corroborated'
+            best_corroborated_ev      = best['ev']
+            best_corroborated_count   = chosen_team_count
+        elif corroborated_ids:
+            best_corr_id = max(corroborated_ids, key=lambda tid: team_ev[tid])
+            corroboration_status      = 'single_chain'
+            best_corroborated_ev      = team_ev[best_corr_id]
+            best_corroborated_count   = team_count[best_corr_id]
+        else:
+            corroboration_status      = 'no_corroboration'
+            best_corroborated_ev      = best['ev']
+            best_corroborated_count   = 1
+
+        convergence_meta = {
+            'chosen_team_count':       chosen_team_count,
+            'n_chains':                len(chain_results),
+            'best_seen_ev':            best['ev'],
+            'best_corroborated_ev':    int(best_corroborated_ev),
+            'best_corroborated_count': best_corroborated_count,
+            'corroboration_status':    corroboration_status,
+        }
+
+        # ── Diagnostic log ────────────────────────────────────────────────
         diag = {
             'strategy':            strategy['name'],
             'n_chains_attempted':  len(chain_seeds),
             'n_chains_succeeded':  len(chain_results),
             'chosen_chain_index':  best['index'],
-            'convergence_count':   convergence_count,
+            'convergence_count':   chosen_team_count,
+            'corroboration':       corroboration_status,
             'ev_spread':           ev_spread,
             'chain_evs':           chain_evs,
             'chain_acceptance':    [round(c['sa_diags']['acceptance_rate'], 3) for c in chain_results],
@@ -1183,6 +1245,7 @@ def generate_candidate_teams(candidates, probabilities,
                 'cost_n2':      int(actual_cost_n2),
                 'total_forward_cost': int(actual_cost_n1 + actual_cost_n2 * LOOKAHEAD_DISCOUNT),
             },
+            'convergence': convergence_meta,
             'rationale': strategy['description'],
         })
 

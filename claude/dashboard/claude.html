@@ -401,6 +401,11 @@ input[type=range]::-webkit-slider-thumb {
 .tc-label { font-weight: 700; font-size: 12px; color: var(--color-text); }
 .tc-ev { font-size: 13px; font-weight: 600; color: var(--color-success); margin-top: 1px; }
 .tc-price { font-size: 11px; color: var(--color-text-3); font-weight: 400; margin-left: 5px; }
+.tc-convergence {
+  font-size: 10px; color: var(--color-text-3); font-weight: 400;
+  padding: 0 10px 4px; line-height: 1.4;
+}
+.tc-convergence.warn { color: var(--color-warning); }
 .tc-riders { padding: 0; }
 .tc-rider-row {
   display: flex; align-items: center;
@@ -1841,6 +1846,21 @@ function renderOptimizerOutput(data) {
       }).join('');
   }
 
+  // S17-22: render best-seen vs best-corroborated info under the EV header
+  // when the chosen team isn't corroborated. Silent for `corroborated`.
+  function convergenceHtml(team) {
+    const c = team.convergence;
+    if (!c || !c.corroboration_status || c.corroboration_status === 'corroborated') return '';
+    if (c.corroboration_status === 'single_chain') {
+      return `<div class="tc-convergence">`
+        + `best-seen ${fmt(c.best_seen_ev)} (${c.chosen_team_count}/${c.n_chains}) · `
+        + `corroborated ${fmt(c.best_corroborated_ev)} (${c.best_corroborated_count}/${c.n_chains})`
+        + `</div>`;
+    }
+    // no_corroboration
+    return `<div class="tc-convergence warn">⚠ no corroborated team across ${c.n_chains} chains — landscape rugged, recommendation is best single-chain finding</div>`;
+  }
+
   function fwdHtml(fwd) {
     if (!fwd || fwd.transfers_n1 === undefined) {
       return `<div class="tc-fwd" style="color:var(--color-text-3)">No forward data</div>`;
@@ -1927,6 +1947,7 @@ function renderOptimizerOutput(data) {
         <div class="tc-label">${labelPrefix}${esc(team.label || team.strategy || '')}</div>
         <div class="tc-ev">${evHtml}<span class="tc-price">${priceStr}</span></div>
       </div>
+      ${convergenceHtml(team)}
       <div class="tc-riders">${ridersHtml}</div>
       <div class="tc-ev-section">
         <div class="tc-ev-title">EV breakdown</div>
