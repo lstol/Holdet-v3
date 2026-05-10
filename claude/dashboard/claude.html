@@ -490,7 +490,7 @@ input[type=range]::-webkit-slider-thumb {
     </div>
     <div id="header-right">
       <button class="btn btn-ghost" id="refresh-btn" onclick="refreshData()">
-        <i class="ti ti-refresh"></i> Refresh riders
+        <i class="ti ti-refresh"></i> Refresh pre-stage data
       </button>
     </div>
   </header>
@@ -2008,33 +2008,79 @@ function copyPrompt() {
 }
 
 /* ── Refresh ─────────────────────────────────────────────────────────── */
+// Two sequential calls under one button:
+//   1. POST /refresh         — Holdet rider/team/bank refresh (BLOCKING — prices are foundational).
+//   2. POST /gather-standings — TV2 GC + jersey standings for stage N−1 (NON-BLOCKING — falls
+//      back to existing heuristic until Sub-B2 lands; absence shouldn't break the optimizer).
+//
+// Call 2 is skipped cleanly when targetStage == 1 (no prior stage exists).
+// Call 2's failure shows a warning but still triggers the page reload, since rider data
+// has already landed and re-rendering reflects it.
 async function refreshData() {
   const btn = $('refresh-btn');
   const msg = $('server-msg');
-  btn.disabled = true;
+  const restoreBtn = () => {
+    btn.disabled  = false;
+    btn.innerHTML = '<i class="ti ti-refresh"></i> Refresh pre-stage data';
+  };
+  btn.disabled  = true;
   btn.innerHTML = '<i class="ti ti-refresh spinner"></i> Refreshing…';
   msg.style.display = 'block';
-  msg.textContent = 'Scraping Holdet.dk — riders, team, bank balance…';
+  msg.textContent   = 'Scraping Holdet.dk — riders, team, bank balance…';
+
+  // ── 1. Holdet rider refresh (blocking) ────────────────────────────────
+  let riderCount;
   try {
-    const res = await fetch(`${SERVER}/refresh`, {
-      method: 'POST',
+    const res  = await fetch(`${SERVER}/refresh`, {
+      method:  'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ stage: targetStage }),
+      body:    JSON.stringify({ stage: targetStage }),
     });
     const data = await res.json();
-    if (data.status === 'ok') {
-      msg.textContent = `✓ ${data.rider_count} riders loaded — reloading…`;
-      setTimeout(() => location.reload(), 1800);
-    } else {
+    if (data.status !== 'ok') {
       msg.textContent = `Error: ${data.message}`;
-      btn.disabled = false;
-      btn.innerHTML = '<i class="ti ti-refresh"></i> Refresh';
+      restoreBtn();
+      return;
     }
+    riderCount = data.rider_count;
   } catch(e) {
     msg.textContent = `Server error: ${e.message}`;
-    btn.disabled = false;
-    btn.innerHTML = '<i class="ti ti-refresh"></i> Refresh';
+    restoreBtn();
+    return;
   }
+
+  // ── 2. TV2 standings for stage N−1 (non-blocking) ─────────────────────
+  const prevStage = targetStage - 1;
+  if (prevStage < 1) {
+    // Stage 1: no prior stage exists; skip standings cleanly.
+    msg.textContent = `✓ ${riderCount} riders loaded — reloading…`;
+    setTimeout(() => location.reload(), 1800);
+    return;
+  }
+
+  msg.textContent = `✓ ${riderCount} riders · fetching stage ${prevStage} standings…`;
+  try {
+    const res  = await fetch(`${SERVER}/gather-standings`, {
+      method:  'POST',
+      headers: {'Content-Type': 'application/json'},
+      body:    JSON.stringify({ stage: prevStage }),
+    });
+    const data = await res.json();
+    if (data.status === 'error') {
+      msg.textContent = `✓ ${riderCount} riders · ⚠ Standings refresh failed: ${data.message} — reloading…`;
+    } else {
+      const warns  = (data.name_match_warnings || []).length;
+      const errs   = (data.scrape_errors || []).length;
+      const warnTail = warns > 0 || errs > 0
+        ? ` (${warns} unmatched name${warns === 1 ? '' : 's'}${errs > 0 ? `, ${errs} scrape error${errs === 1 ? '' : 's'}` : ''})`
+        : '';
+      msg.textContent = `✓ ${riderCount} riders · standings stage ${prevStage}${warnTail} — reloading…`;
+    }
+  } catch(e) {
+    // Network / server error on /gather-standings is non-blocking.
+    msg.textContent = `✓ ${riderCount} riders · ⚠ Standings refresh failed: ${e.message} — reloading…`;
+  }
+  setTimeout(() => location.reload(), 2200);
 }
 
 /* ── Data loading ────────────────────────────────────────────────────── */
