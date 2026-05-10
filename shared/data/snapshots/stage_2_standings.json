@@ -1,0 +1,1929 @@
+{
+  "stage": 2,
+  "captured_at": "2026-05-10T13:36:40.378770Z",
+  "source": "tv2",
+  "gc": [
+    {
+      "rider_id": 48633,
+      "name": "Guillermo Thomas Silva",
+      "name_raw": "Thomas Silva",
+      "rank": 1,
+      "time_gap_seconds": 0
+    },
+    {
+      "rider_id": 48598,
+      "name": "Florian Stork",
+      "name_raw": "Florian Stork",
+      "rank": 2,
+      "time_gap_seconds": 4
+    },
+    {
+      "rider_id": 47419,
+      "name": "Egan Bernal",
+      "name_raw": "Egan Bernal",
+      "rank": 3,
+      "time_gap_seconds": 4
+    },
+    {
+      "rider_id": 47403,
+      "name": "Thymen Arensman",
+      "name_raw": "Thymen Arensman",
+      "rank": 4,
+      "time_gap_seconds": 6
+    },
+    {
+      "rider_id": 47357,
+      "name": "Giulio Ciccone",
+      "name_raw": "Giulio Ciccone",
+      "rank": 5,
+      "time_gap_seconds": 6
+    },
+    {
+      "rider_id": 47365,
+      "name": "Jan Christen",
+      "name_raw": "Jan Christen",
+      "rank": 6,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47371,
+      "name": "Johannes Kulset",
+      "name_raw": "Johannes Kulset",
+      "rank": 7,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 48630,
+      "name": "Martin Tjøtta",
+      "name_raw": "Martin Tjøtta",
+      "rank": 8,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47377,
+      "name": "Lennert Van Eetvelt",
+      "name_raw": "Lennert van Eetvelt",
+      "rank": 9,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47335,
+      "name": "Darren Rafferty",
+      "name_raw": "Darren Rafferty",
+      "rank": 10,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 48532,
+      "name": "Jan Hirt",
+      "name_raw": "Jan Hirt",
+      "rank": 11,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47331,
+      "name": "Christian Scaroni",
+      "name_raw": "Christian Scaroni",
+      "rank": 12,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47363,
+      "name": "Jai Hindley",
+      "name_raw": "Jai Hindley",
+      "rank": 13,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47333,
+      "name": "Damiano Caruso",
+      "name_raw": "Damiano Caruso",
+      "rank": 14,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47372,
+      "name": "Jonas Vingegaard",
+      "name_raw": "Jonas Vingegaard",
+      "rank": 15,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47347,
+      "name": "Enric Mas Nicolau",
+      "name_raw": "Enric Mas",
+      "rank": 16,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47328,
+      "name": "Ben O'Connor",
+      "name_raw": "Ben O'Connor",
+      "rank": 17,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47374,
+      "name": "Juanpe Lopez",
+      "name_raw": "Juan Pedro Lopez",
+      "rank": 18,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47367,
+      "name": "Javier Romo",
+      "name_raw": "Javier Romo",
+      "rank": 19,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47345,
+      "name": "Einer Augusto Rubio",
+      "name_raw": "Einer Rubio",
+      "rank": 20,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47353,
+      "name": "Filippo Zana",
+      "name_raw": "Filippo Zana",
+      "rank": 21,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 48583,
+      "name": "Felix Engelhardt",
+      "name_raw": "Felix Engelhardt",
+      "rank": 22,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47386,
+      "name": "Mathys Rondel",
+      "name_raw": "Mathys Rondel",
+      "rank": 23,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 48691,
+      "name": "Markel Beloki",
+      "name_raw": "Markel Beloki",
+      "rank": 24,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 48484,
+      "name": "Jefferson Alexander Cepeda",
+      "name_raw": "Jefferson Cepeda",
+      "rank": 25,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47389,
+      "name": "Michael Storer",
+      "name_raw": "Michael Storer",
+      "rank": 26,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47349,
+      "name": "Felix Gall",
+      "name_raw": "Felix Gall",
+      "rank": 27,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47338,
+      "name": "Davide Piganzoli",
+      "name_raw": "Davide Piganzoli",
+      "rank": 28,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47358,
+      "name": "Giulio Pellizzari",
+      "name_raw": "Giulio Pellizzari",
+      "rank": 29,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 48461,
+      "name": "Matteo Sobrero",
+      "name_raw": "Matteo Sobrero",
+      "rank": 30,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47361,
+      "name": "Harold Martin Lopez",
+      "name_raw": "Harold Lopez",
+      "rank": 31,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 48574,
+      "name": "Giovanni Aleotti",
+      "name_raw": "Giovanni Aleotti",
+      "rank": 32,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 48626,
+      "name": "Andreas Leknessund",
+      "name_raw": "Andreas Leknessund",
+      "rank": 33,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 48490,
+      "name": "Josh Kench",
+      "name_raw": "Josh Kench",
+      "rank": 34,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47405,
+      "name": "Tobias Lund Andresen",
+      "name_raw": "Tobias Lund Andresen",
+      "rank": 35,
+      "time_gap_seconds": 65
+    },
+    {
+      "rider_id": null,
+      "name": "Aleksandr Vlasov",
+      "name_raw": "Aleksandr Vlasov",
+      "rank": 36,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48525,
+      "name": "Orluis Aular",
+      "name_raw": "Orluis Aular",
+      "rank": 37,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47415,
+      "name": "Alessandro Pinarello",
+      "name_raw": "Alessandro Pinarello",
+      "rank": 38,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48592,
+      "name": "Ludovico Crescioli",
+      "name_raw": "Ludovico Crescioli",
+      "rank": 39,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47321,
+      "name": "Alan Hatherly",
+      "name_raw": "Alan Hatherly",
+      "rank": 40,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48590,
+      "name": "Thomas Pesenti",
+      "name_raw": "Thomas Pesenti",
+      "rank": 41,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47339,
+      "name": "Derek Gee",
+      "name_raw": "Derek Gee",
+      "rank": 42,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48580,
+      "name": "Gianmarco Garofoli",
+      "name_raw": "Gianmarco Garofoli",
+      "rank": 43,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48577,
+      "name": "Andrea Raccagni Noviero",
+      "name_raw": "Andrea Raccagni",
+      "rank": 44,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48631,
+      "name": "Sakarias Koller Løland",
+      "name_raw": "Sakarias Koller Løland",
+      "rank": 45,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48596,
+      "name": "Andrea Mifsud",
+      "name_raw": "Andrea Mifsud",
+      "rank": 46,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47329,
+      "name": "Ben Zwiehoff",
+      "name_raw": "Ben Zwiehoff",
+      "rank": 47,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47323,
+      "name": "Alec Segaert",
+      "name_raw": "Alec Segaert",
+      "rank": 48,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47340,
+      "name": "Diego Ulissi",
+      "name_raw": "Diego Ulissi",
+      "rank": 49,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47327,
+      "name": "Bart Lemmen",
+      "name_raw": "Bart Lemmen",
+      "rank": 50,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48530,
+      "name": "Magnus Sheffield",
+      "name_raw": "Magnus Sheffield",
+      "rank": 51,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47401,
+      "name": "Sepp Kuss",
+      "name_raw": "Sepp Kuss",
+      "rank": 52,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47320,
+      "name": "Afonso Eulálio",
+      "name_raw": "Afonso Eulalio",
+      "rank": 53,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47362,
+      "name": "Igor Arrieta",
+      "name_raw": "Igor Arrieta",
+      "rank": 54,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47336,
+      "name": "David De La Cruz",
+      "name_raw": "David De La Cruz",
+      "rank": 55,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48602,
+      "name": "Will Barta",
+      "name_raw": "William Barta",
+      "rank": 56,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47409,
+      "name": "Wout Poels",
+      "name_raw": "Wout Poels",
+      "rank": 57,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48588,
+      "name": "Gijs Leemreize",
+      "name_raw": "Gijs Leemreize",
+      "rank": 58,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48479,
+      "name": "Callum Scotson",
+      "name_raw": "Callum Scotson",
+      "rank": 59,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47354,
+      "name": "Francesco Busatto",
+      "name_raw": "Francesco Busatto",
+      "rank": 60,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48459,
+      "name": "Chris Harper",
+      "name_raw": "Chris Harper",
+      "rank": 61,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48655,
+      "name": "Lukáš Kubiš",
+      "name_raw": "Lukas Kubis",
+      "rank": 62,
+      "time_gap_seconds": 98
+    },
+    {
+      "rider_id": 47397,
+      "name": "Paul Magnier",
+      "name_raw": "Paul Magnier",
+      "rank": 63,
+      "time_gap_seconds": 125
+    },
+    {
+      "rider_id": 47382,
+      "name": "Manuele Tarozzi",
+      "name_raw": "Manuele Tarozzi",
+      "rank": 64,
+      "time_gap_seconds": 129
+    },
+    {
+      "rider_id": 47373,
+      "name": "Jonathan Milan",
+      "name_raw": "Jonathan Milan",
+      "rank": 65,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48526,
+      "name": "Ben Turner",
+      "name_raw": "Ben Turner",
+      "rank": 66,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48668,
+      "name": "Nikita Tsvetkov",
+      "name_raw": "Nikita Tsvetkov",
+      "rank": 67,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48477,
+      "name": "Luca Paletti",
+      "name_raw": "Luca Paletti",
+      "rank": 68,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 47344,
+      "name": "Edoardo Zambanini",
+      "name_raw": "Edoardo Zambanini",
+      "rank": 69,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48568,
+      "name": "David González",
+      "name_raw": "David Gonzalez",
+      "rank": 70,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48654,
+      "name": "Lorenzo Rota",
+      "name_raw": "Lorenzo Rota",
+      "rank": 71,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 47402,
+      "name": "Simone Gualdi",
+      "name_raw": "Simone Gualdi",
+      "rank": 72,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 47376,
+      "name": "Koen Bouwman",
+      "name_raw": "Koen Bouwman",
+      "rank": 73,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 47393,
+      "name": "Nelson Oliveira",
+      "name_raw": "Nélson Oliveira",
+      "rank": 74,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48685,
+      "name": "Nico Denz",
+      "name_raw": "Nico Denz",
+      "rank": 75,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48667,
+      "name": "Alessandro Tonelli",
+      "name_raw": "Alessandro Tonelli",
+      "rank": 76,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 47394,
+      "name": "Nick Schultz",
+      "name_raw": "Nick Schultz",
+      "rank": 77,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48572,
+      "name": "Nick Zukowsky",
+      "name_raw": "Nicolas Zukowsky",
+      "rank": 78,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 47332,
+      "name": "Corbin Strong",
+      "name_raw": "Corbin Strong",
+      "rank": 79,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48599,
+      "name": "Larry Warbasse",
+      "name_raw": "Larry Warbasse",
+      "rank": 80,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48487,
+      "name": "Brieuc Rolland",
+      "name_raw": "Brieuc Rolland",
+      "rank": 81,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 47359,
+      "name": "Gregor Mühlberger",
+      "name_raw": "Gregor Mühlberger",
+      "rank": 82,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48480,
+      "name": "Johannes Staune-Mittet",
+      "name_raw": "Johannes Staune-Mittet",
+      "rank": 83,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 47407,
+      "name": "Victor Campenaerts",
+      "name_raw": "Victor Campenaerts",
+      "rank": 84,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48470,
+      "name": "Tobias Bayer",
+      "name_raw": "Tobias Bayer",
+      "rank": 85,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48658,
+      "name": "Niklas Larsen",
+      "name_raw": "Niklas Larsen",
+      "rank": 86,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48652,
+      "name": "Jonas Rutsch",
+      "name_raw": "Jonas Rutsch",
+      "rank": 87,
+      "time_gap_seconds": 267
+    },
+    {
+      "rider_id": 48669,
+      "name": "Vicente Rojas",
+      "name_raw": "Vicente Rojas",
+      "rank": 88,
+      "time_gap_seconds": 267
+    },
+    {
+      "rider_id": 48478,
+      "name": "Martin Marcellusi",
+      "name_raw": "Martin Marcellusi",
+      "rank": 89,
+      "time_gap_seconds": 267
+    },
+    {
+      "rider_id": 48686,
+      "name": "Warren Barguil",
+      "name_raw": "Warren Barguil",
+      "rank": 90,
+      "time_gap_seconds": 267
+    },
+    {
+      "rider_id": 48481,
+      "name": "Rasmus Søjberg Pedersen",
+      "name_raw": "Rasmus Søjberg Pedersen",
+      "rank": 91,
+      "time_gap_seconds": 313
+    },
+    {
+      "rider_id": 48690,
+      "name": "Madis Mihkels",
+      "name_raw": "Madis Mihkels",
+      "rank": 92,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": 48662,
+      "name": "Toon Aerts",
+      "name_raw": "Toon Aerts",
+      "rank": 93,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": 47369,
+      "name": "Jhonatan Manuel Narvaez Prado",
+      "name_raw": "Jhonatan Narvaez",
+      "rank": 94,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": 47390,
+      "name": "Michael Valgren",
+      "name_raw": "Michael Valgren",
+      "rank": 95,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": 48576,
+      "name": "Mick van Dijke",
+      "name_raw": "Mick van Dijke",
+      "rank": 96,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": 48488,
+      "name": "Cyril Barthe",
+      "name_raw": "Cyril Barthe",
+      "rank": 97,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": 48524,
+      "name": "Lorenzo Milesi",
+      "name_raw": "Lorenzo Milesi",
+      "rank": 98,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": 48486,
+      "name": "Axel Huens",
+      "name_raw": "Axel Huens",
+      "rank": 99,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": 48464,
+      "name": "Gianni Moscon",
+      "name_raw": "Gianni Moscon",
+      "rank": 100,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": 48529,
+      "name": "Jack Haig",
+      "name_raw": "Jack Haig",
+      "rank": 101,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": null,
+      "name": "Amanuel Gebrezgabihier",
+      "name_raw": "Amanuel Gebrezgabihier",
+      "rank": 102,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": 48569,
+      "name": "Fabio Christen",
+      "name_raw": "Fabio Christen",
+      "rank": 103,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": 48523,
+      "name": "Iván García Cortina",
+      "name_raw": "Ivan Cortina",
+      "rank": 104,
+      "time_gap_seconds": 415
+    },
+    {
+      "rider_id": 47348,
+      "name": "Ethan Vernon",
+      "name_raw": "Ethan Vernon",
+      "rank": 105,
+      "time_gap_seconds": 430
+    },
+    {
+      "rider_id": 48594,
+      "name": "Diego Pablo Sevilla",
+      "name_raw": "Diego Sevilla",
+      "rank": 106,
+      "time_gap_seconds": 430
+    },
+    {
+      "rider_id": 47326,
+      "name": "António Morgado",
+      "name_raw": "Antonio Morgado",
+      "rank": 107,
+      "time_gap_seconds": 432
+    },
+    {
+      "rider_id": 48527,
+      "name": "Connor Swift",
+      "name_raw": "Connor Swift",
+      "rank": 108,
+      "time_gap_seconds": 432
+    },
+    {
+      "rider_id": 48680,
+      "name": "Robert Stannard",
+      "name_raw": "Robert Stannard",
+      "rank": 109,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 47366,
+      "name": "Jasper Stuyven",
+      "name_raw": "Jasper Stuyven",
+      "rank": 110,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48579,
+      "name": "Dries Van Gestel",
+      "name_raw": "Dries van Gestel",
+      "rank": 111,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 47406,
+      "name": "Tord Gudmestad",
+      "name_raw": "Tord Gudmestad",
+      "rank": 112,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 47396,
+      "name": "Pascal Ackermann",
+      "name_raw": "Pascal Ackermann",
+      "rank": 113,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48476,
+      "name": "Filippo Magli",
+      "name_raw": "Filippo Magli",
+      "rank": 114,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48659,
+      "name": "Simone Consonni",
+      "name_raw": "Simone Consonni",
+      "rank": 115,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48584,
+      "name": "Robert Donaldson",
+      "name_raw": "Robert Donaldson",
+      "rank": 116,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 47392,
+      "name": "Mirco Maestri",
+      "name_raw": "Mirco Maestri",
+      "rank": 117,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48528,
+      "name": "Embret Svestad-Bårdseng",
+      "name_raw": "Embret Svestad-Bårdseng",
+      "rank": 118,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 47395,
+      "name": "Oliver Naesen",
+      "name_raw": "Oliver Naesen",
+      "rank": 119,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 47351,
+      "name": "Filippo Ganna",
+      "name_raw": "Filippo Ganna",
+      "rank": 120,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48471,
+      "name": "Fran Miholjević",
+      "name_raw": "Fran Miholjevic",
+      "rank": 121,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48573,
+      "name": "Sjoerd Bax",
+      "name_raw": "Sjoerd Bax",
+      "rank": 122,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48628,
+      "name": "Fredrik Dversnes",
+      "name_raw": "Fredrik Dversnes",
+      "rank": 123,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 47404,
+      "name": "Timo Kielich",
+      "name_raw": "Timo Kielich",
+      "rank": 124,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48578,
+      "name": "Ayco Bastiaens",
+      "name_raw": "Ayco Bastiaens",
+      "rank": 125,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48689,
+      "name": "Fabio Van den Bossche",
+      "name_raw": "Fabio van den Bossche",
+      "rank": 126,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48632,
+      "name": "Arjen Livyns",
+      "name_raw": "Arjen Livyns",
+      "rank": 127,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48489,
+      "name": "Johan Jacobs",
+      "name_raw": "Johan Jacobs",
+      "rank": 128,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": null,
+      "name": "Christopher Juul-Jensen",
+      "name_raw": "Christopher Juul-Jensen",
+      "rank": 129,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48678,
+      "name": "Matyas Kopecky",
+      "name_raw": "Matyas Kopecky",
+      "rank": 130,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 47420,
+      "name": "Hartthijs de Vries",
+      "name_raw": "Hartthijs De Vries",
+      "rank": 131,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 47322,
+      "name": "Alberto Bettiol",
+      "name_raw": "Alberto Bettiol",
+      "rank": 132,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48661,
+      "name": "Tomáš Kopecký",
+      "name_raw": "Tomas Kopecky",
+      "rank": 133,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48570,
+      "name": "Mark Donovan",
+      "name_raw": "Mark Donovan",
+      "rank": 134,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48466,
+      "name": "Jensen Plowright",
+      "name_raw": "Jensen Plowright",
+      "rank": 135,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48469,
+      "name": "Luca Vergallito",
+      "name_raw": "Luca Vergallito",
+      "rank": 136,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 47337,
+      "name": "Davide Ballerini",
+      "name_raw": "Davide Ballerini",
+      "rank": 137,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48679,
+      "name": "Mikkel Bjerg",
+      "name_raw": "Mikkel Bjerg",
+      "rank": 138,
+      "time_gap_seconds": 551
+    },
+    {
+      "rider_id": null,
+      "name": "Robin Froidevaux",
+      "name_raw": "Robin Froidevaux",
+      "rank": 139,
+      "time_gap_seconds": 551
+    },
+    {
+      "rider_id": 48660,
+      "name": "Tim Torn Teutenberg",
+      "name_raw": "Tim Teutenberg",
+      "rank": 140,
+      "time_gap_seconds": 551
+    },
+    {
+      "rider_id": 48491,
+      "name": "Paul Penhoët",
+      "name_raw": "Paul Penhoet",
+      "rank": 141,
+      "time_gap_seconds": 551
+    },
+    {
+      "rider_id": 48472,
+      "name": "Mathijs Paasschens",
+      "name_raw": "Mathijs Paasschens",
+      "rank": 142,
+      "time_gap_seconds": 551
+    },
+    {
+      "rider_id": 48677,
+      "name": "Fabian Lienhard",
+      "name_raw": "Fabian Lienhard",
+      "rank": 143,
+      "time_gap_seconds": 551
+    },
+    {
+      "rider_id": 48585,
+      "name": "Timo de Jong",
+      "name_raw": "Timo De Jong",
+      "rank": 144,
+      "time_gap_seconds": 551
+    },
+    {
+      "rider_id": 48467,
+      "name": "Johan Price-Pejtersen",
+      "name_raw": "Johan Price-Pejtersen",
+      "rank": 145,
+      "time_gap_seconds": 551
+    },
+    {
+      "rider_id": 48474,
+      "name": "Enrico Zanoncello",
+      "name_raw": "Enrico Zanoncello",
+      "rank": 146,
+      "time_gap_seconds": 564
+    },
+    {
+      "rider_id": 47352,
+      "name": "Filippo Turconi",
+      "name_raw": "Filippo Turconi",
+      "rank": 147,
+      "time_gap_seconds": 564
+    },
+    {
+      "rider_id": 48593,
+      "name": "Giovanni Lonardi",
+      "name_raw": "Giovanni Lonardi",
+      "rank": 148,
+      "time_gap_seconds": 567
+    },
+    {
+      "rider_id": 47346,
+      "name": "Elmar Reinders",
+      "name_raw": "Elmar Reinders",
+      "rank": 149,
+      "time_gap_seconds": 567
+    },
+    {
+      "rider_id": 48600,
+      "name": "Luca Mozzato",
+      "name_raw": "Luca Mozzato",
+      "rank": 150,
+      "time_gap_seconds": 567
+    },
+    {
+      "rider_id": 47342,
+      "name": "Dylan Groenewegen",
+      "name_raw": "Dylan Groenewegen",
+      "rank": 151,
+      "time_gap_seconds": 567
+    },
+    {
+      "rider_id": 48650,
+      "name": "Arnaud De Lie",
+      "name_raw": "Arnaud de Lie",
+      "rank": 152,
+      "time_gap_seconds": 703
+    },
+    {
+      "rider_id": 48634,
+      "name": "Matteo Malucelli",
+      "name_raw": "Matteo Malucelli",
+      "rank": 153,
+      "time_gap_seconds": 703
+    },
+    {
+      "rider_id": 48657,
+      "name": "Milan Menten",
+      "name_raw": "Milan Menten",
+      "rank": 154,
+      "time_gap_seconds": 703
+    },
+    {
+      "rider_id": 48629,
+      "name": "Markus Hoelgaard",
+      "name_raw": "Markus Hoelgaard",
+      "rank": 155,
+      "time_gap_seconds": 703
+    },
+    {
+      "rider_id": 48465,
+      "name": "Edward Planckaert",
+      "name_raw": "Edward Planckaert",
+      "rank": 156,
+      "time_gap_seconds": 703
+    },
+    {
+      "rider_id": 48627,
+      "name": "Erlend Blikra",
+      "name_raw": "Erlend Blikra",
+      "rank": 157,
+      "time_gap_seconds": 703
+    },
+    {
+      "rider_id": 47330,
+      "name": "Casper van Uden",
+      "name_raw": "Casper van Uden",
+      "rank": 158,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 47388,
+      "name": "Max Walscheid",
+      "name_raw": "Max Walscheid",
+      "rank": 159,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 48533,
+      "name": "Ryan Mullen",
+      "name_raw": "Ryan Mullen",
+      "rank": 160,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 48586,
+      "name": "Tim Naberman",
+      "name_raw": "Tim Naberman",
+      "rank": 161,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 47319,
+      "name": "Adam Yates",
+      "name_raw": "Adam Yates",
+      "rank": 162,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 48591,
+      "name": "Mattia Bais",
+      "name_raw": "Mattia Bais",
+      "rank": 163,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 48482,
+      "name": "James Shaw",
+      "name_raw": "James Shaw",
+      "rank": 164,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 48468,
+      "name": "Jonas Geens",
+      "name_raw": "Jonas Geens",
+      "rank": 165,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 48492,
+      "name": "Rémi Cavagna",
+      "name_raw": "Remi Cavagna",
+      "rank": 166,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 47355,
+      "name": "Frank van den Broek",
+      "name_raw": "Frank van den Broek",
+      "rank": 167,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 48493,
+      "name": "Rémy Rochas",
+      "name_raw": "Remy Rochas",
+      "rank": 168,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 48587,
+      "name": "Sean Flynn",
+      "name_raw": "Sean Flynn",
+      "rank": 169,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 48589,
+      "name": "Chris Hamilton",
+      "name_raw": "Chris Hamilton",
+      "rank": 170,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 47408,
+      "name": "Wilco Kelderman",
+      "name_raw": "Wilco Kelderman",
+      "rank": 171,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 48597,
+      "name": "Tim Rex",
+      "name_raw": "Tim Rex",
+      "rank": 172,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 48483,
+      "name": "Jardi Christiaan van der Lee",
+      "name_raw": "Jardi Christiaan van der Lee",
+      "rank": 173,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 48698,
+      "name": "Joshua Giddings",
+      "name_raw": "Joshua Giddings",
+      "rank": 174,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 47375,
+      "name": "Kaden Groves",
+      "name_raw": "Kaden Groves",
+      "rank": 175,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 47399,
+      "name": "Samuele Battistella",
+      "name_raw": "Samuele Battistella",
+      "rank": 176,
+      "time_gap_seconds": 1016
+    },
+    {
+      "rider_id": 48581,
+      "name": "Andrea Vendrame",
+      "name_raw": "Andrea Vendrame",
+      "rank": 177,
+      "time_gap_seconds": 1060
+    },
+    {
+      "rider_id": 48531,
+      "name": "Jake Stewart",
+      "name_raw": "Jake Stewart",
+      "rank": 178,
+      "time_gap_seconds": 1060
+    },
+    {
+      "rider_id": 47341,
+      "name": "Dion Smith",
+      "name_raw": "Dion Smith",
+      "rank": 179,
+      "time_gap_seconds": 1060
+    }
+  ],
+  "points_classification": [
+    {
+      "rider_id": 47397,
+      "name": "Paul Magnier",
+      "name_raw": "Paul Magnier",
+      "rank": 1,
+      "points": 55
+    },
+    {
+      "rider_id": 47405,
+      "name": "Tobias Lund Andresen",
+      "name_raw": "Tobias Lund Andresen",
+      "rank": 2,
+      "points": 35
+    },
+    {
+      "rider_id": 47373,
+      "name": "Jonathan Milan",
+      "name_raw": "Jonathan Milan",
+      "rank": 3,
+      "points": 26
+    },
+    {
+      "rider_id": 48633,
+      "name": "Guillermo Thomas Silva",
+      "name_raw": "Thomas Silva",
+      "rank": 4,
+      "points": 25
+    },
+    {
+      "rider_id": 47348,
+      "name": "Ethan Vernon",
+      "name_raw": "Ethan Vernon",
+      "rank": 5,
+      "points": 25
+    },
+    {
+      "rider_id": 48594,
+      "name": "Diego Pablo Sevilla",
+      "name_raw": "Diego Sevilla",
+      "rank": 6,
+      "points": 20
+    },
+    {
+      "rider_id": 48598,
+      "name": "Florian Stork",
+      "name_raw": "Florian Stork",
+      "rank": 7,
+      "points": 18
+    },
+    {
+      "rider_id": 48690,
+      "name": "Madis Mihkels",
+      "name_raw": "Madis Mihkels",
+      "rank": 8,
+      "points": 14
+    },
+    {
+      "rider_id": 47382,
+      "name": "Manuele Tarozzi",
+      "name_raw": "Manuele Tarozzi",
+      "rank": 9,
+      "points": 12
+    },
+    {
+      "rider_id": 47357,
+      "name": "Giulio Ciccone",
+      "name_raw": "Giulio Ciccone",
+      "rank": 10,
+      "points": 12
+    },
+    {
+      "rider_id": 48593,
+      "name": "Giovanni Lonardi",
+      "name_raw": "Giovanni Lonardi",
+      "rank": 11,
+      "points": 12
+    },
+    {
+      "rider_id": 47396,
+      "name": "Pascal Ackermann",
+      "name_raw": "Pascal Ackermann",
+      "rank": 12,
+      "points": 10
+    },
+    {
+      "rider_id": 47388,
+      "name": "Max Walscheid",
+      "name_raw": "Max Walscheid",
+      "rank": 13,
+      "points": 9
+    },
+    {
+      "rider_id": 47331,
+      "name": "Christian Scaroni",
+      "name_raw": "Christian Scaroni",
+      "rank": 14,
+      "points": 8
+    },
+    {
+      "rider_id": 47406,
+      "name": "Tord Gudmestad",
+      "name_raw": "Tord Gudmestad",
+      "rank": 15,
+      "points": 8
+    },
+    {
+      "rider_id": 47392,
+      "name": "Mirco Maestri",
+      "name_raw": "Mirco Maestri",
+      "rank": 16,
+      "points": 8
+    },
+    {
+      "rider_id": 47358,
+      "name": "Giulio Pellizzari",
+      "name_raw": "Giulio Pellizzari",
+      "rank": 17,
+      "points": 6
+    },
+    {
+      "rider_id": 48579,
+      "name": "Dries Van Gestel",
+      "name_raw": "Dries van Gestel",
+      "rank": 18,
+      "points": 6
+    },
+    {
+      "rider_id": 48461,
+      "name": "Matteo Sobrero",
+      "name_raw": "Matteo Sobrero",
+      "rank": 19,
+      "points": 5
+    },
+    {
+      "rider_id": 47366,
+      "name": "Jasper Stuyven",
+      "name_raw": "Jasper Stuyven",
+      "rank": 20,
+      "points": 5
+    },
+    {
+      "rider_id": 48626,
+      "name": "Andreas Leknessund",
+      "name_raw": "Andreas Leknessund",
+      "rank": 21,
+      "points": 4
+    },
+    {
+      "rider_id": null,
+      "name": "Marc Soler",
+      "name_raw": "Marc Soler",
+      "rank": 22,
+      "points": 4
+    },
+    {
+      "rider_id": 47365,
+      "name": "Jan Christen",
+      "name_raw": "Jan Christen",
+      "rank": 23,
+      "points": 3
+    },
+    {
+      "rider_id": 48476,
+      "name": "Filippo Magli",
+      "name_raw": "Filippo Magli",
+      "rank": 24,
+      "points": 3
+    },
+    {
+      "rider_id": 47375,
+      "name": "Kaden Groves",
+      "name_raw": "Kaden Groves",
+      "rank": 25,
+      "points": 3
+    },
+    {
+      "rider_id": 48630,
+      "name": "Martin Tjøtta",
+      "name_raw": "Martin Tjøtta",
+      "rank": 26,
+      "points": 2
+    },
+    {
+      "rider_id": 48680,
+      "name": "Robert Stannard",
+      "name_raw": "Robert Stannard",
+      "rank": 27,
+      "points": 2
+    },
+    {
+      "rider_id": 47386,
+      "name": "Mathys Rondel",
+      "name_raw": "Mathys Rondel",
+      "rank": 28,
+      "points": 1
+    },
+    {
+      "rider_id": 48474,
+      "name": "Enrico Zanoncello",
+      "name_raw": "Enrico Zanoncello",
+      "rank": 29,
+      "points": 1
+    }
+  ],
+  "kom_classification": [
+    {
+      "rider_id": 48594,
+      "name": "Diego Pablo Sevilla",
+      "name_raw": "Diego Sevilla",
+      "rank": 1,
+      "points": 24
+    },
+    {
+      "rider_id": 47372,
+      "name": "Jonas Vingegaard",
+      "name_raw": "Jonas Vingegaard",
+      "rank": 2,
+      "points": 9
+    },
+    {
+      "rider_id": 47392,
+      "name": "Mirco Maestri",
+      "name_raw": "Mirco Maestri",
+      "rank": 3,
+      "points": 8
+    },
+    {
+      "rider_id": 47358,
+      "name": "Giulio Pellizzari",
+      "name_raw": "Giulio Pellizzari",
+      "rank": 4,
+      "points": 4
+    },
+    {
+      "rider_id": 47382,
+      "name": "Manuele Tarozzi",
+      "name_raw": "Manuele Tarozzi",
+      "rank": 5,
+      "points": 4
+    },
+    {
+      "rider_id": 47377,
+      "name": "Lennert Van Eetvelt",
+      "name_raw": "Lennert van Eetvelt",
+      "rank": 6,
+      "points": 2
+    },
+    {
+      "rider_id": 48533,
+      "name": "Ryan Mullen",
+      "name_raw": "Ryan Mullen",
+      "rank": 7,
+      "points": 2
+    },
+    {
+      "rider_id": 48597,
+      "name": "Tim Rex",
+      "name_raw": "Tim Rex",
+      "rank": 8,
+      "points": 2
+    },
+    {
+      "rider_id": 47386,
+      "name": "Mathys Rondel",
+      "name_raw": "Mathys Rondel",
+      "rank": 9,
+      "points": 1
+    },
+    {
+      "rider_id": 47329,
+      "name": "Ben Zwiehoff",
+      "name_raw": "Ben Zwiehoff",
+      "rank": 10,
+      "points": 1
+    },
+    {
+      "rider_id": 48471,
+      "name": "Fran Miholjević",
+      "name_raw": "Fran Miholjevic",
+      "rank": 11,
+      "points": 1
+    },
+    {
+      "rider_id": 48578,
+      "name": "Ayco Bastiaens",
+      "name_raw": "Ayco Bastiaens",
+      "rank": 12,
+      "points": 1
+    },
+    {
+      "rider_id": 47420,
+      "name": "Hartthijs de Vries",
+      "name_raw": "Hartthijs De Vries",
+      "rank": 13,
+      "points": 1
+    }
+  ],
+  "young_rider": [
+    {
+      "rider_id": 48633,
+      "name": "Guillermo Thomas Silva",
+      "name_raw": "Thomas Silva",
+      "rank": 1,
+      "time_gap_seconds": 0
+    },
+    {
+      "rider_id": 47365,
+      "name": "Jan Christen",
+      "name_raw": "Jan Christen",
+      "rank": 2,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47371,
+      "name": "Johannes Kulset",
+      "name_raw": "Johannes Kulset",
+      "rank": 3,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 48630,
+      "name": "Martin Tjøtta",
+      "name_raw": "Martin Tjøtta",
+      "rank": 4,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47377,
+      "name": "Lennert Van Eetvelt",
+      "name_raw": "Lennert van Eetvelt",
+      "rank": 5,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47335,
+      "name": "Darren Rafferty",
+      "name_raw": "Darren Rafferty",
+      "rank": 6,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47386,
+      "name": "Mathys Rondel",
+      "name_raw": "Mathys Rondel",
+      "rank": 7,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 48691,
+      "name": "Markel Beloki",
+      "name_raw": "Markel Beloki",
+      "rank": 8,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47338,
+      "name": "Davide Piganzoli",
+      "name_raw": "Davide Piganzoli",
+      "rank": 9,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47358,
+      "name": "Giulio Pellizzari",
+      "name_raw": "Giulio Pellizzari",
+      "rank": 10,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 48490,
+      "name": "Josh Kench",
+      "name_raw": "Josh Kench",
+      "rank": 11,
+      "time_gap_seconds": 10
+    },
+    {
+      "rider_id": 47405,
+      "name": "Tobias Lund Andresen",
+      "name_raw": "Tobias Lund Andresen",
+      "rank": 12,
+      "time_gap_seconds": 65
+    },
+    {
+      "rider_id": 47415,
+      "name": "Alessandro Pinarello",
+      "name_raw": "Alessandro Pinarello",
+      "rank": 13,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48592,
+      "name": "Ludovico Crescioli",
+      "name_raw": "Ludovico Crescioli",
+      "rank": 14,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48580,
+      "name": "Gianmarco Garofoli",
+      "name_raw": "Gianmarco Garofoli",
+      "rank": 15,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48577,
+      "name": "Andrea Raccagni Noviero",
+      "name_raw": "Andrea Raccagni",
+      "rank": 16,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48631,
+      "name": "Sakarias Koller Løland",
+      "name_raw": "Sakarias Koller Løland",
+      "rank": 17,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47323,
+      "name": "Alec Segaert",
+      "name_raw": "Alec Segaert",
+      "rank": 18,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 48530,
+      "name": "Magnus Sheffield",
+      "name_raw": "Magnus Sheffield",
+      "rank": 19,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47320,
+      "name": "Afonso Eulálio",
+      "name_raw": "Afonso Eulalio",
+      "rank": 20,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47362,
+      "name": "Igor Arrieta",
+      "name_raw": "Igor Arrieta",
+      "rank": 21,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47354,
+      "name": "Francesco Busatto",
+      "name_raw": "Francesco Busatto",
+      "rank": 22,
+      "time_gap_seconds": 71
+    },
+    {
+      "rider_id": 47397,
+      "name": "Paul Magnier",
+      "name_raw": "Paul Magnier",
+      "rank": 23,
+      "time_gap_seconds": 125
+    },
+    {
+      "rider_id": 48668,
+      "name": "Nikita Tsvetkov",
+      "name_raw": "Nikita Tsvetkov",
+      "rank": 24,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48477,
+      "name": "Luca Paletti",
+      "name_raw": "Luca Paletti",
+      "rank": 25,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 47344,
+      "name": "Edoardo Zambanini",
+      "name_raw": "Edoardo Zambanini",
+      "rank": 26,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 47402,
+      "name": "Simone Gualdi",
+      "name_raw": "Simone Gualdi",
+      "rank": 27,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48487,
+      "name": "Brieuc Rolland",
+      "name_raw": "Brieuc Rolland",
+      "rank": 28,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48480,
+      "name": "Johannes Staune-Mittet",
+      "name_raw": "Johannes Staune-Mittet",
+      "rank": 29,
+      "time_gap_seconds": 135
+    },
+    {
+      "rider_id": 48669,
+      "name": "Vicente Rojas",
+      "name_raw": "Vicente Rojas",
+      "rank": 30,
+      "time_gap_seconds": 267
+    },
+    {
+      "rider_id": 48481,
+      "name": "Rasmus Søjberg Pedersen",
+      "name_raw": "Rasmus Søjberg Pedersen",
+      "rank": 31,
+      "time_gap_seconds": 313
+    },
+    {
+      "rider_id": 48690,
+      "name": "Madis Mihkels",
+      "name_raw": "Madis Mihkels",
+      "rank": 32,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": 48524,
+      "name": "Lorenzo Milesi",
+      "name_raw": "Lorenzo Milesi",
+      "rank": 33,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": 48486,
+      "name": "Axel Huens",
+      "name_raw": "Axel Huens",
+      "rank": 34,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": 48569,
+      "name": "Fabio Christen",
+      "name_raw": "Fabio Christen",
+      "rank": 35,
+      "time_gap_seconds": 336
+    },
+    {
+      "rider_id": 47326,
+      "name": "António Morgado",
+      "name_raw": "Antonio Morgado",
+      "rank": 36,
+      "time_gap_seconds": 432
+    },
+    {
+      "rider_id": 47406,
+      "name": "Tord Gudmestad",
+      "name_raw": "Tord Gudmestad",
+      "rank": 37,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48584,
+      "name": "Robert Donaldson",
+      "name_raw": "Robert Donaldson",
+      "rank": 38,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48528,
+      "name": "Embret Svestad-Bårdseng",
+      "name_raw": "Embret Svestad-Bårdseng",
+      "rank": 39,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48471,
+      "name": "Fran Miholjević",
+      "name_raw": "Fran Miholjevic",
+      "rank": 40,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48678,
+      "name": "Matyas Kopecky",
+      "name_raw": "Matyas Kopecky",
+      "rank": 41,
+      "time_gap_seconds": 434
+    },
+    {
+      "rider_id": 48660,
+      "name": "Tim Torn Teutenberg",
+      "name_raw": "Tim Teutenberg",
+      "rank": 42,
+      "time_gap_seconds": 551
+    },
+    {
+      "rider_id": 48491,
+      "name": "Paul Penhoët",
+      "name_raw": "Paul Penhoet",
+      "rank": 43,
+      "time_gap_seconds": 551
+    },
+    {
+      "rider_id": 47352,
+      "name": "Filippo Turconi",
+      "name_raw": "Filippo Turconi",
+      "rank": 44,
+      "time_gap_seconds": 564
+    },
+    {
+      "rider_id": 48650,
+      "name": "Arnaud De Lie",
+      "name_raw": "Arnaud de Lie",
+      "rank": 45,
+      "time_gap_seconds": 703
+    },
+    {
+      "rider_id": 47330,
+      "name": "Casper van Uden",
+      "name_raw": "Casper van Uden",
+      "rank": 46,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 48597,
+      "name": "Tim Rex",
+      "name_raw": "Tim Rex",
+      "rank": 47,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 48483,
+      "name": "Jardi Christiaan van der Lee",
+      "name_raw": "Jardi Christiaan van der Lee",
+      "rank": 48,
+      "time_gap_seconds": 836
+    },
+    {
+      "rider_id": 48698,
+      "name": "Joshua Giddings",
+      "name_raw": "Joshua Giddings",
+      "rank": 49,
+      "time_gap_seconds": 836
+    }
+  ],
+  "jerseys": {
+    "maglia_rosa": {
+      "rider_id": 48633,
+      "name": "Guillermo Thomas Silva"
+    },
+    "ciclamino": {
+      "rider_id": 47397,
+      "name": "Paul Magnier"
+    },
+    "azzurra": {
+      "rider_id": 48594,
+      "name": "Diego Pablo Sevilla"
+    },
+    "maglia_bianca": {
+      "rider_id": 48633,
+      "name": "Guillermo Thomas Silva"
+    }
+  },
+  "name_match_warnings": [
+    "Aleksandr Vlasov",
+    "Amanuel Gebrezgabihier",
+    "Christopher Juul-Jensen",
+    "Robin Froidevaux",
+    "Marc Soler"
+  ],
+  "scrape_errors": []
+}

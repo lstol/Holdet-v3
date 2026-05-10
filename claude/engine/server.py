@@ -92,20 +92,53 @@ def _ascii_fold(s: str) -> str:
     return ''.join(c for c in nfkd if not unicodedata.combining(c)).lower()
 
 
-def match_rider_name(query: str, roster: list):
-    """Match a free-form rider name (full, abbreviated 'J. Milan', or last-name only)
-    against a roster of {'name': ...} dicts. Returns the matched rider dict or None.
+# Bidirectional nickname / formal-expansion aliases. Used when the matcher's
+# structural rules can't bridge a source-vs-canonical gap (e.g. TV2 publishes
+# Spanish riders' formal-name expansions; riders.json carries the nickname).
+# Keys/values are ASCII-folded. The reverse direction is added at module load
+# so a query in either form resolves the other.
+# If this grows past ~10 entries, lift to a dedicated aliases.json file.
+_NICKNAME_ALIASES_RAW = {
+    "juanpe lopez": "juan pedro lopez",  # roster: "Juanpe Lopez", TV2: "Juan Pedro Lopez"
+}
+_NICKNAME_ALIASES: dict = {}
+for _a, _b in _NICKNAME_ALIASES_RAW.items():
+    _NICKNAME_ALIASES[_a] = _b
+    _NICKNAME_ALIASES[_b] = _a
 
-    Resolution order: exact (accent-/case-insensitive) → initial+lastname → lastname-only.
-    All comparisons are ASCII-folded so 'D. Gonzalez' matches 'David González'.
+
+def match_rider_name(query: str, roster: list):
+    """Match a free-form rider name against a roster of {'name': ...} dicts.
+    Returns the matched rider dict or None.
+
+    Resolution order (first single-match wins; multi-match returns None):
+      1. Exact accent-/case-folded equality, alias-aware
+      2. Initial+lastname  ('J. Milan' → 'Jonathan Milan')
+      3. Rule X: first-word AND last-word match  (drops middle names)
+                 ('Einer Rubio' → 'Einer Augusto Rubio')
+      4. Rule Y: every query word appears as a complete whitespace-delimited
+                 word in the rider name  (handles missing-first / extra-middle)
+                 ('Thomas Silva' → 'Guillermo Thomas Silva')
+      5. Last-word-of-query == last-word-of-rider
+                 ('Milan' → 'Jonathan Milan')
+
+    All comparisons are ASCII-folded.
     """
     q = query.strip()
     if not q:
         return None
-    qf = _ascii_fold(q)
-    exact = next((r for r in roster if _ascii_fold(r['name']) == qf), None)
+    qf      = _ascii_fold(q)
+    qparts  = qf.split()
+    qf_alt  = _NICKNAME_ALIASES.get(qf)  # alternative form, or None
+
+    # 1. Exact (alias-aware)
+    def _matches(rf: str) -> bool:
+        return rf == qf or (qf_alt is not None and rf == qf_alt)
+    exact = next((r for r in roster if _matches(_ascii_fold(r['name']))), None)
     if exact:
         return exact
+
+    # 2. Initial+lastname (e.g. "J. Milan")
     parts = q.split()
     if len(parts) >= 2 and len(parts[0]) <= 3 and parts[0].endswith('.'):
         initial  = _ascii_fold(parts[0][0])
@@ -117,7 +150,34 @@ def match_rider_name(query: str, roster: list):
         ]
         if len(candidates) == 1:
             return candidates[0]
-    candidates = [r for r in roster if _ascii_fold(r['name'].split()[-1]) == qf]
+
+    # 3. Rule X: first-word AND last-word match (handles middle-name drops)
+    if len(qparts) >= 2:
+        qf_first, qf_last = qparts[0], qparts[-1]
+        candidates = [
+            r for r in roster
+            if _ascii_fold(r['name'].split()[0])  == qf_first
+            and _ascii_fold(r['name'].split()[-1]) == qf_last
+        ]
+        if len(candidates) == 1:
+            return candidates[0]
+
+    # 4. Rule Y: every query word is a whole word in the rider name
+    if len(qparts) >= 2:
+        candidates = [
+            r for r in roster
+            if all(qw in _ascii_fold(r['name']).split() for qw in qparts)
+        ]
+        if len(candidates) == 1:
+            return candidates[0]
+
+    # 5. Last-word-of-query == last-word-of-rider
+    # (Pre-fix bug: compared full folded query against rider's last word —
+    # 'einer rubio' could never equal 'rubio'. Existing callers route through
+    # rules 1–2 with single-word or initial-form queries, so the bug was
+    # latent for them; multi-word "first last" queries from TV2 surfaced it.)
+    qf_last_word = qparts[-1] if qparts else qf
+    candidates = [r for r in roster if _ascii_fold(r['name']).split()[-1] == qf_last_word]
     if len(candidates) == 1:
         return candidates[0]
     return None
@@ -933,6 +993,93 @@ Rules:
         return jsonify({'status': 'error', 'message': str(e), 'raw': raw}), 500
     except Exception as e:
         _log(f"gather-intel error: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+# ── Race standings (GC + jerseys, used by Sub-B1+ EV refinements) ────────────
+
+@app.route('/gather-standings', methods=['POST', 'OPTIONS'])
+def gather_standings():
+    """Scrape TV2 GC + sprint + KOM + young-rider classifications, name-match
+    against riders.json's active roster, write stage_N_standings.json.
+
+    Source: tv2.dk/cykling/giro-d-italia/etapeN/klassement/{samlet,sprint,bjerg,ungdom}
+    """
+    if request.method == 'OPTIONS':
+        return '', 204
+    body = request.json or {}
+    stage = body.get('stage', '?')
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from scraper import scrape_tv2_standings
+        raw = scrape_tv2_standings(int(stage))
+
+        scrape_errors = raw.get('errors', [])
+        if scrape_errors:
+            _log(f"gather-standings stage={stage} scrape errors: {scrape_errors}")
+        sizes = {k: len(raw.get(k, [])) for k in
+                 ('gc', 'points_classification', 'kom_classification', 'young_rider')}
+        _log(f"gather-standings stage={stage} rows={sizes} errors={len(scrape_errors)}")
+
+        rider_data = json.load(open(RIDERS_FILE))
+        active     = [r for r in rider_data['riders']
+                      if not r.get('isOut') and r.get('status') != 'dns']
+
+        warnings  = []
+        seen_warn = set()  # dedupe across the four classifications
+
+        def resolve(row, value_key):
+            raw_name = row['name_raw']
+            match = match_rider_name(raw_name, active)
+            entry = {
+                'rider_id': match.get('holdet_id') if match else None,
+                'name':     match['name']          if match else raw_name,
+                'name_raw': raw_name,
+                'rank':     row['rank'],
+            }
+            entry[value_key] = row[value_key]
+            if not match and raw_name not in seen_warn:
+                warnings.append(raw_name)
+                seen_warn.add(raw_name)
+            return entry
+
+        gc_rows     = [resolve(r, 'time_gap_seconds') for r in raw.get('gc', [])]
+        points_rows = [resolve(r, 'points')           for r in raw.get('points_classification', [])]
+        kom_rows    = [resolve(r, 'points')           for r in raw.get('kom_classification', [])]
+        young_rows  = [resolve(r, 'time_gap_seconds') for r in raw.get('young_rider', [])]
+
+        # Jerseys derived from rank-1 of each classification (explicitly stored
+        # for downstream ergonomics).
+        def _jersey(rows):
+            if not rows:
+                return None
+            top = rows[0]
+            return {'rider_id': top.get('rider_id'), 'name': top.get('name')}
+
+        snapshot = {
+            'stage':                  int(stage),
+            'captured_at':            _dt.utcnow().isoformat() + 'Z',
+            'source':                 'tv2',
+            'gc':                     gc_rows,
+            'points_classification':  points_rows,
+            'kom_classification':     kom_rows,
+            'young_rider':            young_rows,
+            'jerseys': {
+                'maglia_rosa':   _jersey(gc_rows),
+                'ciclamino':     _jersey(points_rows),
+                'azzurra':       _jersey(kom_rows),
+                'maglia_bianca': _jersey(young_rows),
+            },
+            'name_match_warnings': warnings,
+            'scrape_errors':       scrape_errors,
+        }
+        path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_standings.json')
+        with open(path, 'w') as f:
+            json.dump(snapshot, f, indent=2, ensure_ascii=False)
+        _log(f"gather-standings stage={stage} saved to {path} warnings={len(warnings)}")
+        return jsonify(snapshot)
+    except Exception as e:
+        _log(f"gather-standings error: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 

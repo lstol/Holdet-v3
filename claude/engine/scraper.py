@@ -270,6 +270,139 @@ async def fetch_inner_ring_preview(stage: int) -> str:
         return content.strip() or f'[Inner Ring: Could not extract content from {article_url}]'
 
 
+async def fetch_tv2_standings(stage: int) -> dict:
+    """
+    Log in to TV2 Sport once, then fetch all four classifications for `stage`:
+    GC (samlet), Points (sprint), KOM (bjerg), Young rider (ungdom).
+
+    Returns: {
+      'gc':                    [{'rank':int, 'name_raw':str, 'team_raw':str, 'time_gap_seconds':int}, ...],
+      'points_classification': [{'rank':int, 'name_raw':str, 'team_raw':str, 'points':int}, ...],
+      'kom_classification':    [{'rank':int, 'name_raw':str, 'team_raw':str, 'points':int}, ...],
+      'young_rider':           [{'rank':int, 'name_raw':str, 'team_raw':str, 'time_gap_seconds':int}, ...],
+      'errors':                [str, ...],   # per-classification errors (empty list = clean run)
+    }
+    Name canonicalisation against riders.json happens upstream in the server endpoint
+    so this function stays standalone-callable without server.py imports.
+    """
+    classifications = [
+        ('gc',                    'samlet', 'time'),
+        ('points_classification', 'sprint', 'points'),
+        ('kom_classification',    'bjerg',  'points'),
+        ('young_rider',           'ungdom', 'time'),
+    ]
+    out = {key: [] for key, _, _ in classifications}
+    out['errors'] = []
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        context = await browser.new_context()
+        page = await context.new_page()
+
+        # Same login flow as fetch_tv2_stage_preview
+        await page.goto('https://mit.tv2.dk/?login', wait_until='networkidle')
+        await _dismiss_cookiebot(page)
+        await page.wait_for_timeout(500)
+        await page.click('a:has-text("Log ind"), button:has-text("Log ind")', timeout=8000)
+        await page.wait_for_selector('input[name="email"]', timeout=10000)
+        await page.fill('input[name="email"]', TV2_EMAIL)
+        await page.fill('input[name="password"]', TV2_PASSWORD)
+        await page.click('button[type="submit"]')
+        await page.wait_for_timeout(3000)
+
+        for key, slug, value_kind in classifications:
+            url = f'https://sport.tv2.dk/cykling/giro-d-italia/etape{stage}/klassement/{slug}'
+            try:
+                # 'load' is more reliable than 'networkidle' for the standings pages
+                # (some have long-poll requests that never settle)
+                await page.goto(url, wait_until='load', timeout=30000)
+                await _dismiss_cookiebot(page)
+                await page.wait_for_timeout(1500)
+                # Try expanding the table — the page renders top ~12 by default
+                try:
+                    await page.click('button:has-text("Vis alt"), a:has-text("Vis alt")', timeout=2000)
+                    await page.wait_for_timeout(800)
+                except Exception:
+                    pass
+                rows = _parse_tv2_standings_table(await page.inner_text('body'), value_kind)
+                out[key] = rows
+            except Exception as e:
+                out['errors'].append(f'{key}: {e}')
+
+        await browser.close()
+    return out
+
+
+def _parse_tv2_standings_table(body_text: str, value_kind: str) -> list:
+    """Parse TV2 klassement page body text into a list of rows.
+
+    The page renders each ranking row as four separate lines:
+      <rank>\\n<name>\\n<team>\\n<value>
+    after a header line that starts with '#' and contains 'Rytter'.
+
+    value_kind: 'time'   → emit {'time_gap_seconds': int}; rank-1's cumulative
+                            time is treated as 0 gap.
+                'points' → emit {'points': int}.
+    """
+    lines = [ln.strip() for ln in body_text.split('\n') if ln.strip()]
+    rows = []
+    in_table = False
+    i = 0
+    n = len(lines)
+    while i < n:
+        line = lines[i]
+        if not in_table:
+            if line.startswith('#') and 'Rytter' in line:
+                in_table = True
+            i += 1
+            continue
+        if not line.isdigit() or i + 3 >= n:
+            break
+        rank = int(line)
+        name = lines[i + 1]
+        team = lines[i + 2]
+        val  = lines[i + 3]
+        if value_kind == 'time':
+            rows.append({'rank': rank, 'name_raw': name, 'team_raw': team,
+                         'time_gap_seconds': _parse_tv2_time_gap(val)})
+        else:
+            rows.append({'rank': rank, 'name_raw': name, 'team_raw': team,
+                         'points':  _parse_tv2_points(val)})
+        i += 4
+    return rows
+
+
+def _parse_tv2_time_gap(s: str) -> int:
+    """+m:ss → seconds. +h:mm:ss → seconds. Leader's cumulative time (e.g. '9:0:23')
+    or anything not starting with '+' → 0 (leader has no gap)."""
+    s = s.strip()
+    if not s.startswith('+'):
+        return 0
+    parts = s[1:].split(':')
+    try:
+        parts = [int(p) for p in parts]
+    except ValueError:
+        return 0
+    if len(parts) == 2:
+        return parts[0] * 60 + parts[1]
+    if len(parts) == 3:
+        return parts[0] * 3600 + parts[1] * 60 + parts[2]
+    return 0
+
+
+def _parse_tv2_points(s: str) -> int:
+    s = s.strip()
+    try:
+        return int(s)
+    except ValueError:
+        return 0
+
+
+def scrape_tv2_standings(stage: int) -> dict:
+    """Sync wrapper for fetch_tv2_standings — mirrors scrape_all_intel pattern."""
+    return asyncio.run(fetch_tv2_standings(stage))
+
+
 def scrape_all_intel(stage: int) -> dict:
     """Scrapes all three sources concurrently. Returns raw text per source."""
     async def _run():
