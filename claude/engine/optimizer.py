@@ -702,8 +702,13 @@ def topup_team(team, candidates, probabilities, all_riders, budget):
 
 
 def compute_objective(team, probabilities, all_riders, objective='ev',
-                      cost_n1=0, cost_n2=0, team_n1=None, team_n2=None):
-    """Multi-strategy objective for SA search."""
+                      cost_n1=0, cost_n2=0, team_n1=None, team_n2=None,
+                      current_team=None):
+    """Multi-strategy objective for SA search.
+
+    current_team is only consulted by the 'lookahead' objective — other
+    strategies remain bit-identical regardless of whether it's passed.
+    """
     base_ev = compute_team_ev(team, probabilities)
 
     if objective == 'ev':
@@ -720,9 +725,17 @@ def compute_objective(team, probabilities, all_riders, objective='ev',
         return base_ev - tc * 3
 
     elif objective == 'lookahead':
-        tc_n1 = compute_transfer_cost(team, team_n1 or []) if team_n1 else 0
-        tc_n2 = compute_transfer_cost(team_n1 or [], team_n2 or []) if team_n1 and team_n2 else 0
-        return base_ev - tc_n1 - (LOOKAHEAD_DISCOUNT * tc_n2)
+        # S16-4: align internal objective with the user-facing transfer-adj EV
+        # metric. Pre-refactor missed tc_current, so Lookahead happily picked
+        # candidate teams that required expensive current-stage transfers in
+        # pursuit of marginal forward optionality. Post-refactor:
+        #   maximize  ev − tc_current − cost_n1 − 0.7 × cost_n2
+        # Coefficients (1.0 / 1.0 / 0.7) match the user-facing formula and
+        # the result-assembly's 'total_forward_cost' field exactly.
+        tc_current = compute_transfer_cost(current_team or [], team) if current_team else 0
+        tc_n1      = compute_transfer_cost(team, team_n1 or [])      if team_n1 else 0
+        tc_n2      = compute_transfer_cost(team_n1 or [], team_n2 or []) if team_n1 and team_n2 else 0
+        return base_ev - tc_current - tc_n1 - (LOOKAHEAD_DISCOUNT * tc_n2)
 
     return base_ev
 
@@ -734,7 +747,8 @@ _sa_logger = logging.getLogger(__name__)
 def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
                          budget=BUDGET, n_iter=200_000, seed=42,
                          max_seconds=3, objective='ev', verbose=False,
-                         cost_n1=0, cost_n2=0, team_n1=None, team_n2=None):
+                         cost_n1=0, cost_n2=0, team_n1=None, team_n2=None,
+                         current_team=None):
     """
     Single SA chain.  Returns (best_team_list, best_ev).
 
@@ -777,7 +791,8 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
 
     # Mutable state
     current_score = compute_objective(team, probs, all_riders, objective,
-                                      cost_n1, cost_n2, team_n1, team_n2)
+                                      cost_n1, cost_n2, team_n1, team_n2,
+                                      current_team=current_team)
     best_team     = team[:]
     best_score    = current_score
 
@@ -831,7 +846,8 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
             continue
 
         new_score = compute_objective(new_team, probs, all_riders, objective,
-                                      cost_n1, cost_n2, team_n1, team_n2)
+                                      cost_n1, cost_n2, team_n1, team_n2,
+                                      current_team=current_team)
         delta     = new_score - current_score
 
         if delta > 0 or rng.random() < math.exp(delta / max(T, 0.01)):
@@ -990,6 +1006,7 @@ def generate_candidate_teams(candidates, probabilities,
             cost_n2=cost_n2,
             team_n1=team_n1,
             team_n2=team_n2,
+            current_team=current_team,
         )
         if team is None:
             continue
