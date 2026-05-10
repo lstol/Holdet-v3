@@ -170,7 +170,7 @@ Originally Sub-B (single ~2-3 day implementation). Mid-S17 evaluated B1/B2 split
 
 ## In flight
 
-(none — Session 17 close pending; awaiting Stage 3 results and any additional handoffs)
+- 🟡 **S17-21 Phase 1.5** — N-curve diagnostic. Empirical sampling experiment to determine what N value Phase 2 should use. Phase 1 shipped at N=5 with `convergence_count=1` across 3 of 4 strategies — meaning we don't know if N=10, N=20, or N=50 is the right answer. Returns N→(EV-best, EV-spread, convergence_count, runtime) curves per strategy so S17-22 design becomes data-driven rather than guesswork. Read-only diagnostic; no production code change.
 
 ---
 
