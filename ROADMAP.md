@@ -175,7 +175,7 @@ Originally Sub-B (single ~2-3 day implementation). Mid-S17 evaluated B1/B2 split
 
 ## In flight
 
-(none — Session 17 close pending; awaiting Stage 3 results and any additional handoffs)
+- 🟡 **S17-22-followup** *(Phase 1 diagnostic in flight)* — Quality fix for multi-start convergence at operational N. S17-22 V4 reported no convergence improvement at operational N=10, but the comparison was confounded (pre-Tier-A baseline vs post-Tier-A cooling=0.99999, single seed each); best-corroborated reporting works correctly but "ship marginal, rely on UX" was always a fallback — the user wants a quality fix. Phase 1 (this handoff) characterizes basin landscape per strategy across three slider configurations of Stage 2 (saved state, sprint-heavy, uniform): N=50 chains × 4 strategies × 3 configs = 12 cells, reporting basin counts, count histograms, EV spreads, and N=10 sub-sample corroboration checks. Lookahead is then case-classified A/B/C/D to drive Phase 2's prescription: hyperparameter sweep at operational N (Case A), heterogeneous N (Case B), corroboration definition change (Case C), or objective-level fix (Case D). Cross-references: connects to S17-22 closed (V4 inconclusive due to confounded comparison + single seed at operational N).
 
 ---
 
