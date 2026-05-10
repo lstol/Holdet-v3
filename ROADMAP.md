@@ -10,7 +10,7 @@ Living document. Replaces the prior roadmap section in the v5 onboarding doc. Tr
 
 ## Update protocol
 
-- The first handoff of every new session is a ROADMAP.md update folding deltas from the prior session (closed items, new items, scope changes, corrections). Standing rule.
+- Every substantive Claude Code handoff includes a Part 0 ROADMAP.md delta capturing changes since the last roadmap update — closures, new items, scope shifts, corrections. If genuinely no deltas, Part 0 explicitly states "no roadmap deltas this handoff" rather than being omitted. Standing rule.
 - Update at the close of each handoff that completes scope, or when scope changes mid-session
 - Each item carries: ID, status, one-line description, optional notes
 - Status values: ✅ closed, 🟡 in flight, ⏳ queued, 💭 decision pending, ❌ withdrawn
@@ -157,6 +157,7 @@ The dominant Session 17 piece. Eliminates the optimizer's blind spot to GC stand
   - **Documented weights stale**: v5 onboarding states TV2 1.5 / Feltet 1.3 / Inner Ring 1.2; actual current YAML is TV2 1.5 / Feltet 1.0, Inner Ring removed (S11 Fix 3, Feltet 1.3→1.0 in commit `bb71b7e` between S13-14).
   - **Clean architectural slot** identified for stage-level `stage_signals.{gc_volatility, sprint_likelihood, breakaway_likelihood}` in Haiku output schema. Consumer hook in `build_probabilities` mirrors existing `key_signals` access pattern.
   - Carving outcome: Sub-B split into Sub-B1 (extend Haiku schema) + Sub-B2 (standings-aware bonus gated by `gc_volatility`) + Sub-B3 (deferred — relative time-gap GC simulation, conditional on Sub-B2 verification gap).
+- ✅ **S17-1 Sub-A2** — Closed. Delivered: button renamed "Refresh riders" → "Refresh pre-stage data" (claude.html:493); handler rewritten as two sequential awaited calls (claude.html:2010-2080) — Holdet refresh blocking, /gather-standings non-blocking with warning surface that includes unmatched-name and scrape-error counts. Stage 1 edge skipped cleanly. Reload delay 1800ms → 2200ms when standings fire so warnings are readable. No server.py changes. Sub-B2 unblocked end-to-end; standings flow confirmed working in real dashboard use. Commits c4f0557 (Part 0 candidate sources insertion) + c9aa6cc (Part 1 wiring).
 
 #### Sub-B carving evolution (decision history, for future reference)
 Originally Sub-B (single ~2-3 day implementation). Mid-S17 evaluated B1/B2 split (jersey-only / GC re-ranking); **rejected** because the GC retention shortcut underlying the split proved invalid (breakaways routinely gap GC by 5+ minutes on "flat" stages). Merged back to single Sub-B. Architecture pivoted again when the user proposed reading GC volatility from intel rather than fitting rank-transition distributions — Sub-B Design Diagnostic added to characterize the intel pipeline. Final carving (post-diagnostic): Sub-B1 (input: extend Haiku schema with stage_signals) → Sub-B2 (consumer: standings-aware bonus blended via gc_volatility) → Sub-B3 (deferred refinement: relative time-gap simulation if Sub-B2 verification shows blend formula breaks materially on high-volatility stages). A briefly-proposed Sub-B0 (retire Inner Ring) was **withdrawn** when the user clarified Inner Ring's status: disabled under time pressure, not abandoned. Its repair is folded into S18-7.
@@ -173,7 +174,6 @@ Originally Sub-B (single ~2-3 day implementation). Mid-S17 evaluated B1/B2 split
 
 ### Critical path (gates Sub-B work)
 
-- ⏳ **S17-1 Sub-A2** — Dashboard wiring. Extend "Refresh riders" button to also call `/gather-standings` for stage `N-1`. Failure semantics: Holdet failure blocking, TV2 failure non-blocking warning. Stage 1 edge: skip standings call cleanly (no previous stage exists). Rename button (proposed: "Refresh pre-stage data" or similar). ~30 min. **Gate-critical**: without this, standings ingested by Sub-A never reach the optimizer in normal pre-stage workflow. Must land before Sub-B2 can be tested end-to-end.
 - ⏳ **S17-1 Sub-B-plumbing** — Verify dashboard expert weight slider plumbing. ~5-min read-only follow-up to Sub-B Design Diagnostic. Read `claude.html` slider handler + `server.py` `/gather-intel` to confirm whether the dashboard slider rides the YAML→prompt-string pathway, plumbs to a different numerical pathway, or is partially wired. Result feeds S18-1 design and S18-7 architecture.
 
 ### Session 17 — week 1 remainder (rest day May 11 → Stage 7, May 15)
