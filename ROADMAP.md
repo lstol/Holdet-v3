@@ -4,12 +4,13 @@ Living document. Replaces the prior roadmap section in the v5 onboarding doc. Tr
 
 **Project**: Holdet v3 (repo at `~/Claude/Holdet-v3/`)
 **Race target**: Tour de France 2026 (early July). Giro d'Italia 2026 is calibration.
-**Last updated**: May 10, 2026 (mid-Session 17, post-Sub-A close, Stage 3 racing).
+**Last updated**: May 10, 2026 (Session 17 close pending; Sub-B Design Diagnostic landed).
 
 ---
 
 ## Update protocol
 
+- The first handoff of every new session is a ROADMAP.md update folding deltas from the prior session (closed items, new items, scope changes, corrections). Standing rule.
 - Update at the close of each handoff that completes scope, or when scope changes mid-session
 - Each item carries: ID, status, one-line description, optional notes
 - Status values: ✅ closed, 🟡 in flight, ⏳ queued, 💭 decision pending, ❌ withdrawn
@@ -101,7 +102,7 @@ Living document. Replaces the prior roadmap section in the v5 onboarding doc. Tr
 
 - ✅ **Fix 1** — Carousel pill display-only: removed `setTargetStage()` from pill `onclick`; pills update display index without reloading optimizer/odds/intel.
 - ✅ **Fix 2** — Expert weights `localStorage` persistence (mirrors slider persistence pattern).
-- ✅ **Fix 3** — Inner Ring removed from `S.expertSources` and `expert_sources.yaml`. Scraper still fetches Inner Ring text but Haiku's prompt no longer assigns it a named weight.
+- ✅ **Fix 3** — Inner Ring removed from `S.expertSources` and `expert_sources.yaml` due to time-pressured decision after stale-data scraping was observed (showed 2024 Giro riders). Scraper still fetches Inner Ring text but Haiku's prompt no longer assigns it a named weight. **NOT a permanent retirement** — flagged for repair under S18-7.
 - ✅ **Fix 4** — Ingemann JSON extraction: regex `\{.*\}` (DOTALL) replaces strict `json.loads(raw.strip())`, plus tighter prompt ("No text before or after. No markdown fences").
 - ✅ **Fix 5** — Stage results from players API. Probing nexus `/api/games/{id}/rounds/*` revealed Next.js HTML, not JSON. Players API is the only real JSON endpoint; cumulative `points` field after stage scoring. New flow: fetch players API → cross-reference with team snapshot → write `stage_N_results.json`. `fetchStageResults()` calls `renderStageResults()` directly.
 - ✅ **Fix 5b** (cont) — `fetch_stage_results` falls back to live `fetch_team_as_dict()` call when snapshot's `team_composition` is empty; persists composition back into snapshot for subsequent calls.
@@ -144,28 +145,45 @@ The dominant Session 17 piece. Eliminates the optimizer's blind spot to GC stand
 
 - ✅ **S17-1 Sub-A Phase 1 Diagnostic** — Closed. Finding: Feltet scraper does NOT touch standings (user's prior premise was incorrect). README's claim of GC in `stage_N_holdet.json` was aspirational. Reframed Sub-A from "wire up existing scraper" to "build standings ingestion path from scratch."
 - ✅ **S17-1 Sub-B Phase 1 Diagnostic** — Closed. Finding: existing `gc_bonus`/`jersey_bonus` are heuristic over stage finish probability, not standings-aware. Two layers: pre-search EV annotation (`add_stage_evs` in `optimizer.py:181-234`) and Monte Carlo simulation (`simulate_stage` lines 1180-1191). Structural error surfaced: jersey bonus given to stage WINNER, not jersey HOLDER going into stage. Verdict: Sub-B requires standings-aware replacement, not extension.
-- ✅ **S17-1 Sub-A Phase 2** — Closed today. Delivered: `fetch_tv2_standings(stage)` in `scraper.py` + `POST /gather-standings` endpoint in `server.py`. Pulls four classifications (samlet/sprint/bjerg/ungdom) from TV2 per stage. `stage_2_standings.json` written. Verified: Silva at GC #1, holds rosa + bianca. Includes matcher upgrade (Rule X first-and-last word match + Rule Y word-level subset, lastname-only bug fix, `_NICKNAME_ALIASES` dict). All 5 original stop-condition unmatched names resolved (0/30 vs. original 5/30). Five remaining warnings beyond top-30 are deeper-scope (hyphen tokenisation, typo similarity, transliteration variants) — flagged in commit body, not addressed.
+- ✅ **S17-1 Sub-A Phase 2** — Closed. Delivered: `fetch_tv2_standings(stage)` in `scraper.py` + `POST /gather-standings` endpoint in `server.py`. Pulls four classifications (samlet/sprint/bjerg/ungdom) from TV2 per stage. `stage_2_standings.json` written. Verified: Silva at GC #1, holds rosa + bianca. Includes matcher upgrade (Rule X first-and-last word match + Rule Y word-level subset, lastname-only bug fix, `_NICKNAME_ALIASES` dict). All 5 original stop-condition unmatched names resolved (0/30 vs. original 5/30). Five remaining warnings beyond top-30 are deeper-scope (hyphen tokenisation, typo similarity, transliteration variants) — flagged in commit body, not addressed.
+- ✅ **S17-1 Sub-B Design Diagnostic** — Closed. Architectural read of intel pipeline. Key findings:
+  - **Single consumption site at `optimizer.py:284-293`** reading `key_signals` only via 6-cell `INTEL_MULT` table at `optimizer.py:71-79`. Per-rider lift bounded: max 1.20× up, min 0.75× down.
+  - **Renormalisation property** (`optimizer.py:303-306`): intel can re-rank within field but cannot inflate total probability mass.
+  - **`build_forward_probabilities` does NOT consume intel.** Forward stages (n+1, n+2) are slider-derived only. Material gap for cost_n1 / cost_n2 reasoning.
+  - **Stage-level intel fields (`summary`, `stage_notes`, `weather`) are dead in optimizer** — rendered in dashboard, never reach `build_probabilities`.
+  - **Expert weights are LLM prompt-string nudges** — f-string-substituted into Haiku prompt at `server.py:921-976`, not numerical multipliers. Per-rider numerical lever is the hardcoded `INTEL_MULT` table. Changing YAML weights from 1.5→2.0 wouldn't change any number in the optimizer; it would only change the prompt string.
+  - **Dashboard expert weight slider plumbing** not yet verified — diagnostic traced YAML→prompt clearly but didn't trace whether the dashboard slider feeds the same path, a different numerical pathway, or is partially wired. Follow-up needed (Sub-B-plumbing).
+  - **Inner Ring**: still scraped, included in Haiku prompt as "background context only, no weight," produces zero numerical contribution. ~5-10s scrape cost per gather-intel call for cosmetic prose-shaping. **NOT to be retired** — to be repaired and brought into per-source UI control as part of S18-7.
+  - **Documented weights stale**: v5 onboarding states TV2 1.5 / Feltet 1.3 / Inner Ring 1.2; actual current YAML is TV2 1.5 / Feltet 1.0, Inner Ring removed (S11 Fix 3, Feltet 1.3→1.0 in commit `bb71b7e` between S13-14).
+  - **Clean architectural slot** identified for stage-level `stage_signals.{gc_volatility, sprint_likelihood, breakaway_likelihood}` in Haiku output schema. Consumer hook in `build_probabilities` mirrors existing `key_signals` access pattern.
+  - Carving outcome: Sub-B split into Sub-B1 (extend Haiku schema) + Sub-B2 (standings-aware bonus gated by `gc_volatility`) + Sub-B3 (deferred — relative time-gap GC simulation, conditional on Sub-B2 verification gap).
 
 #### Sub-B carving evolution (decision history, for future reference)
-Originally Sub-B (single ~2-3 day implementation). Mid-S17 evaluated B1/B2 split (jersey-only / GC re-ranking); **rejected** because the GC retention shortcut underlying the split proved invalid (breakaways routinely gap GC by 5+ minutes on "flat" stages). Merged back to single Sub-B. Architecture pivoted again when the user proposed reading GC volatility from intel rather than fitting rank-transition distributions — Sub-B Design Diagnostic added to characterize the intel pipeline before designing the standings-aware bonus.
+Originally Sub-B (single ~2-3 day implementation). Mid-S17 evaluated B1/B2 split (jersey-only / GC re-ranking); **rejected** because the GC retention shortcut underlying the split proved invalid (breakaways routinely gap GC by 5+ minutes on "flat" stages). Merged back to single Sub-B. Architecture pivoted again when the user proposed reading GC volatility from intel rather than fitting rank-transition distributions — Sub-B Design Diagnostic added to characterize the intel pipeline. Final carving (post-diagnostic): Sub-B1 (input: extend Haiku schema with stage_signals) → Sub-B2 (consumer: standings-aware bonus blended via gc_volatility) → Sub-B3 (deferred refinement: relative time-gap simulation if Sub-B2 verification shows blend formula breaks materially on high-volatility stages). A briefly-proposed Sub-B0 (retire Inner Ring) was **withdrawn** when the user clarified Inner Ring's status: disabled under time pressure, not abandoned. Its repair is folded into S18-7.
 
 ---
 
 ## In flight
 
-- 🟡 **S17-1 Sub-B Design Diagnostic** — Claude Code working. Architectural read of intel pipeline: how does `scrape_all_intel` flow into `build_probabilities`, and is there room for a structured stage-level `gc_volatility` field? Result shapes Sub-B implementation design.
+(none — Session 17 close pending; awaiting Stage 3 results and any additional handoffs)
 
 ---
 
 ## Future work
 
+### Critical path (gates Sub-B work)
+
+- ⏳ **S17-1 Sub-A2** — Dashboard wiring. Extend "Refresh riders" button to also call `/gather-standings` for stage `N-1`. Failure semantics: Holdet failure blocking, TV2 failure non-blocking warning. Stage 1 edge: skip standings call cleanly (no previous stage exists). Rename button (proposed: "Refresh pre-stage data" or similar). ~30 min. **Gate-critical**: without this, standings ingested by Sub-A never reach the optimizer in normal pre-stage workflow. Must land before Sub-B2 can be tested end-to-end.
+- ⏳ **S17-1 Sub-B-plumbing** — Verify dashboard expert weight slider plumbing. ~5-min read-only follow-up to Sub-B Design Diagnostic. Read `claude.html` slider handler + `server.py` `/gather-intel` to confirm whether the dashboard slider rides the YAML→prompt-string pathway, plumbs to a different numerical pathway, or is partially wired. Result feeds S18-1 design and S18-7 architecture.
+
 ### Session 17 — week 1 remainder (rest day May 11 → Stage 7, May 15)
 
-- ⏳ **S17-1 Sub-A2** — Dashboard wiring. Extend "Refresh riders" button to bundle `/gather-standings` for stage `N-1`. Failure semantics: Holdet failure blocking, TV2 failure non-blocking warning. Stage 1 edge: skip standings call cleanly (no previous stage). Rename button (e.g. "Refresh pre-stage data"). ~30 min. **Needed for testing — slot in soon.**
-- ⏳ **S17-1 Sub-B Implementation** — Design follows from Sub-B Design Diagnostic. Standings-aware bonus + intel-driven GC volatility signal. Verification: retroactive Stage 3 with `pre_stage_standings = stage_2_standings.json` should surface Silva at ~140k combined (rosa retention 25k + bianca retention 15k + GC #1 bonus ~100k).
+- ⏳ **S17-1 Sub-B1** — Extend Haiku prompt + JSON schema with `stage_signals.{gc_volatility, sprint_likelihood, breakaway_likelihood}` ∈ [0.0, 1.0]. Calibration note in prompt: 0.0 = explicit "peloton control / no GC moves / sprint-controlled"; 1.0 = explicit "GC moves expected / decisive day / splits in the favourites group"; default 0.5 when sources don't speak to it. Verify field appears in re-scraped `stage_N_intel.json`. No optimizer change yet — Sub-B1 only delivers the input data.
+- ⏳ **S17-1 Sub-B2** — Standings-aware GC/jersey bonus, gated by `gc_volatility`, consuming Sub-A's `stage_{N-1}_standings.json`. Replaces heuristic in both `add_stage_evs` (pre-search EV annotation) and `simulate_stage` (Monte Carlo). Blend formula: `P(post_stage_top_10) = (1-gc_volatility) × (current_rank ∈ top_10) + gc_volatility × P(stage_finish_top_10)`. Same shape for jersey retention. **Verification (option 2 — measurable gap)**: (a) retroactive Stage 3 should surface Silva at ~140k combined (rosa retention 25k + bianca retention 15k + GC #1 bonus ~100k); (b) at least one high-volatility historical stage (mountain stage with GC reshuffle, e.g. selected from prior Grand Tour) where blend formula is expected to break — measure how badly; documented gap feeds Sub-B3 trigger decision. Requires Sub-A2 to be landed for end-to-end test.
+- ⏳ **S17-1 Sub-B3** *(deferred, conditional)* — Relative time-gap GC simulation. Triggers if Sub-B2 high-volatility verification shows blend formula breaks materially. Replaces stage-finish-position proxy with proper relative time-gap reasoning across current GC top-10 (a 40th-place finish that loses 30s with all rivals also losing 30s should preserve GC rank). Architecturally larger; possibly T-series rather than S17. If Sub-B2 verification shows blend is adequate, B3 stays in roadmap as a known refinement but isn't actively scheduled.
 - ⏳ **S17-2** — Slider/race-type tickbox bug. Diagnose first. EV variance 1450k-1785k for same stage; recommendations partially trustworthy until fixed. Should land before Stage 4 prep (May 12) for confident EV reads.
-- ⏳ **S17-1 Sub-C** — Jersey acquisition probability for non-holders.
-- ⏳ **S17-1 Sub-D** — Verification: replay Stages 1-3 with full Sub-B model + actual standings. Calibrate retention probabilities.
+- ⏳ **S17-1 Sub-C** — Jersey acquisition probability for non-holders. Less critical than retention; matters in mountain weeks. Builds on Sub-B2's standings-aware infrastructure.
+- ⏳ **S17-1 Sub-D** — Verification across multiple stages. Replay Stages 1-3 with full Sub-A + B1 + B2 (+ B3 if triggered) + C model + actual standings. Confirm Silva would have surfaced. Calibrate `gc_volatility`-blend behaviour against actual stage outcomes. ~1-2 days.
 - ⏳ **S17-6** — Time trial bucket (5th `SCENARIO_TO_TERRAIN` category). **Hard deadline ~May 17** before Stage 8 prep when Stage 10 enters n+2 window. Cannot go to Tour without this.
 - ⏳ **S17-3** — Two-team support. Team selector toggle in dashboard header. Snapshot files namespaced per team. Shared race-level data unified.
 - 💭 **S17-12** — Ingemann observation window. Check if Stage 4 Feltet article appears post-rest-day. If not, manual paste is permanent. Observation only.
@@ -187,15 +205,27 @@ Originally Sub-B (single ~2-3 day implementation). Mid-S17 evaluated B1/B2 split
 - ⏳ **S17-14** — Transfer-rate calibration vs. top-N. Compare optimizer's recommended transfer counts vs. actual top-10 transfer counts. Calibration analysis, not code.
 - ⏳ **S17-16** — Axelgaard preview integration, Phase 2. Use stage classification for forward slider auto-fill or hint. Use star ratings as forward EV priors in `build_forward_probabilities()`.
 - ⏳ **S17-17** — Stage 2 retroactive A/B post-mortem. Re-run optimizer on Stage 2 with corrected curve + seeded RNG; compare to actual Project Win The Giro picks. Calibrates how much was optimizer wisdom vs. human bias.
+- ⏳ **S17-18** *(new from S17 audit)* — Forward-probabilities intel consumption. `build_forward_probabilities` currently doesn't consume intel at all; n+1 and n+2 EV is purely slider-derived. Fold the same `key_signals`-multiplier logic (or its successor after Sub-B1) into forward EV calculation. Affects cost_n1 and cost_n2 reasoning across all four strategy cards.
+- ⏳ **S17-19** *(new from S17 audit)* — Stage-level intel fields (`summary`, `stage_notes`, `weather`) are dead in optimizer — rendered in dashboard, never reach `build_probabilities`. Either (a) wire them into prompt context for the per-rider intel synthesis, (b) extract structured signals from them (Sub-B1 partially does this for `gc_volatility` etc.), or (c) explicitly mark display-only and stop scraping `weather` if unused. Decide direction first.
 
 ### Session 18 — calibration and refinement (mid-Giro, post-Stage 9-10)
 
-- ⏳ **S18-1** — Mid-Giro re-baselining. Calibrate slider weights and expert weights (TV2 1.5 / Feltet 1.3 / Inner Ring 1.2 are pre-Giro guesses). Depth-bonus distribution sanity check — how often do real teams hit 5/6/7/8 in top-15?
+- ⏳ **S18-1** — Mid-Giro re-baselining. Two distinct levers:
+  - **Numerical**: `INTEL_MULT` table (6 cells at `optimizer.py:71-79`) — pre-Giro guesses, never validated. Calibrate against actual Stage 1-9 outcomes: do `up/strong` riders actually outperform their bookmaker baseline by ~20%?
+  - **Prompt-tuning**: expert weights in `expert_sources.yaml` and dashboard sliders. These are LLM prompt-string nudges (per S17 Sub-B Design Diagnostic), not numerical multipliers. Tuning them is prompt engineering — adjust only with awareness that effects are opaque.
+  - Also: depth-bonus distribution sanity check — how often do real teams hit 5/6/7/8 in top-15?
 - ⏳ **S18-2** — Bank live in header (real-time Holdet API). Replaces D₁ removal from Session 15.
 - ⏳ **S18-3** — Most-picked panel from Holdet API. Crowd consensus signal. Different from S17-4 (top-N expert teams). Useful as fourth card if S17-11 retires Low-transfer.
 - ⏳ **S18-4** — Snapshot rename `stage_N_ingemann.json` → `stage_N_expert_team.json`. Cosmetic.
 - ⏳ **S18-5** — Dead-code cleanup pass. Remove `/current-team`, `/save-current-team`, `.stat-pill`, `.mock-badge`, scraper Ingemann functions (gated on S17-12 confirming Feltet silence through Stage 6).
 - 💭 **S18-6** — Crash-correlated risk modeling. Decision item, possibly no code. Document Stage 2 lesson (UAE-adjacent crash took out Strong/Morgado/Narvaez correlated). Make decision deliberate.
+- ⏳ **S18-7** *(reworked from earlier draft)* — Multi-source intel framework with per-source UI control. Goals: (i) repair Inner Ring scraping (currently disabled due to stale-data failure showing 2024 Giro riders; root cause unknown — wrong page, outdated selectors, Inner Ring hadn't published 2026 content at scrape time, or upstream search returning archived content); (ii) add Cycling News as a configured source; (iii) extensible source registry for adding further sources without scraper rewrites.
+  - **Phase 1 — Inner Ring repair diagnostic**: investigate why Inner Ring scraping returned 2024 Giro content. Identify whether it's a fixable selector/URL issue, a freshness check problem, or upstream content unavailability. ~half-day diagnostic.
+  - **Phase 2 — Source registry + quality gate**: configured candidate source registry (TV2, Feltet, Inner Ring, Cycling News, etc.) with per-source scrape config (URL pattern, content selector). Quality gate at scrape-time: rider-name match against current `riders.json`; <30% match flags as stale. Returns warning, not error. ~1 day.
+  - **Phase 3 — Dashboard UI + per-source controls**: per-source row in dashboard with (a) tickbox to include in this run (default ticked), (b) weight slider, (c) freshness indicator (✅ / ⚠️ stale / ❌ failed). Tickbox state persists in localStorage. Pipeline change: `scrape_all_intel(stage, included_sources)` returns only ticked sources passing freshness. Haiku prompt reflects which sources were used. ~1 day.
+  - **Phase 4 — Architectural caveat documentation**: tooltip or note explaining that source weights are LLM prompt-string nudges, not numerical multipliers (per S17 Sub-B Design Diagnostic). The numerical lever is `INTEL_MULT` (S18-1 calibration target). Slider effects are opaque; tickbox effects are observable. ~30 min.
+  - Total: ~2.5-3 days.
+  - **Architectural property to preserve**: per-rider lift bounded by `INTEL_MULT` cells regardless of source count. Adding sources broadens coverage (more riders tagged) but each rider's individual lift cap stays the same. Watch for Haiku's `strength` assignment scaling with agreement (3/4 sources agreeing → `strong`; 1/4 → `moderate`); this is arguably desirable (agreement → confidence) but is the one place number-of-sources can affect lift via prompt synthesis.
 
 ### Pre-Tour (T-series, June 1 → early July, ~7 weeks)
 
