@@ -1,17 +1,25 @@
 # Claude Code — Standing Instructions
 
-**Read this file at the start of every session.**
-**Follow the session protocol at the end of every session — no exceptions.**
+**Read this file at the start of every session.** Pair with `ROADMAP.md` (current project state — fetch / read on session start; authoritative for status of all work items) and `CLAUDE_SESSION.md` (conversational Claude's onboarding — see for cross-reference on the workflow).
+
+---
+
+## Session start procedure
+
+Before executing any work:
+
+1. Read this file.
+2. Read `ROADMAP.md` to ground in current state — what's recently closed, what's in flight, what's queued.
+3. Receive the handoff from the user. Handoffs are self-contained — everything you need to execute is inside the handoff itself. You do not need conversational thread or prior handoffs.
 
 ---
 
 ## What this project is
 
-Holdet v3 is a decision-support engine for elite-level play in Holdet.dk's Giro d'Italia 2026 fantasy competition. It is a fantasy optimization engine, not a cycling performance predictor.
+Holdet v3 is a decision-support engine for elite-level play in Holdet.dk's fantasy cycling competitions. **Race target**: Tour de France 2026 (early July). **Currently calibrating against**: Giro d'Italia 2026.
 
-Design authority: `shared/rules/Giro_Fantasy_Optimizer_Framing.md` — read this before making any architecture decisions.
-
-Scoring rules and game mechanics: `shared/rules/02_rules_payoff.md`
+Design authority: `shared/rules/Giro_Fantasy_Optimizer_Framing.md` — read before making any architecture decisions.
+Scoring rules: `shared/rules/02_rules_payoff.md`.
 
 ---
 
@@ -19,139 +27,173 @@ Scoring rules and game mechanics: `shared/rules/02_rules_payoff.md`
 
 ```
 holdet-v3/
-├── ROADMAP.md                         ← living project roadmap, updated every session
-├── CLAUDE_CODE.md                     ← this file
-├── claude/                            ← Claude's engine and dashboard (Claude only)
+├── ROADMAP.md                         ← living project state — authoritative
+├── CLAUDE_CODE.md                     ← this file (executor instructions)
+├── CLAUDE_SESSION.md                  ← conversational Claude's onboarding
+├── claude/
 │   ├── engine/
-│   │   ├── fetch_riders.py            ← working Holdet.dk scraper
-│   │   ├── capture_cookie.py          ← Playwright cookie capture
-│   │   ├── optimizer.py               ← to be built
-│   │   ├── expert_sources.yaml        ← Claude's expert source weights (Claude-internal only)
-│   │   └── API_NOTES.md               ← Holdet.dk API reference (Claude-internal)
+│   │   ├── server.py                  ← Flask server, port 5050
+│   │   ├── optimizer.py               ← four-strategy SA optimizer
+│   │   ├── scraper.py                 ← Playwright scrapers (TV2, Feltet, TV2 standings)
+│   │   ├── fetch_riders.py            ← Holdet.dk API client
+│   │   ├── expert_sources.yaml        ← per-source weights (Claude-internal)
+│   │   └── API_NOTES.md
 │   ├── dashboard/
-│   │   └── claude.html                ← Claude's decision dashboard
-│   ├── output/                        ← per-stage optimization output (Claude only)
-│   │   └── stage_N_claude.json
-│   ├── sessions/                      ← session logs, one file per Claude Code session
-│   ├── notes/                         ← Claude working notes, intel summaries, stage analysis
-│   └── decisions/
-│       └── decisions_log.md           ← key decisions log with rationale and date
-├── chatgpt/
-│   └── README.md                      ← ChatGPT/Codex domain — Claude never touches this
-├── shared/                            ← Holdet.dk data and snapshots only (both systems read)
-│   ├── data/
-│   │   ├── riders/
-│   │   │   └── giro_2026/             ← 199 riders with holdet_ids
-│   │   ├── stages/
-│   │   │   └── giro_2026/             ← stage roadbook, sprint/KOM positions
-│   │   ├── stage_images/
-│   │   │   └── giro_2026/
-│   │   │       └── stage-N.jpg        ← 21 stage profile images
-│   │   └── snapshots/                 ← stage_N_holdet.json
-│   └── rules/                         ← single source of truth for all rules and framing docs
-│       ├── 02_rules_payoff.md
-│       ├── game_strategy.md
-│       └── Giro_Fantasy_Optimizer_Framing.md
+│   │   └── claude.html                ← single-page dashboard
+│   ├── output/                        ← per-stage optimizer output
+│   ├── sessions/                      ← session logs (one file per Claude Code session)
+│   ├── notes/
+│   ├── decisions/
+│   │   └── decisions_log.md
+│   ├── diagnostics/                   ← re-runnable diagnostic scripts
+│   └── logs/
+├── chatgpt/                           ← ChatGPT/Codex domain — never modify
+└── shared/
+    ├── data/
+    │   ├── riders/giro_2026/
+    │   ├── stages/giro_2026/
+    │   ├── stage_images/giro_2026/
+    │   └── snapshots/                 ← stage_N_*.json files (holdet, intel, odds, results, standings, ingemann)
+    └── rules/
+        ├── 02_rules_payoff.md
+        ├── game_strategy.md
+        └── Giro_Fantasy_Optimizer_Framing.md
 ```
 
-**Architecture notes:**
-- `chatgpt/` is ChatGPT/Codex's directory — Claude never creates or modifies files there
-- `shared/rules/` is the single source of truth for all rules and framing docs — no copies elsewhere
-- `shared/` contains Holdet.dk data and snapshots only — no intelligence config, no source weights, no odds data. Schema defined in framing doc Section 12
-- Expert source weights are at `claude/engine/expert_sources.yaml` — Claude-internal, never placed in shared/
-- Each race gets its own subfolder under `riders/`, `stages/`, and `stage_images/` (e.g. `giro_2026/`, `tdf_2026/`). This is the canonical pattern for multi-race support.
+**Architecture invariants:**
 
-If any of these directories or files are missing, create them before doing anything else.
+- `chatgpt/` is ChatGPT/Codex's directory — never create or modify files there
+- `shared/rules/` is the single source of truth for rules and framing docs
+- `shared/data/` contains Holdet.dk data and snapshots only — no intelligence config, no source weights, no odds data
+- Expert source weights live at `claude/engine/expert_sources.yaml` — Claude-internal, never under `shared/`
+- Each race gets its own subfolder under `riders/`, `stages/`, `stage_images/`. Canonical pattern for multi-race support.
+- Claude output writes to `claude/output/` — never to `shared/`
+
+If any directory is missing, create it before doing anything else.
 
 ---
 
-## Sessions 2 / 2b / 2c — completed (2026-05-06)
+## How handoffs work
 
-- ✅ Restructured repo into `claude/` / `chatgpt/` / `shared/` layout
-- ✅ Created `claude/engine/expert_sources.yaml` (intelligence is Claude-internal, not shared)
-- ✅ Created `claude/engine/optimizer.py` stub
-- ✅ Created `claude/dashboard/claude.html` stub
-- ✅ Created `chatgpt/` directory with README (ChatGPT scaffolds its own structure)
-- ✅ Removed duplicates and extra directories from `shared/`
-- ✅ Moved sessions/, notes/, decisions/ under claude/
-- ✅ Created `claude/decisions/decisions_log.md` with decisions from Sessions 1–2
-- ✅ Updated framing doc with Section 13 (System Architecture)
-- ✅ Updated ROADMAP.md and CLAUDE_CODE.md to reflect clean structure
+Conversational Claude drafts handoffs; you execute them. Standard handoff structure:
 
-## Session 3 — immediate tasks
+**Part 0 — ROADMAP.md update.** Every handoff includes a Part 0 delta — closures of completed items, new items added, scope shifts, corrections. If Part 0 is genuinely empty, the handoff says so explicitly.
 
-1. **Wire dashboard to live data**
-   - Replace mock rider array in `claude/dashboard/claude.html` with a fetch from `shared/data/snapshots/stage_N_holdet.json`
-   - Add a minimal local server (`claude/engine/server.py`) with one endpoint:
-     - `POST /refresh` → runs `fetch_riders.py`, returns JSON
-   - Refresh button in dashboard calls this endpoint
+**Part 1 — The substantive work.** One issue per handoff (3-4 fixes maximum, never more). Includes:
+- Scope (which files, what changes)
+- Implementation guidance (sometimes with sketched diff)
+- Verification cases (numbered, mechanically checkable)
+- Stop conditions (when to halt and report rather than mutating)
+- Commit message format
 
-2. **Verify `fetch_riders.py` runs clean**
-   Run `python3 claude/engine/fetch_riders.py`, confirm output shape matches the snapshot schema in framing doc Section 12.
-
-3. **ChatGPT onboarding**
-   Draft CODEX.md standing instructions for ChatGPT. Define stage_N_chatgpt.json output schema.
-
-4. **Follow session protocol** (see below)
+Diagnostic handoffs (read-only) may include sketched diffs in your report — proposing changes is encouraged, commit only after user confirms. This is a standing rule.
 
 ---
 
-## Session protocol — mandatory at end of every session
+## Handoff execution protocol
 
-Every Claude Code session must end with these three steps, in order. No exceptions.
+When you receive a handoff:
 
-### Step 1 — Update ROADMAP.md
+1. **Read the entire handoff first.** Don't start executing partway through. Note the stop conditions before you start.
 
-- Mark completed tasks as ✅
-- Add any new tasks discovered during the session
-- Update the "Last updated" line with session number and date
-- Add a row to the session log index table
+2. **Apply Part 0 (ROADMAP delta).** Apply the listed changes to `ROADMAP.md`. If a delta is already applied (e.g., user notes "Delta 2 already applied"), skip. If a delta conflicts with current state in ways that suggest concurrent edits, surface and stop. Commit Part 0 alone with the message specified in the handoff (typically `roadmap: ...`).
 
-### Step 2 — Write session log
+3. **Execute Part 1.** Follow the handoff's scope, implementation guidance, and verification cases. Respect stop conditions absolutely — when in doubt, stop and report.
 
-Create `claude/sessions/YYYY-MM-DD_N.md` (date + session number within that date).
+4. **Verify.** Run all listed verification cases. Capture results to surface in the report. Do not commit if any verification fails or any stop condition triggers — surface the finding instead.
 
-Template:
-```markdown
-# Session N — YYYY-MM-DD
+5. **Commit Part 1 alone.** Separate from Part 0 — separate diff = readable diff. Use the commit message specified in the handoff.
 
-## What was built
-[Bullet list of concrete deliverables]
+6. **Restart server if needed.** When `optimizer.py`, `server.py`, or related Python files changed, restart at the very end:
+   ```
+   pkill -f server.py && sleep 1 && launchctl kickstart -k gui/$(id -u)/com.holdet.server
+   ```
+   Cluster `pkill` + `launchctl` together so dashboard downtime is seconds, not minutes. Verify server is up: `curl http://localhost:5050/`.
 
-## Decisions made
-[Any architectural or design decisions, with brief rationale]
+7. **Return report to user** in standard format (see below).
 
-## Open questions
-[Anything unresolved that needs a decision next session]
+---
 
-## Next session tasks
-[Concrete first steps for next session — these go into ROADMAP.md too]
+## Standard report-back format
+
+Reports are returned in chat for the user to paste back to conversational Claude. Use this structure:
+
+```
+[Brief one-line summary if the result is unambiguous, or skip if findings are nuanced]
+
+Both commits pushed:
+| Commit  | Scope                          |
+|---------|--------------------------------|
+| abc1234 | Part 0 — ROADMAP delta         |
+| def5678 | Part 1 — [substantive change]  |
+
+Verifications
+| Check                          | Result        |
+|--------------------------------|---------------|
+| V1 [description]               | ✅ [outcome]  |
+| V2 [description]               | ❌ [reason]   |
+
+[Implementation summary — what files changed, what the change does in 2-4 sentences]
+
+Findings worth surfacing
+- [Anything surprising, opaque, or worth flagging — e.g. unexpected line counts, runtime concerns, side findings]
+
+Decisions deferred to user
+- [Anything the handoff explicitly left for user to decide post-execution, e.g. "Tier A merge call: recommend X, awaiting confirmation"]
+
+Pre-existing main working-tree files (riders.json, etc.) untouched throughout.
 ```
 
-### Step 3 — Commit and push
+Adapt as needed — drop sections that aren't relevant. The fixed elements are: commits, verifications, anything that diverged from the handoff plan.
 
-```bash
-git add .
-git commit -m "session N: [one-line summary of what was done]"
-git push
-```
+---
 
-The commit message must start with `session N:` so the log is easy to scan.
+## Operational rules (non-negotiable)
+
+These match the rules in `CLAUDE_SESSION.md`. In case of conflict, that file is source of truth.
+
+- **Never use git worktrees.** Every change goes directly to main. If a worktree exists, merge and delete it before doing anything else.
+- **Read-only diagnosis before mutation.** When state is unexpected, stop and report instead of mutating.
+- **One issue per handoff.** Never batch more than 3-4 fixes.
+- **Stop and report on scope creep.** Don't spiral mid-handoff. Respect the stop-conditions section.
+- **Server restart clusters at end of handoff.** Cluster `pkill` + `launchctl` so downtime is seconds.
+- **Verify field names from real JSON before assuming.** Past handoffs failed when names were guessed.
+- **When local main has uncommitted changes**, plan `merge --no-ff`, not `--ff-only`.
+
+---
+
+## Diagnostic script disposition
+
+When a diagnostic handoff produces a script (e.g., the N-curve experiment in S17-21 Phase 1.5):
+
+- **Re-runnable and likely useful again** → commit to `claude/diagnostics/`. Self-contained (no dependencies on changing optimizer internals). Top-of-file comment documents the canonical reproducer (stage, slider state, etc.).
+- **One-off, unlikely to be re-run** → leave at `/tmp/`, discard after report lands. Mention disposition in report.
+- **Default when uncertain**: commit. Storage is cheap, re-derivation is not.
+
+---
+
+## Game rules (project facts, hardcoded by Holdet.dk)
+
+These are facts about the game, not rules for execution.
+
+- Budget: 50,000,000 kr
+- Team: exactly 8 riders
+- Max 2 per real-world team
+- Captain proposed by optimizer, user overrides
+- Stage-type sliders are user-controlled — optimizer suggests, user decides
+- The optimizer never uses historical rider attributes — odds + expert intel only
 
 ---
 
 ## Daily use
 
-**Dashboard is always at `http://localhost:5050`** — bookmark this.
+Dashboard always at `http://localhost:5050`.
 
-The Flask server starts automatically on login via LaunchAgent:
-```
-~/Library/LaunchAgents/com.holdet.server.plist
-```
-Source: `claude/tools/com.holdet.server.plist` — uses `/usr/local/bin/python3`.
+Flask server starts automatically on login via LaunchAgent: `~/Library/LaunchAgents/com.holdet.server.plist`. Source: `claude/tools/com.holdet.server.plist` — uses `/usr/local/bin/python3`.
 
-To start/stop manually:
-```bash
+Manual control:
+
+```
 launchctl load   ~/Library/LaunchAgents/com.holdet.server.plist
 launchctl unload ~/Library/LaunchAgents/com.holdet.server.plist
 # or directly:
@@ -160,48 +202,66 @@ python3 claude/engine/server.py
 
 Logs: `claude/logs/server.log` and `claude/logs/server-error.log`
 
-```
-claude/tools/Open Dashboard.app    → opens http://localhost:5050 (add to Dock)
-claude/tools/Holdet Refresh.app    → runs holdet-refresh.sh (fetch + reopen dashboard)
-```
+`claude/tools/Open Dashboard.app` — opens http://localhost:5050
+`claude/tools/Holdet Refresh.app` — runs holdet-refresh.sh
 
 **Setup requirements:**
-```bash
+
+```
 pip install flask anthropic pyyaml python-dotenv
-# Intel scraping
 pip install playwright --break-system-packages
 playwright install chromium
 ```
+
 `.env` must contain:
+
 ```
-ANTHROPIC_API_KEY=sk-ant-...   # for /gather-odds and /gather-intel
-HOLDET_COOKIE=...              # for fetch_riders.py
+ANTHROPIC_API_KEY=sk-ant-...
+HOLDET_COOKIE=...
+HOLDET_FANTASY_TEAM_ID=...
+HOLDET_CARTRIDGE=...
 ```
 
 ---
 
-## Critical rules (never violate these)
+## Session protocol — end of session
 
-- **NEVER use git worktrees.** Every change goes directly to main. If Claude Code creates a worktree, merge and delete it immediately before doing anything else.
+Per-handoff Part 0 deltas update ROADMAP continuously, so end-of-session steps are simpler than the older protocol:
 
-## Key rules (never violate these)
+### Step 1 — Write session log
 
-- Budget: 50,000,000 kr | Team: exactly 8 riders | Max 2 per real-world team
-- Expert source weights are always read from `claude/engine/expert_sources.yaml` — never hardcoded, never placed in shared/
-- Stage-type sliders are user-controlled — AI suggests, user overrides
-- `stage_N_snapshot.json` contains only the fields specified in framing doc Section 12
-- The optimizer never uses historical rider attributes — odds + expert intel only
-- Captain is proposed by the optimizer but always user-overrideable
-- Claude never creates or modifies files under `chatgpt/` — that directory belongs to ChatGPT/Codex
-- Claude output is always written to `claude/output/` — never to `shared/`
+Create `claude/sessions/YYYY-MM-DD_N.md`:
+
+```
+# Session N — YYYY-MM-DD
+
+## What was built
+[Bullet list of concrete deliverables across all handoffs in the session]
+
+## Decisions made
+[Any architectural or design decisions with rationale, or pointers to where they're recorded]
+
+## Open questions
+[Anything unresolved — should already be in ROADMAP via Part 0 deltas]
+
+## Next session tasks
+[Concrete first steps for next session — already in ROADMAP via Part 0]
+```
+
+### Step 2 — Push
+
+```
+git push
+```
+
+If commits weren't pushed during the session (per-handoff push is fine and preferred for incremental visibility).
 
 ---
 
-## Operating model (brief)
+## Operating model
 
-- **Claude (this system):** Scrapes Holdet.dk, gathers own odds and intel, runs own optimization, drives dashboard
-- **ChatGPT:** Ingests `stage_N_snapshot.json` (Holdet data only), gathers own odds and intel independently
-- **User:** Sets sliders, confirms Tier-A, overrides at every decision point, makes all final calls
-- **Claude Code:** Executes repo work, always ends sessions with protocol above
+- **Conversational Claude** drafts handoffs; reads context, captures decisions, audits diagnostic findings. Does not edit code.
+- **Claude Code (you)** executes handoffs: diagnostics, code changes, tests, commits, pushes.
+- **User** sets goals, ships handoffs to you, makes decisions on direction, verifies in real dashboard use.
 
-Disagreement between Claude and ChatGPT is useful signal — it traces to either different probability judgment or different optimization logic. Both are valuable.
+Disagreement between optimizer outputs and human judgement is useful signal — captured in `claude/decisions/decisions_log.md` as a learning artifact when it shows architectural insight.
