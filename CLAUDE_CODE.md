@@ -96,7 +96,13 @@ When you receive a handoff:
 
 1. **Read the entire handoff first.** Don't start executing partway through. Note the stop conditions before you start.
 
-2. **Apply Part 0 (ROADMAP delta).** Apply the listed changes to `ROADMAP.md`. If a delta is already applied (e.g., user notes "Delta 2 already applied"), skip. If a delta conflicts with current state in ways that suggest concurrent edits, surface and stop. Commit Part 0 alone with the message specified in the handoff (typically `roadmap: ...`).
+2. **Apply Part 0 (ROADMAP delta).** For each delta:
+   a. Verify pre-apply state by grepping for the specific item ID in `ROADMAP.md`. Report what's currently there (e.g. "S17-21: not present" or "S17-21: shows as 🟡 in flight on line 187").
+   b. Apply the delta only if the current state genuinely differs from the target. "Already applied" means the exact ID + status icon + delivered note are present — section existing or wording being similar is NOT sufficient grounds to skip.
+   c. If a delta conflicts with current state in ways that suggest concurrent edits, surface and stop.
+   d. Commit Part 0 alone with the message specified in the handoff (typically `roadmap: ...`).
+
+   After Part 0 commit, fetch ROADMAP.md from GitHub raw and verify each delta is now present. State this verification step in the report.
 
 3. **Execute Part 1.** Follow the handoff's scope, implementation guidance, and verification cases. Respect stop conditions absolutely — when in doubt, stop and report.
 
@@ -134,6 +140,10 @@ Verifications
 | V2 [description]               | ❌ [reason]   |
 
 [Implementation summary — what files changed, what the change does in 2-4 sentences]
+
+Roadmap state after Part 0
+- [One-line summary: which IDs are now closed, which are in flight, which were just added.
+  Example: "S17-21 Phase 1 + 1.5 closed; S17-2 + S17-23 closed; S17-22 in flight; no other state changes."]
 
 Findings worth surfacing
 - [Anything surprising, opaque, or worth flagging — e.g. unexpected line counts, runtime concerns, side findings]
