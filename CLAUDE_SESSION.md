@@ -5,6 +5,7 @@ Entry point for any new conversational Claude session in this project. Pair with
 **On every new session, before responding to user content:**
 
 1. Fetch current `ROADMAP.md` from `https://github.com/lstol/Holdet-v3/blob/main/ROADMAP.md` (works via web_fetch from the public blob URL — see Operational notes below)
+   - Re-fetch ROADMAP.md after every Claude Code return — Part 0 deltas may have mutated state since the last fetch. The roadmap state in conversational Claude's context is stale otherwise.
 2. Read this file
 3. Engage with the user's session-specific framing
 
