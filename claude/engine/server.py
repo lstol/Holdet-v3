@@ -1500,6 +1500,57 @@ def snapshot():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+# ── Data freshness (dashboard status display) ────────────────────────────────
+
+@app.route('/data-freshness', methods=['GET'])
+def data_freshness():
+    """Returns metadata for the dashboard's under-Refresh-button freshness display:
+       (a) most recently written holdet snapshot timestamp
+       (b) most recent standings file (highest stage_N_standings.json that exists)
+    Uses the in-file timestamp first, file mtime as fallback.
+    """
+    out = {'riders': None, 'standings': None}
+
+    # (a) Most recent holdet snapshot. Prefer timestamp / refreshed_at fields,
+    # fall back to filesystem mtime if neither is present.
+    try:
+        holdet_files = [f for f in os.listdir(SNAPSHOT_DIR) if f.endswith('_holdet.json')]
+        if holdet_files:
+            holdet_files.sort(
+                key=lambda f: os.path.getmtime(os.path.join(SNAPSHOT_DIR, f)),
+                reverse=True,
+            )
+            path = os.path.join(SNAPSHOT_DIR, holdet_files[0])
+            d = json.load(open(path))
+            ts = d.get('timestamp') or d.get('refreshed_at')
+            if not ts:
+                ts = _dt.utcfromtimestamp(os.path.getmtime(path)).isoformat() + 'Z'
+            out['riders'] = {
+                'timestamp':    ts,
+                'rider_count':  len(d.get('riders', [])),
+                'source_file':  holdet_files[0],
+            }
+    except Exception as e:
+        _log(f"data-freshness riders error: {e}")
+
+    # (b) Highest stage_N_standings.json present.
+    try:
+        for s in range(21, 0, -1):
+            path = os.path.join(SNAPSHOT_DIR, f'stage_{s}_standings.json')
+            if os.path.exists(path):
+                d = json.load(open(path))
+                out['standings'] = {
+                    'stage':       d.get('stage', s),
+                    'captured_at': d.get('captured_at'),
+                    'source':      d.get('source', 'unknown'),
+                }
+                break
+    except Exception as e:
+        _log(f"data-freshness standings error: {e}")
+
+    return jsonify(out)
+
+
 if __name__ == '__main__':
     print('Dashboard: http://localhost:5050')
     app.run(port=5050, debug=False)

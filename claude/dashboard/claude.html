@@ -492,6 +492,10 @@ input[type=range]::-webkit-slider-thumb {
       <button class="btn btn-ghost" id="refresh-btn" onclick="refreshData()">
         <i class="ti ti-refresh"></i> Refresh pre-stage data
       </button>
+      <div id="data-freshness" style="font-size:10px; color:var(--color-warning); margin-top:4px; line-height:1.5;">
+        <div id="freshness-riders">—</div>
+        <div id="freshness-standings">—</div>
+      </div>
     </div>
   </header>
 <div id="server-msg" style="display:none;padding:6px 0;font-size:11px;
@@ -2007,6 +2011,52 @@ function copyPrompt() {
   });
 }
 
+/* ── Data freshness display (under Refresh button) ──────────────────── */
+function _fmtFreshTs(isoString) {
+  if (!isoString) return null;
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return null;
+    // Local time, "YYYY-MM-DD HH:MM" — unambiguous and compact
+    const yr  = d.getFullYear();
+    const mo  = String(d.getMonth() + 1).padStart(2, '0');
+    const da  = String(d.getDate()).padStart(2, '0');
+    const hr  = String(d.getHours()).padStart(2, '0');
+    const mi  = String(d.getMinutes()).padStart(2, '0');
+    return `${yr}-${mo}-${da} ${hr}:${mi}`;
+  } catch(_) { return null; }
+}
+
+async function loadDataFreshness() {
+  try {
+    const res  = await fetch(`${SERVER}/data-freshness`);
+    const data = await res.json();
+    const ridersEl    = $('freshness-riders');
+    const standingsEl = $('freshness-standings');
+
+    if (data.riders && data.riders.timestamp) {
+      const ts = _fmtFreshTs(data.riders.timestamp);
+      ridersEl.textContent = ts
+        ? `Riders refreshed: ${ts}`
+        : 'Riders: not yet refreshed';
+    } else {
+      ridersEl.textContent = 'Riders: not yet refreshed';
+    }
+
+    if (data.standings && data.standings.captured_at) {
+      const ts = _fmtFreshTs(data.standings.captured_at);
+      const stage = data.standings.stage;
+      standingsEl.textContent = ts
+        ? `Standings after stage ${stage}: ${ts}`
+        : `Standings after stage ${stage}: (timestamp unavailable)`;
+    } else {
+      standingsEl.textContent = 'Standings: not yet fetched';
+    }
+  } catch(_) {
+    // Soft-fail: leave existing values (—) so an unreachable server doesn't blank the line
+  }
+}
+
 /* ── Refresh ─────────────────────────────────────────────────────────── */
 // Two sequential calls under one button:
 //   1. POST /refresh         — Holdet rider/team/bank refresh (BLOCKING — prices are foundational).
@@ -2166,6 +2216,7 @@ async function init() {
   await loadSavedOutput();
   await loadSavedIngemann();
   await loadStageResults();
+  await loadDataFreshness();
   updateHeader();
 }
 
