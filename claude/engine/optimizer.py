@@ -303,9 +303,11 @@ def build_probabilities(all_riders, odds, intel, sliders=None,
         if not name:
             continue
         odds_map[name]  = o.get('win_pct', 0) / 100.0
-        if o.get('top3_pct') is not None:
+        # Project invariant: zero means missing (S17-29). Cleared/missing
+        # top3/top10 falls through to the win-derived fallback below.
+        if (o.get('top3_pct') or 0) > 0:
             top3_map[name]  = o['top3_pct']  / 100.0
-        if o.get('top10_pct') is not None:
+        if (o.get('top10_pct') or 0) > 0:
             top10_map[name] = o['top10_pct'] / 100.0
 
     in_odds = set(n for n, p in odds_map.items() if p > 0)
