@@ -77,6 +77,14 @@ Commits are typically split: Part 0 alone (roadmap), then Part 1 alone (the work
 - **Report-back format from Claude Code.** Claude Code returns reports in a standardized structure (commits table, verifications table, implementation summary, findings worth surfacing, decisions deferred to user). See `CLAUDE_CODE.md` for the template. When reading a returned report, expect this structure.
 - **Decision durability.** Non-trivial decisions made in conversation should land somewhere durable — either as a ROADMAP delta (Sub-B carving evolution style — preserves the "why" alongside the "what") or in `claude/decisions/decisions_log.md`. Memory rules persist across sessions but are bounded (max 30 entries); files don't drift.
 - **Harness worktree placement is acceptable.** The Claude Code harness may place sessions in `.claude/worktrees/<auto-name>/` rather than the canonical `~/Claude/Holdet-v3`. This is fine as long as commits fast-forward-push to `origin/main` (no merge commit, no divergence). The "every change goes directly to main" rule is about destination, not workspace.
+- **Dashboard verification protocol (post-deploy, for any change touching optimizer / odds / results panels):**
+  1. **Page load.** Open dashboard with browser console open. No console errors during initial render.
+  2. **Odds round-trip.** Paste win / top3 / top10 → `parse-ok` status → all three columns populated → optimizer button enabled.
+  3. **Clear round-trip.** Click ✕ on one bucket → column shows `—` (not "0") → disk shows that bucket = 0 → other buckets preserved on disk.
+  4. **Optimizer round-trip on a good state.** "Run optimizer" on a stage with non-empty odds → all expected strategy cards render with EV breakdowns → no fetch errors → no console errors.
+  5. **Optimizer pre-flight on cleared state.** "Run optimizer" on a stage where every win-odds row was cleared → immediate error message (no 120s timeout) → user can recover by re-pasting odds.
+  6. **"How it unfolded".** Target a completed stage → breakdown renders all columns; `—` only where the underlying data field is genuinely 0/missing.
+  Page-load-only verification (the V1 pattern that missed S17-20's bug surface) does not exercise these paths. End-to-end round-trip is the standard for any change touching these areas.
 
 ---
 
