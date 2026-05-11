@@ -1795,6 +1795,20 @@ ${formatIntelForPrompt()}
 async function runPyOptimizer() {
   const btn = $('run-optimizer-btn');
   const outEl = $('optimizer-output');
+
+  // S17-24 pre-flight: if odds are loaded but every row has a non-positive
+  // win value, the server-side optimizer would run to its ~200s wall-clock
+  // cap (no SA gradient under uniform probabilities) and the 120s fetch
+  // AbortController would fire first. Fail fast in-browser instead.
+  const hasWinSignal = S.oddsRows.some(r => (parseFloat(r.win) || 0) > 0);
+  if (S.oddsRows.length > 0 && !hasWinSignal) {
+    outEl.innerHTML = '<div style="color:var(--color-danger,#e05)">No win odds for this stage. ' +
+      'Paste win odds (📷 Win odds zone) before running the optimizer.</div>';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-cpu"></i> Run Python optimizer ↗';
+    return;
+  }
+
   btn.disabled = true;
   outEl.className = '';
   outEl.textContent = 'Running Python Monte Carlo optimizer…';

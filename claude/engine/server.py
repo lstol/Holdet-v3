@@ -479,6 +479,24 @@ def run_optimizer_py():
     else:
         odds = []
 
+    # S17-24: detect the "present but all-zero" odds state introduced by
+    # S17-20's clear buttons. With uniform probabilities SA has no gradient
+    # and every chain runs to its max_seconds cap (~200s total), exceeding
+    # the dashboard's 120s AbortController. Empty list (`odds = []`) is the
+    # legitimate fresh-stage / Stage-1 flow and stays on the slider-only
+    # fallback path inside build_probabilities — only the present-but-zero
+    # case is short-circuited here.
+    has_win_signal = any((o.get('win_pct') or 0) > 0 for o in odds)
+    if odds and not has_win_signal:
+        return jsonify({
+            'status': 'error',
+            'message': (
+                f'Stage {stage} odds are all zero — likely cleared via the ✕ button. '
+                'Paste win odds before running the optimizer, or click the win-odds '
+                'paste zone to gather them.'
+            ),
+        }), 400
+
     rider_data    = json.load(open(RIDERS_FILE))
     active_riders = [r for r in rider_data['riders'] if not r.get('isOut') and r.get('status') != 'dns']
 
