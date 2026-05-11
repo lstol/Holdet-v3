@@ -1234,9 +1234,13 @@ function populateOddsTable(arr, gatheredAt) {
     .sort((a, b) => (b.win_pct ?? 0) - (a.win_pct ?? 0))
     .map((entry, i) => ({
       id: i, name: entry.name || '',
-      win:   entry.win_pct   ?? '',
-      top3:  entry.top3_pct  ?? '',
-      top10: entry.top10_pct ?? '',
+      // S17-20: treat 0 as "missing" so cleared buckets render blank
+      // (placeholder dash) rather than "0%". `/clear-odds` writes 0 to
+      // disk to keep downstream Python null-safe; the dashboard maps
+      // 0 → '' on the way in.
+      win:   entry.win_pct   || '',
+      top3:  entry.top3_pct  || '',
+      top10: entry.top10_pct || '',
     }));
   renderOdds();
   renderTable();
@@ -1565,7 +1569,10 @@ async function clearOddsBucket(bucket) {
     });
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'unknown error');
-    S.oddsRows.forEach(r => { r[bucket] = 0; });
+    // Render blank in-memory so the cell shows the placeholder dash
+    // rather than "0%" — avoids misreading missing data as "0% chance".
+    // Disk stays at 0 (handoff spec; downstream Python is null-unsafe).
+    S.oddsRows.forEach(r => { r[bucket] = ''; });
     renderOdds();
     renderTable();
     if (statusEl) {
