@@ -1,11 +1,19 @@
 """
-Basin landscape diagnostic — S17-22-followup Phase 1.
+Basin landscape diagnostic — S17-22-followup Phase 1 + Phase 2A.
 
-Characterises per-strategy basin landscape across three slider configurations
-of Stage 2. Drives Phase 2's case classification (A/B/C/D) for the lookahead
-strategy and informs whether the convergence problem is hyperparameter-tunable,
-landscape-intrinsic, false-corroboration risk, or a strategy-specific
-pathology.
+Phase 1: characterises per-strategy basin landscape across three slider
+configurations of Stage 2 (3 configs × 4 strategies × 50 chains = 600 SA
+runs). Drives the case classification (A/B/C/D) for the lookahead strategy
+and informs whether the convergence problem is hyperparameter-tunable,
+landscape-intrinsic, false-corroboration risk, or strategy-specific.
+
+Phase 2A (this augmentation): objective decomposition. Persists per-chain
+data (rider rosters, sim_ev, compute_objective value, and decomposed
+components ev_estimate / tc_current / cost_n1 / cost_n2) so a downstream
+analysis can localize EV-inversion to (a) ev_estimate-vs-sim_ev divergence
+or (b) forward-cost weighting. The augmentation is backward-compatible —
+re-runs can target a subset of cells via --cells and merge into the existing
+persisted JSON without disturbing cells already on disk.
 
 Why this exists:
   - S17-22 V4 reported no convergence improvement at operational N=10, but
@@ -66,9 +74,17 @@ Important property of S17-2 Tier A under race_type_adjustment=False:
     realistic operational picture; the diagnostic stays meaningful.
 
 Usage:
+    # Phase 1 (full sweep, 12 cells, ~37 min)
     python3 claude/diagnostics/basin_landscape.py
+
+    # Phase 2A (subset; persisted JSON merged in-place)
+    python3 claude/diagnostics/basin_landscape.py \\
+        --cells A_saved:lookahead,B_sprint:lookahead,B_sprint:low-transfer \\
+        --analyze-objectives
 """
+import argparse
 import json
+import math
 import os
 import sys
 import time
@@ -89,6 +105,9 @@ from optimizer import (
     fast_optimize,
     load_stage_scoring,
     get_stage_config,
+    compute_objective,
+    compute_team_ev,
+    compute_transfer_cost,
 )
 
 SNAPSHOT_DIR = os.path.join(REPO, 'shared', 'data', 'snapshots')
@@ -191,6 +210,10 @@ STRATEGIES = [
 ]
 
 
+def _holdet_ids(team):
+    return sorted(int(r['holdet_id']) for r in team if r.get('holdet_id') is not None)
+
+
 def run_cell(strategy, sliders, active_riders, odds, intel, budget,
              current_team, scoring, stage_config, deadline_total):
     """Run N_CHAINS chains for one (config, strategy) cell.
@@ -198,6 +221,11 @@ def run_cell(strategy, sliders, active_riders, odds, intel, budget,
     Returns (chain_results, elapsed, status, captured_teams).
     status ∈ {'ok', 'cell_timeout', 'total_timeout'}.
     captured_teams: dict team_id → team list (one representative team).
+
+    Phase 2A augmentation: each chain_results entry carries roster +
+    objective decomposition fields (holdet_ids, captain, objective_value,
+    ev_estimate, tc_current, cost_n1_team_to_team_n1, cost_n2_const) so
+    downstream analysis can localize EV-inversion without SA re-runs.
     """
     base_seed = compute_seed(STAGE, sliders, FORCE_IN, FORCE_OUT, USE_RACE_TYPE)
 
@@ -264,10 +292,33 @@ def run_cell(strategy, sliders, active_riders, odds, intel, budget,
         tid = _team_id(team_ci)
         if tid not in captured_teams:
             captured_teams[tid] = team_ci
+
+        # Phase 2A: capture objective decomposition for the chain's final team.
+        obj_val = compute_objective(
+            team_ci, probs_current, active_riders, strategy['objective'],
+            cost_n1, cost_n2, team_n1, team_n2,
+            current_team=current_team,
+        )
+        ev_estimate_team = compute_team_ev(team_ci, probs_current)
+        tc_current_team  = compute_transfer_cost(current_team or [], team_ci) \
+                           if current_team else 0
+        cost_n1_team     = compute_transfer_cost(team_ci, team_n1 or []) \
+                           if team_n1 else 0
+        cost_n2_const    = compute_transfer_cost(team_n1 or [], team_n2 or []) \
+                           if team_n1 and team_n2 else 0
+
         chain_results.append({
-            'index':   ci,
-            'ev':      int(sim_ci['mean']),
-            'team_id': tid,
+            'index':           ci,
+            'ev':              int(sim_ci['mean']),
+            'team_id':         tid,
+            'holdet_ids':      _holdet_ids(team_ci),
+            'captain':         captain_ci['name'],
+            'sim_ev':          int(sim_ci['mean']),
+            'objective_value': float(obj_val),
+            'ev_estimate':     float(ev_estimate_team),
+            'tc_current':      float(tc_current_team),
+            'cost_n1':         float(cost_n1_team),
+            'cost_n2_const':   float(cost_n2_const),
         })
     return chain_results, time.time() - cell_start, 'ok', captured_teams
 
@@ -351,6 +402,8 @@ def aggregate_cell(chain_results, captured_teams):
         'ev_top1_minus_top5': ev_top1_minus_top5,
         'ev_best_seen_minus_corroborated': ev_best_seen_minus_corroborated,
         'subsample_corroboration': subsample_corroboration,
+        # Phase 2A: full per-chain detail for objective decomposition.
+        'chain_data': chain_results,
     }
 
 
@@ -377,7 +430,204 @@ def print_cell_section(config_name, strategy_name, agg, status, elapsed):
         print(f"    window {s['window']:>5} (n={s['n']}): {s['status']}")
 
 
+RESULTS_PATH = '/tmp/basin_landscape_results.json'
+
+
+def _load_existing_results():
+    if not os.path.exists(RESULTS_PATH):
+        return {}
+    try:
+        with open(RESULTS_PATH) as f:
+            return json.load(f)
+    except Exception as exc:
+        print(f"  WARN: existing {RESULTS_PATH} unreadable ({exc}); ignoring.",
+              flush=True)
+        return {}
+
+
+def _bit_identical_check(new_cell, existing_cell, config_name, strategy_name):
+    """Compare new top-2 basins (label + count) against existing persisted
+    top_teams[:2] for the same cell. Returns (ok: bool, detail: str).
+
+    Verifies the seed/algorithm path is reproducing Phase 1's basins exactly.
+    """
+    new_top  = new_cell.get('top_teams', [])[:2]
+    old_top  = existing_cell.get('top_teams', [])[:2]
+    if not old_top:
+        return True, "(no prior data for this cell — skipping bit-identical check)"
+    if len(new_top) != len(old_top):
+        return False, f"top-2 length mismatch: new={len(new_top)} old={len(old_top)}"
+    for i, (n, o) in enumerate(zip(new_top, old_top)):
+        if n['label'] != o['label']:
+            return False, f"top-{i+1} label diverged: new='{n['label']}' old='{o['label']}'"
+        if n['count'] != o['count']:
+            return False, f"top-{i+1} count diverged: new={n['count']} old={o['count']}"
+    return True, "top-2 basins bit-identical to Phase 1"
+
+
+def _parse_cells_arg(s):
+    """Parse 'A_saved:lookahead,B_sprint:lookahead,...' into a set of tuples."""
+    out = set()
+    for tok in s.split(','):
+        tok = tok.strip()
+        if not tok:
+            continue
+        if ':' not in tok:
+            raise SystemExit(f"--cells: bad token {tok!r}; expected config:strategy")
+        cfg, strat = tok.split(':', 1)
+        out.add((cfg.strip(), strat.strip()))
+    return out
+
+
+def _spearman(xs, ys):
+    """Spearman rank correlation. Returns NaN if zero variance."""
+    n = len(xs)
+    if n < 2:
+        return float('nan')
+    def ranks(vals):
+        idx = sorted(range(n), key=lambda i: vals[i])
+        r = [0.0] * n
+        for rank_i, orig_i in enumerate(idx, start=1):
+            r[orig_i] = rank_i
+        return r
+    rx, ry = ranks(xs), ranks(ys)
+    mx = sum(rx) / n
+    my = sum(ry) / n
+    num   = sum((rx[i] - mx) * (ry[i] - my) for i in range(n))
+    denx  = math.sqrt(sum((rx[i] - mx) ** 2 for i in range(n)))
+    deny  = math.sqrt(sum((ry[i] - my) ** 2 for i in range(n)))
+    if denx == 0 or deny == 0:
+        return float('nan')
+    return num / (denx * deny)
+
+
+def analyze_objectives(results, target_cells):
+    """Phase 2A decomposition over the target cells' chain_data.
+
+    Outputs per-cell basin tables, Q1 (ev_estimate vs sim_ev divergence),
+    Q2 (forward-cost dominance for lookahead), and an overall verdict.
+    """
+    print("\n========================== OBJECTIVE DECOMPOSITION (Phase 2A) ==========================")
+    verdicts = {}
+    for (cfg, strat) in sorted(target_cells):
+        cell = results.get(cfg, {}).get(strat)
+        if not cell or not cell.get('chain_data'):
+            print(f"\n### {cfg} × {strat} — no chain_data; skipped.")
+            continue
+        chains = cell['chain_data']
+
+        # Basin aggregation: group by team_id tuple.
+        # team_id values arrive from JSON as lists (JSON doesn't preserve
+        # tuples); normalise to tuples for hashing.
+        by_basin = defaultdict(list)
+        for c in chains:
+            tid = tuple(c['team_id']) if isinstance(c['team_id'], list) else c['team_id']
+            by_basin[tid].append(c)
+
+        # Sort basins by count descending.
+        sorted_basins = sorted(by_basin.items(), key=lambda kv: -len(kv[1]))
+
+        # Build label map from cell['top_teams'].
+        label_by_count_ev = {}
+        for t in cell.get('top_teams', []):
+            label_by_count_ev[(t['count'], t['ev'])] = t['label']
+
+        # Print top-5 (or more if needed) basin table.
+        print(f"\n### {cfg} × {strat}")
+        print(f"\n| basin | count | mean_obj    | mean_ev_est | mean_sim_ev | mean_tc_cur | mean_cost_n1 | label                       |")
+        print(f"|------:|------:|------------:|------------:|------------:|------------:|-------------:|-----------------------------|")
+        basin_rows = []
+        for rank, (tid, chs) in enumerate(sorted_basins[:max(5, 2)], start=1):
+            n      = len(chs)
+            m_obj  = sum(c['objective_value']   for c in chs) / n
+            m_evest= sum(c['ev_estimate']       for c in chs) / n
+            m_sim  = sum(c['sim_ev']            for c in chs) / n
+            m_tcc  = sum(c['tc_current']        for c in chs) / n
+            m_c1   = sum(c['cost_n1']           for c in chs) / n
+            label  = label_by_count_ev.get((n, int(m_sim)), '?')
+            basin_rows.append((rank, n, m_obj, m_evest, m_sim, m_tcc, m_c1, label))
+            print(f"| {rank:>5} | {n:>5} | {m_obj:>11,.0f} | {m_evest:>11,.0f} | "
+                  f"{m_sim:>11,.0f} | {m_tcc:>11,.0f} | {m_c1:>12,.0f} | {label:<27} |")
+
+        # Q1: ev_estimate vs sim_ev correlation across all 50 chains.
+        evs_est = [c['ev_estimate'] for c in chains]
+        evs_sim = [c['sim_ev']      for c in chains]
+        rho = _spearman(evs_est, evs_sim)
+        print(f"\n  Q1 — Spearman(ev_estimate, sim_ev) across {len(chains)} chains: ρ = {rho:.3f}")
+
+        if len(basin_rows) >= 2:
+            r1, r2 = basin_rows[0], basin_rows[1]
+            # Side-by-side mean_ev_est vs mean_sim_ev for top-2 basins.
+            evest_gap = r1[3] - r2[3]   # basin1 - basin2 by count
+            sim_gap   = r1[4] - r2[4]
+            agree_sign = (evest_gap > 0) == (sim_gap > 0) if evest_gap != 0 and sim_gap != 0 else None
+            print(f"  Q1 top-2 side-by-side (basin1 by count vs basin2):")
+            print(f"    mean_ev_est:  {r1[3]:>11,.0f} vs {r2[3]:>11,.0f}  (Δ = {evest_gap:+,.0f})")
+            print(f"    mean_sim_ev:  {r1[4]:>11,.0f} vs {r2[4]:>11,.0f}  (Δ = {sim_gap:+,.0f})")
+            print(f"    Δ sign agreement: {agree_sign}")
+
+        # Q2: lookahead only — forward-cost dominance of basin choice.
+        q2_verdict = None
+        if strat == 'lookahead' and len(basin_rows) >= 2:
+            r1, r2 = basin_rows[0], basin_rows[1]
+            # Objective gap basin1 − basin2.
+            obj_gap   = r1[2] - r2[2]
+            evest_gap = r1[3] - r2[3]
+            tcc_gap   = -(r1[5] - r2[5])   # objective sign on tc is negative
+            cn1_gap   = -(r1[6] - r2[6])
+            # tc_n2 differences = 0 across basins (team_n1, team_n2 are cell-level constants).
+            attributed = evest_gap + tcc_gap + cn1_gap
+            # Fraction explanation (signed): how much of the objective gap is
+            # explained by each component.
+            def pct(part):
+                if obj_gap == 0:
+                    return float('nan')
+                return 100.0 * part / obj_gap
+            print(f"  Q2 — top-2 objective gap decomposition (basin1 − basin2):")
+            print(f"    obj_gap          = {obj_gap:+12,.0f}")
+            print(f"    Δ ev_estimate    = {evest_gap:+12,.0f}  ({pct(evest_gap):+5.1f}% of obj_gap)")
+            print(f"    Δ (−tc_current)  = {tcc_gap:+12,.0f}  ({pct(tcc_gap):+5.1f}% of obj_gap)")
+            print(f"    Δ (−cost_n1)     = {cn1_gap:+12,.0f}  ({pct(cn1_gap):+5.1f}% of obj_gap)")
+            print(f"    (residual / Δ tc_n2 constant): {obj_gap - attributed:+,.0f}")
+            # Verdict heuristic: which single term covers the largest |share|?
+            shares = {'ev_estimate': evest_gap, 'tc_current': tcc_gap, 'cost_n1': cn1_gap}
+            dominant = max(shares.items(), key=lambda kv: abs(kv[1]))
+            q2_verdict = (dominant[0], dominant[1], pct(dominant[1]))
+            print(f"    Q2 dominant term: {dominant[0]} ({pct(dominant[1]):+.1f}% of obj_gap)")
+
+        # One-line conclusion.
+        concl = []
+        if not math.isnan(rho) and rho < 0.9:
+            concl.append(f"Q1: ev_estimate diverges from sim_ev (ρ={rho:.3f})")
+        else:
+            concl.append(f"Q1: ev_estimate ≈ sim_ev (ρ={rho:.3f})")
+        if q2_verdict:
+            concl.append(f"Q2 dominant term: {q2_verdict[0]} ({q2_verdict[2]:+.1f}%)")
+        print(f"\n  → {' | '.join(concl)}")
+
+        verdicts[(cfg, strat)] = {'q1_rho': rho, 'q2': q2_verdict}
+
+    print("\n========================== VERDICTS ==========================")
+    for (cfg, strat), v in sorted(verdicts.items()):
+        print(f"  {cfg:<10} × {strat:<14}  ρ={v['q1_rho']:.3f}"
+              + (f"   Q2 dominant: {v['q2'][0]} ({v['q2'][2]:+.1f}%)" if v['q2'] else ""))
+    return verdicts
+
+
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--cells', help='Comma-separated config:strategy pairs to run; '
+                                    'omit for full 12-cell sweep.')
+    ap.add_argument('--analyze-objectives', action='store_true',
+                    help='Run Phase 2A objective decomposition on the selected '
+                         'cells after the run (or on previously persisted data '
+                         'if --cells is omitted alongside --no-run).')
+    ap.add_argument('--no-run', action='store_true',
+                    help='Skip SA; only run --analyze-objectives over persisted JSON.')
+    args = ap.parse_args()
+
+    target_cells = _parse_cells_arg(args.cells) if args.cells else None
+
     print("Loading inputs ...", flush=True)
     active_riders, odds, intel, budget, current_team = _load_data()
     print(f"  active_riders={len(active_riders)}, odds_rows={len(odds)}, "
@@ -395,53 +645,90 @@ def main():
     stage_config = get_stage_config(STAGE, scoring)
     deadline_total = time.time() + TOTAL_TIMEOUT_SECS
 
-    # results[config_name][strategy_name] = {agg + 'elapsed' + 'status'}
+    existing = _load_existing_results()
+    # Materialise loaded cells into the in-memory results dict so analysis can
+    # read either fresh or existing per-cell chain_data uniformly.
     results = defaultdict(dict)
-    aborted = False
-    for config_name, sliders in SLIDER_CONFIGS.items():
-        if aborted:
-            break
-        for strategy in STRATEGIES:
-            if time.time() > deadline_total:
-                print(f"\n  TOTAL TIMEOUT at {config_name}/{strategy['name']} — aborting",
-                      flush=True)
-                aborted = True
-                break
-            print(f"\n[{config_name}/{strategy['name']:<12}] running {N_CHAINS} chains ...",
-                  flush=True)
-            chain_results, elapsed, status, captured_teams = run_cell(
-                strategy, sliders, active_riders, odds, intel, budget,
-                current_team, scoring, stage_config, deadline_total,
-            )
-            agg = aggregate_cell(chain_results, captured_teams)
-            results[config_name][strategy['name']] = {
-                **agg, 'elapsed': elapsed, 'status': status,
-            }
-            print(f"  done: {agg['n_chains']}/{N_CHAINS} chains, "
-                  f"{agg['n_distinct_teams']} distinct teams, "
-                  f"ev_best_seen={fmt_int(max((c['ev'] for c in chain_results), default=None))}, "
-                  f"runtime={elapsed:.1f}s, status={status}",
-                  flush=True)
-            if status == 'cell_timeout':
-                print(f"  cell timed out (>15 min); continuing with remaining cells.",
-                      flush=True)
-            elif status == 'total_timeout':
-                print(f"  TOTAL TIMEOUT inside cell — partial cell recorded.",
-                      flush=True)
-                aborted = True
-                break
+    for cfg, by_strat in existing.items():
+        for strat, cell in by_strat.items():
+            results[cfg][strat] = cell
 
+    aborted = False
+    first_rerun_checked = False
+    if not args.no_run:
+        for config_name, sliders in SLIDER_CONFIGS.items():
+            if aborted:
+                break
+            for strategy in STRATEGIES:
+                if target_cells and (config_name, strategy['name']) not in target_cells:
+                    continue
+                if time.time() > deadline_total:
+                    print(f"\n  TOTAL TIMEOUT at {config_name}/{strategy['name']} — aborting",
+                          flush=True)
+                    aborted = True
+                    break
+                print(f"\n[{config_name}/{strategy['name']:<12}] running {N_CHAINS} chains ...",
+                      flush=True)
+                chain_results, elapsed, status, captured_teams = run_cell(
+                    strategy, sliders, active_riders, odds, intel, budget,
+                    current_team, scoring, stage_config, deadline_total,
+                )
+                agg = aggregate_cell(chain_results, captured_teams)
+                new_cell = {**agg, 'elapsed': elapsed, 'status': status}
+
+                # Bit-identical check on the very first re-run cell that has
+                # prior persisted data. If it diverges, stop before mutating
+                # anything else.
+                if not first_rerun_checked:
+                    prior = existing.get(config_name, {}).get(strategy['name'])
+                    if prior:
+                        ok, detail = _bit_identical_check(
+                            new_cell, prior, config_name, strategy['name']
+                        )
+                        print(f"  bit-identical check: {'PASS' if ok else 'FAIL'} — {detail}",
+                              flush=True)
+                        if not ok:
+                            print(f"  STOPPING: top-2 basins diverged from Phase 1. "
+                                  f"Aborting before merge-write.", flush=True)
+                            sys.exit(3)
+                        first_rerun_checked = True
+
+                results[config_name][strategy['name']] = new_cell
+                print(f"  done: {agg['n_chains']}/{N_CHAINS} chains, "
+                      f"{agg['n_distinct_teams']} distinct teams, "
+                      f"ev_best_seen={fmt_int(max((c['ev'] for c in chain_results), default=None))}, "
+                      f"runtime={elapsed:.1f}s, status={status}",
+                      flush=True)
+                if status == 'cell_timeout':
+                    print(f"  cell timed out (>15 min); continuing with remaining cells.",
+                          flush=True)
+                elif status == 'total_timeout':
+                    print(f"  TOTAL TIMEOUT inside cell — partial cell recorded.",
+                          flush=True)
+                    aborted = True
+                    break
+
+    # Decide which cells to print in detail. When --cells is set, only show
+    # those cells (concise, focused report). When not, show every cell.
+    detail_filter = target_cells if target_cells else None
     print(f"\n========================== PER-CELL DETAIL ==========================")
     for config_name in SLIDER_CONFIGS.keys():
         if config_name not in results:
             continue
-        print(f"\n### Config {config_name}")
+        emitted_header = False
         for strategy in STRATEGIES:
             sname = strategy['name']
             if sname not in results[config_name]:
                 continue
+            if detail_filter and (config_name, sname) not in detail_filter:
+                continue
+            if not emitted_header:
+                print(f"\n### Config {config_name}")
+                emitted_header = True
             cell = results[config_name][sname]
-            print_cell_section(config_name, sname, cell, cell['status'], cell['elapsed'])
+            print_cell_section(config_name, sname, cell,
+                                cell.get('status', '—'),
+                                cell.get('elapsed', 0.0))
 
     print(f"\n========================== AGGREGATES ==========================")
 
@@ -497,7 +784,8 @@ def main():
                   f"{dom_pct:>7} | {fmt_int(cell['ev_top1_minus_top5']):>12} | "
                   f"{fmt_int(cell['ev_best_seen_minus_corroborated']):>12} |")
 
-    # Persist for re-analysis
+    # Persist for re-analysis (merge-aware: results dict already includes
+    # any prior cells loaded from disk plus this run's fresh cells).
     payload = {
         config_name: {
             sname: {
@@ -508,10 +796,17 @@ def main():
         }
         for config_name, by_strat in results.items()
     }
-    out_path = '/tmp/basin_landscape_results.json'
-    with open(out_path, 'w') as f:
+    with open(RESULTS_PATH, 'w') as f:
         json.dump(payload, f, indent=2, default=str)
-    print(f"\nRaw results saved to {out_path}")
+    print(f"\nResults persisted to {RESULTS_PATH}")
+
+    if args.analyze_objectives:
+        cells_for_analysis = (
+            target_cells
+            if target_cells
+            else {(c, s) for c, by in results.items() for s in by}
+        )
+        analyze_objectives(results, cells_for_analysis)
 
 
 if __name__ == '__main__':
