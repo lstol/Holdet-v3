@@ -226,15 +226,17 @@ def stage_scoring(stage_num):
 def riders():
     """Return riders from latest snapshot (live pricing) or riders.json (static)."""
     try:
-        snapshots = sorted([f for f in os.listdir(SNAPSHOT_DIR) if f.endswith('_holdet.json')])
-        if snapshots:
-            with open(os.path.join(SNAPSHOT_DIR, snapshots[-1])) as f:
-                data = json.load(f)
+        # S17-27: read stage_1 directly (canonical rider master list per
+        # fetch_riders.py). The prior sorted([…])[-1] pattern silently fell
+        # on later-stage stubs once they existed.
+        path = os.path.join(SNAPSHOT_DIR, 'stage_1_holdet.json')
+        if os.path.exists(path):
+            data = json.load(open(path))
             return jsonify({
                 'riders': data.get('riders', []),
                 'timestamp': data.get('timestamp'),
                 'source': 'snapshot',
-                '_filename': snapshots[-1],
+                '_filename': 'stage_1_holdet.json',
             })
     except Exception:
         pass
@@ -274,12 +276,15 @@ def refresh():
         if result.returncode != 0:
             return jsonify({'status': 'error', 'message': result.stderr}), 500
 
-        snapshots = sorted([f for f in os.listdir(SNAPSHOT_DIR) if f.endswith('_holdet.json')])
+        # S17-27: fetch_riders.py writes the canonical rider master list to
+        # stage_1_holdet.json only; later-stage snapshots carry per-stage
+        # team_composition + bank without a riders field. Hardcoding stage_1
+        # avoids the alphabetic sort-falls-on-later-stage failure mode that
+        # emerged once stage_3_holdet.json appeared and dominated `[-1]`.
+        stage1_path = os.path.join(SNAPSHOT_DIR, 'stage_1_holdet.json')
         rider_count = 0
-        if snapshots:
-            with open(os.path.join(SNAPSHOT_DIR, snapshots[-1])) as f:
-                data = json.load(f)
-                rider_count = len(data.get('riders', []))
+        if os.path.exists(stage1_path):
+            rider_count = len(json.load(open(stage1_path)).get('riders', []))
 
         return jsonify({
             'status': 'ok',
@@ -1564,13 +1569,14 @@ def snapshot():
                 'player_points':    data.get('player_points'),
                 'refreshed_at':     data.get('refreshed_at'),
             })
-        # No stage param — return latest snapshot (legacy behaviour)
-        snapshots = sorted([f for f in os.listdir(SNAPSHOT_DIR) if f.endswith('_holdet.json')])
-        if not snapshots:
+        # No stage param — canonical rider master list lives in
+        # stage_1_holdet.json (per fetch_riders.py); later-stage snapshots
+        # are per-stage stubs without a riders field (S17-27).
+        path = os.path.join(SNAPSHOT_DIR, 'stage_1_holdet.json')
+        if not os.path.exists(path):
             return jsonify({'status': 'no_snapshot'}), 404
-        with open(os.path.join(SNAPSHOT_DIR, snapshots[-1])) as f:
-            data = json.load(f)
-        data['_filename'] = snapshots[-1]
+        data = json.load(open(path))
+        data['_filename'] = 'stage_1_holdet.json'
         return jsonify(data)
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
