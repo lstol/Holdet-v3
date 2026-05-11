@@ -86,6 +86,13 @@ Commits are typically split: Part 0 alone (roadmap), then Part 1 alone (the work
   4. **Optimizer round-trip on a good state.** "Run optimizer" on a stage with non-empty odds → all expected strategy cards render with EV breakdowns → no fetch errors → no console errors.
   5. **Optimizer pre-flight on cleared state.** "Run optimizer" on a stage where every win-odds row was cleared → immediate error message (no 120s timeout) → user can recover by re-pasting odds.
   6. **"How it unfolded".** Target a completed stage → breakdown renders all columns; `—` only where the underlying data field is genuinely 0/missing.
+  7. **Optimizer output sanity check** (post-deploy, for any change touching `build_probabilities`, `simulate_stage`, `compute_objective`, or odds consumers). After V4 (full optimizer round-trip), inspect the strategy output JSON. For each strategy, verify:
+     - `ev_estimate` falls within plausible bounds (typically 800k–2M for current Giro stage profile; adjust band as race-day calibration accumulates).
+     - `ev_net = ev_estimate − transfer_cost` is within similar bounds.
+     - Captain assignment is non-empty and consistent with the strategy's optimization target.
+     - No strategy returns NaN/Infinity in any EV field.
+
+     Surface-level UX checks (V1–V6) do not exercise the optimizer's internal math. A regression in `build_probabilities`'s normalization, `simulate_stage`'s MC, or `compute_objective`'s weighting will surface here when EVs collapse or balloon in an order-of-magnitude way. **Origin:** S17-29 — `is not None` vs `> 0` guard on top3/top10 silently zeroed positions 4–15 contribution; pre-fix EVs were under-counted ~30–50% and V1–V6 wouldn't have caught it. **Expected-bounds calibration:** keep the 800k–2M band loose for now; tighten as Giro stages 5–21 accumulate. If a stage returns EVs outside the band, that's a "look at this" signal, not a hard failure — race profile may legitimately differ (TT stages, mountain stages with smaller field).
   Page-load-only verification (the V1 pattern that missed S17-20's bug surface) does not exercise these paths. End-to-end round-trip is the standard for any change touching these areas.
 
 ---
