@@ -137,6 +137,16 @@ _FP_W23   = (FINISH_POINTS[1] + FINISH_POINTS[2]) / 2
 _FP_W4_10 = sum(FINISH_POINTS[3:10]) / 7
 _FP_W11_15= sum(FINISH_POINTS[10:15]) / 5
 
+# S17-31 extrapolation constants. When a rider's position-bucket odds are
+# missing (zero, per S17-29 invariant), extrapolate from the nearest-in-nature
+# observed bucket. Defaults below are sensible priors based on typical
+# bookmaker overround patterns; recalibrate empirically per S17-32.
+#
+# Last recalibrated: never (defaults). Recalibration method: TODO S17-32.
+C10_TOP3 = 3.5   # top10 ≈ top3 × 3.5  (dominant fallback case)
+C3_WIN   = 3.5   # top3  ≈ win  × 3.5  (rare fallback case)
+C10_WIN  = 8.0   # top10 ≈ win  × 8.0  (rare fallback case; matches prior heuristic)
+
 # ── Stage scoring helpers ─────────────────────────────────────────────────────
 
 import json as _json
@@ -348,10 +358,28 @@ def build_probabilities(all_riders, odds, intel, sliders=None,
         pw   = raw.get(name, EPS)
 
         if name in in_odds:
-            # Prefer market-derived top3/top10 over win-scaled estimates
-            top3  = top3_map.get(name,  min(0.95, pw * 3.5))
-            top10 = top10_map.get(name, min(0.95, pw * 8.0))
+            # S17-31 fallback chain. When an odds bucket is missing (per the
+            # zero-means-missing invariant from S17-29), extrapolate from the
+            # nearest-in-nature observed bucket — never impute from win alone
+            # when a closer signal exists.
+            if name in top3_map:
+                top3 = top3_map[name]
+            else:
+                top3 = min(0.95, pw * C3_WIN)
+            if name in top10_map:
+                top10 = top10_map[name]
+            elif name in top3_map:
+                # Dominant fallback: top10 from top3 (closer in nature than win)
+                top10 = min(0.95, top3_map[name] * C10_TOP3)
+            else:
+                # Rare edge: both top3 and top10 missing → win-derived for top10
+                top10 = min(0.95, pw * C10_WIN)
             top15 = min(0.95, top10 + top10 * 0.15)   # ~15% of top-10 riders also land 11-15
+            # Defensive monotonicity: calibration constants below 1 could
+            # invert order; clamp here. Currently redundant given defaults
+            # but guards against future recalibration mistakes (S17-32).
+            top3  = max(top3,  pw)
+            top10 = max(top10, top3)
         else:
             top3 = 0.02; top10 = 0.04; top15 = 0.05
 
