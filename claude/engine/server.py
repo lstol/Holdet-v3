@@ -895,6 +895,64 @@ def parse_odds_image_single():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+# ── Clear odds bucket (S17-20) ─────────────────────────────────────────────────
+
+@app.route('/clear-odds', methods=['POST', 'OPTIONS'])
+def clear_odds():
+    """Zero a single bucket (win / top3 / top10) for one stage on disk.
+    Mirrors /parse-odds-image's bucket-isolation property: only the named
+    field is touched; other buckets are preserved.
+    """
+    if request.method == 'OPTIONS':
+        return '', 204
+    body   = request.json or {}
+    stage  = body.get('stage')
+    bucket = body.get('bucket')
+    field_map = {'win': 'win_pct', 'top3': 'top3_pct', 'top10': 'top10_pct'}
+
+    if not isinstance(stage, int) or not (1 <= stage <= 21):
+        return jsonify({'ok': False, 'error': f'stage must be int in [1,21], got {stage!r}'}), 400
+    if bucket not in field_map:
+        return jsonify({'ok': False, 'error': f'bucket must be one of {list(field_map)}, got {bucket!r}'}), 400
+    field_name = field_map[bucket]
+
+    odds_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
+    # Stage-N edge: no on-disk file ⇒ in-memory clear is still valid.
+    if not os.path.exists(odds_path):
+        return jsonify({'ok': True, 'stage': stage, 'bucket': bucket, 'cleared_count': 0})
+
+    try:
+        with open(odds_path) as f:
+            existing_file = json.load(f)
+        is_envelope = isinstance(existing_file, dict)
+        rows = existing_file.get('odds', existing_file) if is_envelope else existing_file
+        if not isinstance(rows, list):
+            return jsonify({'ok': False, 'error': f'unexpected odds schema in {odds_path}'}), 500
+
+        cleared = 0
+        for r in rows:
+            if not isinstance(r, dict):
+                continue
+            r[field_name] = 0
+            cleared += 1
+
+        # Preserve envelope (stage + gathered_at) when present. Don't refresh
+        # gathered_at — this isn't new gathered data.
+        if is_envelope:
+            existing_file['odds'] = rows
+            payload = existing_file
+        else:
+            payload = rows
+
+        with open(odds_path, 'w') as f:
+            json.dump(payload, f, indent=2)
+        _log(f"clear-odds stage={stage} bucket={bucket} cleared={cleared}")
+        return jsonify({'ok': True, 'stage': stage, 'bucket': bucket, 'cleared_count': cleared})
+    except Exception as e:
+        _log(f"clear-odds error: {e}")
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+
 # ── Gather intel ──────────────────────────────────────────────────────────────
 
 @app.route('/gather-intel', methods=['POST', 'OPTIONS'])

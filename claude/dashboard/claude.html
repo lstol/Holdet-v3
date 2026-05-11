@@ -244,6 +244,8 @@ input[type=range]::-webkit-slider-thumb {
 #odds-table th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-3); padding: 4px 6px; text-align: left; border-bottom: 1px solid var(--color-border); }
 #odds-table td { padding: 4px 6px; border-bottom: 1px solid rgba(43,48,88,.5); vertical-align: middle; }
 #odds-table input[type=number] { width: 54px; padding: 3px 6px; text-align: right; }
+.odds-clear-btn { background: none; border: none; color: var(--color-text-3); cursor: pointer; font-size: 11px; padding: 0 0 0 4px; line-height: 1; }
+.odds-clear-btn:hover { color: var(--color-warning); }
 
 /* Intel structured display */
 .intel-meta { padding: 8px; background: var(--color-surface-2); border-radius: var(--radius-sm); margin-bottom: 8px; }
@@ -572,9 +574,9 @@ input[type=range]::-webkit-slider-thumb {
           <table id="odds-table">
             <thead><tr>
               <th>Rider</th>
-              <th class="num">Win%</th>
-              <th class="num">Top3%</th>
-              <th class="num">Top10%</th>
+              <th class="num">Win%<button type="button" class="odds-clear-btn" title="Clear win odds for this stage" onclick="clearOddsBucket('win')">✕</button></th>
+              <th class="num">Top3%<button type="button" class="odds-clear-btn" title="Clear top3 odds for this stage" onclick="clearOddsBucket('top3')">✕</button></th>
+              <th class="num">Top10%<button type="button" class="odds-clear-btn" title="Clear top10 odds for this stage" onclick="clearOddsBucket('top10')">✕</button></th>
               <th>Tier</th>
               <th>Intel</th>
             </tr></thead>
@@ -1544,6 +1546,40 @@ function renderOdds() {
 function updateOdds(id, field, val) {
   const row = S.oddsRows.find(r => r.id === id);
   if (row) row[field] = val;
+}
+
+// S17-20 — per-bucket clear. Zeros named bucket in-memory + on disk for the
+// current target stage. Preserves the other two buckets (bucket-isolation
+// property mirrors /parse-odds-image, Session 6 fix).
+async function clearOddsBucket(bucket) {
+  const statusEl = $('odds-parse-status');
+  if (statusEl) {
+    statusEl.className   = '';
+    statusEl.textContent = 'Clearing ' + bucket + ' odds…';
+  }
+  try {
+    const res  = await fetch(`${SERVER}/clear-odds`, {
+      method:  'POST',
+      headers: {'Content-Type': 'application/json'},
+      body:    JSON.stringify({stage: targetStage, bucket: bucket}),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'unknown error');
+    S.oddsRows.forEach(r => { r[bucket] = 0; });
+    renderOdds();
+    renderTable();
+    if (statusEl) {
+      statusEl.className   = 'parse-ok';
+      const label = {win: 'Win%', top3: 'Top3%', top10: 'Top10%'}[bucket] || bucket;
+      statusEl.textContent = '✓ ' + label + ' cleared · ' + data.cleared_count + ' rows on disk';
+    }
+  } catch (err) {
+    console.error('clear-odds error:', err);
+    if (statusEl) {
+      statusEl.className   = 'parse-err';
+      statusEl.textContent = 'Error clearing ' + bucket + ': ' + err.message;
+    }
+  }
 }
 
 /* ── Column sorting ─────────────────────────────────────────────────────── */
