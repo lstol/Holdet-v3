@@ -1821,7 +1821,10 @@ async function runPyOptimizer() {
   btn.textContent = 'Running… 0s';
 
   const controller = new AbortController();
-  const abortTimeout = setTimeout(() => controller.abort(), 120_000);
+  // S17-30: 240s recognizes the structural SA runtime floor (4 strategies ×
+  // 10 chains × 5s per-chain cap ≈ 120s minimum). S17-29's V4 measured
+  // Stage 4 at 123.92s post-fix; ~2× margin against this floor.
+  const abortTimeout = setTimeout(() => controller.abort(), 240_000);
 
   try {
     const res = await fetch(`${SERVER}/run-optimizer`, {
