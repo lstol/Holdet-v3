@@ -62,6 +62,7 @@ Commits are typically split: Part 0 alone (roadmap), then Part 1 alone (the work
 
 - **Optimization is search for the highest local maximum, not statistical estimation.** Multi-start beats multi-seed averaging. We want EV-best across N starts, not the central tendency of where SA happens to land.
 - **Calibrate before committing to direction.** When the right value of a tunable (N, threshold, etc.) is unknown, run a small experiment first. The experiment is cheap; baking the wrong default into production code is expensive.
+- **Single-stage findings don't generalize.** A diagnostic on one stage with one slider configuration characterizes that point, not optimizer/system behavior across the input space. Phase 1.5's "lookahead Pattern B" finding (Stage 3, neutral sliders) was treated as a property of the strategy; S17-22-followup Phase 1 on Stage 2 across three configs falsified that generalization. Future diagnostics characterizing optimizer behavior should vary inputs deliberately before concluding.
 - **Pragmatism over architectural purity for in-flight work.** Land tactical fixes that ship; file architectural cleanup as separate roadmap items rather than blocking the tactical fix on the cleanup.
 - **Acknowledge mistakes plainly.** When user pushback lands (e.g. "averaging is the wrong frame, this is optimization not estimation"), take the hit, re-derive, name the corrected framing explicitly.
 - **Diagnostic-then-fix.** Larger fixes split into a read-only diagnostic handoff first, then a fix handoff after we understand the shape. Especially for ambiguous symptoms.
@@ -75,6 +76,7 @@ Commits are typically split: Part 0 alone (roadmap), then Part 1 alone (the work
 - **Memory system.** Two project-scoped rules currently persisted across sessions: (1) diagnostic handoffs may include sketched diffs in the report; (2) every handoff includes a Part 0 ROADMAP.md delta. Adding more rules is fine but should be deliberate.
 - **Report-back format from Claude Code.** Claude Code returns reports in a standardized structure (commits table, verifications table, implementation summary, findings worth surfacing, decisions deferred to user). See `CLAUDE_CODE.md` for the template. When reading a returned report, expect this structure.
 - **Decision durability.** Non-trivial decisions made in conversation should land somewhere durable — either as a ROADMAP delta (Sub-B carving evolution style — preserves the "why" alongside the "what") or in `claude/decisions/decisions_log.md`. Memory rules persist across sessions but are bounded (max 30 entries); files don't drift.
+- **Harness worktree placement is acceptable.** The Claude Code harness may place sessions in `.claude/worktrees/<auto-name>/` rather than the canonical `~/Claude/Holdet-v3`. This is fine as long as commits fast-forward-push to `origin/main` (no merge commit, no divergence). The "every change goes directly to main" rule is about destination, not workspace.
 
 ---
 
