@@ -873,16 +873,19 @@ function renderStageResults(data) {
     <table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;">
       <thead>
         <tr style="background:var(--color-surface-2);border-bottom:1px solid var(--color-border);">
-          <th style="padding:5px 10px;text-align:left;font-size:11px;color:var(--color-text-2);font-weight:500;width:22%;">Rider</th>
-          <th style="padding:5px 8px;text-align:center;font-size:11px;color:var(--color-text-2);font-weight:500;width:8%;">Finish</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Stage</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Sprint</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Jersey</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">GC</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:10%;">Team</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:12%;">Cap.</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:8%;">Total</th>
-          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:9%;">Value</th>
+          <th style="padding:5px 10px;text-align:left;font-size:11px;color:var(--color-text-2);font-weight:500;width:16%;">Rider</th>
+          <th style="padding:5px 8px;text-align:center;font-size:11px;color:var(--color-text-2);font-weight:500;width:6%;">Finish</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:8%;">Stage</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:7%;" title="Etapeplacering — stage finishing position bonus">Stg pl.</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:7%;" title="Sprintpoint">Sprint</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:7%;" title="Pointtrøjen / Bjergtrøjen / Ungdomstrøjen">Jersey</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:7%;" title="Førertrøjen — GC leader retention">GC</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:7%;" title="Løbsplacering — race-leader daily payout">Race pl.</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:7%;" title="Holdbonus">Team</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:6%;" title="Sen ankomst — late-arrival deduction">Penalty</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:8%;">Cap.</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:7%;">Total</th>
+          <th style="padding:5px 8px;text-align:right;font-size:11px;color:var(--color-text-2);font-weight:500;width:7%;">Value</th>
         </tr>
       </thead>
       <tbody>
@@ -901,10 +904,13 @@ function renderStageResults(data) {
             </td>
             <td style="padding:5px 8px;text-align:center;color:${finishColor};">${esc(r.finish)}</td>
             <td style="padding:5px 8px;text-align:right;">${fmt(r.stage_pts)}</td>
+            <td style="padding:5px 8px;text-align:right;">${fmt(r.stage_placement)}</td>
             <td style="padding:5px 8px;text-align:right;">${fmt(r.sprint_pts)}</td>
             <td style="padding:5px 8px;text-align:right;">${fmt(r.jersey_bonus)}</td>
             <td style="padding:5px 8px;text-align:right;">${fmt(r.gc_bonus)}</td>
+            <td style="padding:5px 8px;text-align:right;">${fmt(r.race_placement)}</td>
             <td style="padding:5px 8px;text-align:right;">${fmt(r.team_bonus)}</td>
+            <td style="padding:5px 8px;text-align:right;">${fmt(r.penalty)}</td>
             <td style="padding:5px 8px;text-align:right;color:var(--color-warning);">
               ${r.captain_bonus ? fmt(r.captain_bonus) : '—'}
             </td>

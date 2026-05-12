@@ -76,6 +76,133 @@ def _cookie() -> str:
 
 
 # ---------------------------------------------------------------------------
+# S17-25 Phase 2 — per-rider stage breakdown ingestion
+# ---------------------------------------------------------------------------
+
+# Holdet action-name → stage_N_results.json field mapping.
+# Holdet returns Danish action labels in the breakdown actions array.
+# Position-specific suffixes (e.g., "Etapeplacering - 1. plads") are stripped
+# during matching via prefix-match on " - ". If a new action label appears
+# that isn't in this map, fetch_stage_results surfaces it via the
+# unmapped_actions field (V8 sanity check).
+ACTION_MAP = {
+    "Sprintpoint":           "sprint_pts",
+    "Etapeplacering":        "stage_placement",   # finishing position bonus
+    "Løbsplacering":         "race_placement",    # GC #1 daily payout
+    "Holdbonus":             "team_bonus",
+    "Pointtrøjen":           "jersey_bonus",      # points/sprint jersey
+    "Bjergtrøjen":           "jersey_bonus",      # KOM jersey
+    "Ungdomstrøjen":         "jersey_bonus",      # young rider jersey
+    "Førertrøjen":           "gc_bonus",          # GC leader jersey retention
+    "Sen ankomst (min.)":    "penalty",
+}
+
+
+def map_action(action: dict, target: dict) -> str | None:
+    """
+    Map one action {name, amount, unitScore} into the target rider-result dict.
+    Returns the unmapped label on failure, or None on success. Multiple actions
+    landing on the same field accumulate (e.g., two jersey actions both
+    increment jersey_bonus).
+    """
+    name = action["name"]
+    value = action["amount"] * action["unitScore"]
+    base_name = name.split(" - ")[0] if " - " in name else name
+    field = ACTION_MAP.get(base_name)
+    if field is None:
+        return name
+    target[field] = target.get(field, 0) + value
+    return None
+
+
+def fetch_rider_breakdown(player_id: int) -> dict:
+    """
+    Fetch one rider's per-stage breakdown from Holdet's player-detail
+    modal-intercept route. Returns {round_num: {growth, name, eventId, actions}}.
+
+    Endpoint: GET {BASE_URL}/da/giro-d-italia-2026/cycling/players/{player_id}
+              ?event={any_valid_event_id}
+    Headers:
+      Cookie:   HOLDET_COOKIE
+      Rsc:      1
+      Next-Url: /da/giro-d-italia-2026   ← load-bearing modal-intercept gate
+      Accept:   */*
+
+    The `event` query param is required by the route but the response carries
+    every stage the rider has scored, regardless of which eventId is passed.
+    Using event=48281 (Stage 1) as a stable sentinel.
+
+    Granularity: 1 rider × N stages per call. 8 calls per current-team refresh.
+    """
+    cookie = _cookie()
+    url = f"{BASE_URL}/da/giro-d-italia-2026/cycling/players/{player_id}?event=48281"
+    headers = {
+        "Cookie":     cookie,
+        "Rsc":        "1",
+        "Next-Url":   "/da/giro-d-italia-2026",
+        "Accept":     "*/*",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    }
+    resp = requests.get(url, headers=headers, timeout=15)
+    if resp.status_code in (401, 403):
+        sys.exit(f"ERROR: HTTP {resp.status_code} on player-detail endpoint — "
+                 f"cookie expired or Next-Url header missing.")
+    resp.raise_for_status()
+    # The text/x-component response declares no charset, so requests defaults
+    # to Latin-1 (RFC 7230) and Danish ø/æ/å arrive as mojibake. The payload
+    # is actually UTF-8 — force the decoder so ACTION_MAP key matches work.
+    resp.encoding = "utf-8"
+
+    # Parse RSC payload. The breakdown lives somewhere in the response as
+    # a JSX-serialized React tree:
+    #   ["$","div",null,{className:"p-2 text-sm flex flex-col gap-1",children:[
+    #     ["$","$L<dyn>","{eventId}",{name, round, eventId, growth, actions:[…]}],
+    #     …
+    #   ]}]
+    # The component reference id ($L<dyn>) is assigned dynamically per request
+    # by Next.js — was $Lc in the original cURL capture, $L31 in a separate
+    # call from this codebase. Locate by structural invariants
+    # (`"actions"` + `"growth"` + `"round"` co-occurrence inside `$L<x>`
+    # children of the className-tagged container), NOT by literal line ID
+    # or component reference name.
+    by_round = {}
+
+    # The container's className is a stable marker (Next.js Tailwind classes
+    # don't change between requests for the same route).
+    CONTAINER_CLASSNAME = "p-2 text-sm flex flex-col gap-1"
+
+    def _walk(node):
+        """Recursively scan the JSX-serialized tree for stage_data dicts."""
+        if isinstance(node, dict):
+            # A stage_data dict: has round + actions + growth.
+            if all(k in node for k in ("round", "actions", "growth")):
+                by_round[int(node["round"])] = node
+            for v in node.values():
+                _walk(v)
+        elif isinstance(node, list):
+            for v in node:
+                _walk(v)
+
+    for line in resp.text.splitlines():
+        m = re.match(r'^([0-9a-f]+):(.*)$', line)
+        if not m:
+            continue
+        payload = m.group(2)
+        # Cheap prefilter: skip lines that can't possibly carry the breakdown.
+        if CONTAINER_CLASSNAME not in payload:
+            continue
+        try:
+            parsed = json.loads(payload)
+        except (json.JSONDecodeError, ValueError):
+            continue
+        _walk(parsed)
+        if by_round:
+            break  # first matching line wins
+    return by_round
+
+
+# ---------------------------------------------------------------------------
 # Step 1 — Fetch all riders from API
 # ---------------------------------------------------------------------------
 
@@ -550,8 +677,19 @@ def fetch_stage_results(stage: int) -> dict:
         print(f"  No history entry for round {stage} yet")
 
     # --- Build rider_results ---
-    rider_results = []
-    captain_name  = ""
+    # S17-25 Phase 2: per-rider breakdown is fetched from Holdet's player-detail
+    # modal-intercept route via fetch_rider_breakdown(). Granularity: 1 call
+    # per rider returns all stages; we extract only the target stage's actions.
+    # Two new top-level fields on the result dict surface V8 invariant data
+    # for the dashboard / verification:
+    #   unmapped_actions               — Danish action labels not in ACTION_MAP
+    #   growth_vs_pricechange_divergences — riders whose breakdown growth
+    #                                        differs from round-history priceChange
+    rider_results    = []
+    captain_name     = ""
+    unmapped_actions = []
+    growth_vs_pricechange_divergences = []
+
     for player_id in lineup_player_ids:
         name       = player_names.get(player_id, f"player_{player_id}")
         round_item = round_map.get(player_id, {})
@@ -559,20 +697,75 @@ def fetch_stage_results(stage: int) -> dict:
         is_cap     = (player_id == captain_player_id)
         if is_cap:
             captain_name = name
-        rider_results.append({
-            "name":          name,
-            "finish":        "—",
-            "stage_pts":     price_chg,
-            "sprint_pts":    0,
-            "jersey_bonus":  0,
-            "gc_bonus":      0,
-            "team_bonus":    0,
-            "captain_bonus": captain_bonus if is_cap else 0,
-            "total":         price_chg + (captain_bonus if is_cap else 0),
-        })
+
+        # Per-rider breakdown ingestion. On any failure (network, parse,
+        # missing stage), fall back to the priceChange-only result so the
+        # writer remains operational; the breakdown gap surfaces via the
+        # zeroed per-bonus fields rather than a silent crash.
+        try:
+            breakdown_all = fetch_rider_breakdown(player_id)
+        except Exception as exc:
+            print(f"  ⚠ fetch_rider_breakdown({player_id}) failed: {exc}")
+            breakdown_all = {}
+        stage_data = breakdown_all.get(stage, {"growth": 0, "actions": []})
+
+        rider_result = {
+            "name":            name,
+            "finish":          "—",   # still unsourced; out of scope
+            # `stage_pts` from breakdown growth (S17-25 Phase 2). For Stages
+            # where breakdown is unavailable the dict-default keeps the field
+            # at 0 — V8 surfaces the gap via growth_vs_pricechange_divergences.
+            "stage_pts":       stage_data.get("growth", 0),
+            "sprint_pts":      0,
+            "stage_placement": 0,
+            "race_placement":  0,
+            "team_bonus":      0,
+            "jersey_bonus":    0,
+            "gc_bonus":        0,
+            "penalty":         0,
+            "captain_bonus":   captain_bonus if is_cap else 0,
+        }
+        for action in stage_data.get("actions", []):
+            unmapped = map_action(action, rider_result)
+            if unmapped:
+                unmapped_actions.append({
+                    "player_id": player_id, "name": name, "stage": stage,
+                    "label": unmapped,
+                    "amount": action.get("amount"),
+                    "unitScore": action.get("unitScore"),
+                })
+
+        # V8 cross-check: breakdown growth must equal round-history priceChange.
+        # Divergence usually means breakdown wasn't available for this rider
+        # at this stage (rider not in user's team that round); surface for
+        # investigation but don't fail the writer.
+        growth = stage_data.get("growth", 0)
+        if growth != price_chg:
+            growth_vs_pricechange_divergences.append({
+                "player_id": player_id, "name": name, "stage": stage,
+                "growth": growth, "priceChange": price_chg,
+                "delta": growth - price_chg,
+            })
+
+        rider_result["total"] = rider_result["stage_pts"] + rider_result["captain_bonus"]
+        rider_results.append(rider_result)
 
     rider_results.sort(key=lambda r: r["total"], reverse=True)
     scored = stage_total != 0 or any(r["stage_pts"] != 0 for r in rider_results)
+
+    if unmapped_actions:
+        print(f"  ⚠  {len(unmapped_actions)} unmapped action label(s) — "
+              f"add to ACTION_MAP and re-run:")
+        for u in unmapped_actions:
+            print(f"     {u['name']:<28} stage {u['stage']}  "
+                  f"label='{u['label']}' value={u['amount']}×{u['unitScore']}")
+    if growth_vs_pricechange_divergences:
+        print(f"  ⚠  {len(growth_vs_pricechange_divergences)} growth≠priceChange "
+              f"divergence(s) (likely riders not in user's team that stage):")
+        for d in growth_vs_pricechange_divergences:
+            print(f"     {d['name']:<28} stage {d['stage']}  "
+                  f"growth={d['growth']:>+9,}  priceChange={d['priceChange']:>+9,}  "
+                  f"delta={d['delta']:>+9,}")
 
     # Reverse-map specialBonus → riders-in-top-15 count via the authoritative
     # Holdet curve (shared/rules/game_strategy.md). The API doesn't expose
@@ -597,6 +790,9 @@ def fetch_stage_results(stage: int) -> dict:
         "captain_bonus":   captain_bonus,
         "riders_in_top15": riders_in_top15,
         "scored":          scored,
+        # S17-25 Phase 2 V8-invariant surface
+        "unmapped_actions":                  unmapped_actions,
+        "growth_vs_pricechange_divergences": growth_vs_pricechange_divergences,
     }
 
     if scored:
