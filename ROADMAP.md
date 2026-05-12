@@ -4,7 +4,7 @@ Living document. Replaces the prior roadmap section in the v5 onboarding doc. Tr
 
 **Project**: Holdet v3 (repo at `~/Claude/Holdet-v3/`)
 **Race target**: Tour de France 2026 (early July). Giro d'Italia 2026 is calibration.
-**Last updated**: May 10, 2026 (Session 17 close pending; Sub-B Design Diagnostic landed).
+**Last updated**: May 12, 2026 (Session 17 active; multi-start SA + odds invariant pass + low_transfer retirement + forward intel symmetry all landed; S17-15 orchestration + S17-22-followup Phase 2A in flight).
 
 ---
 
