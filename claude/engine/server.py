@@ -572,9 +572,14 @@ def run_optimizer_py():
             use_race_type=use_race_type,
         )
 
-        # Forward stages: slider-based inference only (no odds)
-        probs_n1 = build_forward_probabilities(active_riders, sliders.get('n2', {}))
-        probs_n2 = build_forward_probabilities(active_riders, sliders.get('n3', {}))
+        # Forward stages: slider-based inference + S17-16 forward-intel multipliers.
+        # `forward_nN_intel` keys are populated by /gather-intel (S17-15) and have
+        # the same `key_signals` shape as top-level intel; absent → slider-only.
+        intel_inner          = intel_data.get('intel', intel_data) if isinstance(intel_data, dict) else {}
+        forward_n1_intel     = intel_inner.get('forward_n1_intel') if isinstance(intel_inner, dict) else None
+        forward_n2_intel     = intel_inner.get('forward_n2_intel') if isinstance(intel_inner, dict) else None
+        probs_n1 = build_forward_probabilities(active_riders, sliders.get('n2', {}), intel=forward_n1_intel)
+        probs_n2 = build_forward_probabilities(active_riders, sliders.get('n3', {}), intel=forward_n2_intel)
 
         teams = generate_candidate_teams(
             active_riders, probs_current,
