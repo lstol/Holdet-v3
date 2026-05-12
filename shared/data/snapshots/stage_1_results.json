@@ -2,7 +2,7 @@
   "rider_results": [
     {
       "name": "Paul Magnier",
-      "finish": "—",
+      "finish": "1st",
       "stage_pts": 575000,
       "sprint_pts": 150000,
       "stage_placement": 200000,
@@ -16,7 +16,7 @@
     },
     {
       "name": "Jonathan Milan",
-      "finish": "—",
+      "finish": "4th",
       "stage_pts": 229000,
       "sprint_pts": 69000,
       "stage_placement": 120000,
@@ -30,7 +30,7 @@
     },
     {
       "name": "Tobias Lund Andresen",
-      "finish": "—",
+      "finish": "2nd",
       "stage_pts": 375000,
       "sprint_pts": 105000,
       "stage_placement": 150000,
@@ -44,7 +44,7 @@
     },
     {
       "name": "Dries van Gestel",
-      "finish": "—",
+      "finish": "10th",
       "stage_pts": 158000,
       "sprint_pts": 18000,
       "stage_placement": 80000,
@@ -58,7 +58,7 @@
     },
     {
       "name": "Giovanni Lonardi",
-      "finish": "—",
+      "finish": "6th",
       "stage_pts": 156000,
       "sprint_pts": 36000,
       "stage_placement": 100000,

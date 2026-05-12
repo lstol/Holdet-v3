@@ -98,20 +98,43 @@ ACTION_MAP = {
 }
 
 
+def _ordinal(n: int) -> str:
+    """English ordinal: 1→'1st', 2→'2nd', 3→'3rd', 4→'4th', 11→'11th', 21→'21st'."""
+    if 10 <= (n % 100) <= 20:
+        suf = 'th'
+    else:
+        suf = {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
+    return f'{n}{suf}'
+
+
 def map_action(action: dict, target: dict) -> str | None:
     """
     Map one action {name, amount, unitScore} into the target rider-result dict.
     Returns the unmapped label on failure, or None on success. Multiple actions
     landing on the same field accumulate (e.g., two jersey actions both
     increment jersey_bonus).
+
+    Side-effect: when the action is an `Etapeplacering - N. plads` (per-rider
+    stage finishing position bonus), parse N from the suffix and write it to
+    `target["finish"]` as an English ordinal ("1st", "5th", etc.). Riders
+    without an Etapeplacering action finished outside top-15 (no per-position
+    bonus paid) and `finish` is left untouched — caller initializes to "—".
     """
     name = action["name"]
     value = action["amount"] * action["unitScore"]
-    base_name = name.split(" - ")[0] if " - " in name else name
+    if " - " in name:
+        base_name, suffix = name.split(" - ", 1)
+    else:
+        base_name, suffix = name, ""
     field = ACTION_MAP.get(base_name)
     if field is None:
         return name
     target[field] = target.get(field, 0) + value
+    # Capture stage finish position from Etapeplacering suffix.
+    if base_name == "Etapeplacering" and suffix:
+        m = re.match(r'^(\d+)\.\s*plads', suffix.strip())
+        if m:
+            target["finish"] = _ordinal(int(m.group(1)))
     return None
 
 
