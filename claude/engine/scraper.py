@@ -403,20 +403,35 @@ def scrape_tv2_standings(stage: int) -> dict:
     return asyncio.run(fetch_tv2_standings(stage))
 
 
-def scrape_all_intel(stage: int) -> dict:
-    """Scrapes all three sources concurrently. Returns raw text per source."""
+def scrape_all_intel(stage: int, include_forward: bool = False) -> dict:
+    """Scrapes all three sources concurrently. Returns raw text per source.
+
+    S17-15: when include_forward=True, also fetches TV2/Axelgaard previews
+    for stage+1 and stage+2 in the same asyncio.gather. Returned dict gains
+    `tv2_n1` and `tv2_n2` keys. Feltet and Inner Ring rarely cover n+1/n+2
+    ahead of race day, so forward intel is TV2-only by design.
+    """
     async def _run():
-        tv2, feltet, inner_ring = await asyncio.gather(
+        tasks = [
             fetch_tv2_stage_preview(stage),
             fetch_feltet_stage_analysis(stage),
             fetch_inner_ring_preview(stage),
-            return_exceptions=True
-        )
-        return {
+        ]
+        if include_forward:
+            tasks.append(fetch_tv2_stage_preview(stage + 1))
+            tasks.append(fetch_tv2_stage_preview(stage + 2))
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        tv2, feltet, inner_ring = results[0], results[1], results[2]
+        out = {
             'tv2':        str(tv2)        if not isinstance(tv2, Exception)        else f'[TV2 error: {tv2}]',
             'feltet':     str(feltet)     if not isinstance(feltet, Exception)     else f'[Feltet error: {feltet}]',
             'inner_ring': str(inner_ring) if not isinstance(inner_ring, Exception) else f'[Inner Ring error: {inner_ring}]',
         }
+        if include_forward:
+            tv2_n1, tv2_n2 = results[3], results[4]
+            out['tv2_n1'] = str(tv2_n1) if not isinstance(tv2_n1, Exception) else f'[TV2 n+1 error: {tv2_n1}]'
+            out['tv2_n2'] = str(tv2_n2) if not isinstance(tv2_n2, Exception) else f'[TV2 n+2 error: {tv2_n2}]'
+        return out
     return asyncio.run(_run())
 
 

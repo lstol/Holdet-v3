@@ -14,6 +14,7 @@ from datetime import datetime as _dt
 import subprocess
 import time
 import unicodedata
+import concurrent.futures
 
 # ── Load .env FIRST — before any anthropic instantiation ─────────────────────
 from dotenv import load_dotenv
@@ -983,6 +984,58 @@ def clear_odds():
 
 # ── Gather intel ──────────────────────────────────────────────────────────────
 
+def _haiku_extract_forward(stage_num: int, tv2_prose: str, client) -> dict | None:
+    """S17-15: extract key_signals + stage_classification for a forward stage
+    from TV2/Axelgaard prose only (Feltet/Inner Ring rarely cover n+1/n+2 ahead
+    of race day). Returns None when prose is the not-found sentinel, a scrape
+    error placeholder, empty, or when the Haiku call / JSON parse fails.
+    Callers treat None as 'omit this forward_nN_intel key' — the consumer
+    (`build_forward_probabilities`) then falls back to slider-only forward EV.
+    """
+    if not tv2_prose or len(tv2_prose) < 200:
+        return None
+    if tv2_prose.startswith('[TV2/Axelgaard:') or tv2_prose.startswith('[TV2 '):
+        return None
+    try:
+        msg = call_with_retry(lambda: client.messages.create(
+            model='claude-haiku-4-5-20251001',
+            max_tokens=2000,
+            messages=[{'role': 'user', 'content': f"""Structure this Axelgaard forward-stage preview for Stage {stage_num} Giro d'Italia 2026 into JSON.
+
+TV2/AXELGAARD (Danish — summarise key rider signals in English):
+{tv2_prose[:3000]}
+
+Focus: which riders will perform well on this stage, which are downgraded relative to bookmaker odds.
+
+Return ONLY the JSON object below. No text before or after. No markdown fences.
+{{
+  "stage_classification": "stage type label — e.g. 'Flad etape', 'Bjergetape', 'Bakketop', 'Enkeltstart' — copy from article or infer from terrain description",
+  "key_signals": [
+    {{"rider": "Name", "signal": "what was said (English)", "direction": "up/down/neutral", "strength": "strong/moderate/weak"}}
+  ]
+}}
+
+Rules:
+- direction: up = favoured beyond raw odds, down = risk not in odds, neutral = in line with odds
+- strength: strong / moderate / weak
+- Only include riders for whom the article makes a substantive forward-looking signal
+- Translate Danish rider mentions to English; keep signal sentence concise"""}]
+        ))
+        raw = msg.content[0].text
+        m = re.search(r'\{.*\}', raw, re.DOTALL)
+        if not m:
+            _log(f"gather-intel forward stage={stage_num}: no JSON in Haiku response")
+            return None
+        result = json.loads(m.group())
+        if not isinstance(result, dict) or 'key_signals' not in result:
+            _log(f"gather-intel forward stage={stage_num}: malformed Haiku JSON (missing key_signals)")
+            return None
+        return result
+    except Exception as e:
+        _log(f"gather-intel forward stage={stage_num}: extraction failed: {e}")
+        return None
+
+
 @app.route('/gather-intel', methods=['POST', 'OPTIONS'])
 def gather_intel():
     if request.method == 'OPTIONS':
@@ -992,29 +1045,33 @@ def gather_intel():
     stage = request.json.get('stage', '?')
     raw = ''
     try:
-        # Step 1: scrape all three sources with Playwright (zero API tokens)
+        # Step 1: scrape current-stage triple + forward n+1/n+2 TV2 previews (S17-15)
         app.logger.info(f"Scraping intel for Stage {stage}...")
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         from scraper import scrape_all_intel
-        raw_sources = scrape_all_intel(int(stage))
+        raw_sources = scrape_all_intel(int(stage), include_forward=True)
         app.logger.info(
             f"TV2: {len(raw_sources['tv2'])} chars | "
             f"Feltet: {len(raw_sources['feltet'])} chars | "
-            f"Inner Ring: {len(raw_sources['inner_ring'])} chars"
+            f"Inner Ring: {len(raw_sources['inner_ring'])} chars | "
+            f"TV2 n+1: {len(raw_sources.get('tv2_n1', ''))} chars | "
+            f"TV2 n+2: {len(raw_sources.get('tv2_n2', ''))} chars"
         )
-        _log(f"gather-intel stage={stage} scraped tv2={len(raw_sources['tv2'])} feltet={len(raw_sources['feltet'])} inrng={len(raw_sources['inner_ring'])}")
+        _log(f"gather-intel stage={stage} scraped tv2={len(raw_sources['tv2'])} feltet={len(raw_sources['feltet'])} inrng={len(raw_sources['inner_ring'])} tv2_n1={len(raw_sources.get('tv2_n1',''))} tv2_n2={len(raw_sources.get('tv2_n2',''))}")
 
-        # Step 2: structure with single Haiku call (no web_search tool)
+        # Step 2: structure with 3 parallel Haiku calls — current stage + forward n+1 + forward n+2 (S17-15)
         sources = yaml.safe_load(open(EXPERT_SOURCES))['sources']
         source_weights = {s['name']: s['weight'] for s in sources}
 
         client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
         tv2_w    = source_weights.get('Emil Axelgaard / TV2 Sport', 1.5)
         feltet_w = source_weights.get('Feltet.dk', 1.3)
-        structure_message = call_with_retry(lambda: client.messages.create(
-            model='claude-haiku-4-5-20251001',
-            max_tokens=8000,
-            messages=[{'role': 'user', 'content': f"""Structure this cycling expert analysis for Stage {stage} Giro d'Italia 2026 into JSON.
+
+        def _haiku_current():
+            return call_with_retry(lambda: client.messages.create(
+                model='claude-haiku-4-5-20251001',
+                max_tokens=8000,
+                messages=[{'role': 'user', 'content': f"""Structure this cycling expert analysis for Stage {stage} Giro d'Italia 2026 into JSON.
 
 SOURCE WEIGHTS:
 - TV2/Axelgaard: {tv2_w} (highest priority, content in Danish)
@@ -1059,7 +1116,24 @@ Rules:
 - Include every rider mentioned by either source in source_ratings
 - TV2 content is in Danish — translate and summarise each rider mention in English
 - Keep stage_notes and summary short (max 2 sentences each)"""}]
-        ))
+            ))
+
+        # Run current-stage Haiku + forward n+1 + forward n+2 in parallel.
+        # Forward Haiku helpers swallow their own errors (return None) so a
+        # forward failure can't kill the current-stage write; current-stage
+        # exceptions propagate to the outer try/except as before.
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            current_future = executor.submit(_haiku_current)
+            n1_future = executor.submit(
+                _haiku_extract_forward, int(stage) + 1, raw_sources.get('tv2_n1', ''), client
+            )
+            n2_future = executor.submit(
+                _haiku_extract_forward, int(stage) + 2, raw_sources.get('tv2_n2', ''), client
+            )
+            structure_message = current_future.result()
+            n1_intel = n1_future.result()
+            n2_intel = n2_future.result()
+
         raw = structure_message.content[0].text
         m = re.search(r'\{.*\}', raw, re.DOTALL)
         if not m:
@@ -1067,11 +1141,25 @@ Rules:
         result = json.loads(m.group())
         result['gathered_at'] = _dt.now().isoformat()
         result['stage'] = stage
+        # S17-15: nest forward intel inside the inner intel dict so the consumer's
+        # intel_data.get('intel', intel_data).get('forward_nN_intel') unwrap at
+        # server.py:578-580 finds it. Omit the key entirely when extraction failed
+        # — consumer falls back to slider-only forward EV via build_forward_probabilities(intel=None).
+        if n1_intel is not None:
+            result['forward_n1_intel'] = {
+                'key_signals': n1_intel.get('key_signals', []),
+                'stage_classification': n1_intel.get('stage_classification', ''),
+            }
+        if n2_intel is not None:
+            result['forward_n2_intel'] = {
+                'key_signals': n2_intel.get('key_signals', []),
+                'stage_classification': n2_intel.get('stage_classification', ''),
+            }
         intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
         with open(intel_path, 'w') as f:
             json.dump({'stage': stage, 'intel': result,
                        'gathered_at': _dt.now().isoformat()}, f, indent=2, ensure_ascii=False)
-        _log(f"gather-intel saved to {intel_path}")
+        _log(f"gather-intel saved to {intel_path} forward_n1={'present' if n1_intel else 'absent'} forward_n2={'present' if n2_intel else 'absent'}")
         result['_gathered_at'] = _dt.now().isoformat()
         return jsonify(result)
     except json.JSONDecodeError as e:
