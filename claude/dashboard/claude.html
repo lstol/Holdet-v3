@@ -185,7 +185,8 @@ a { color: var(--color-primary); }
 }
 
 /* ── Sliders ─────────────────────────────────────────────────────── */
-#sliders-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+/* S17-δ: #sliders-grid deleted; sliders now distributed across Panel 1 / Panel 2
+   per the information-coupling principle (see .panel-row below). */
 .slider-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 10px 12px; }
 .slider-panel-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-2); margin-bottom: 10px; }
 .slider-row { margin-bottom: 8px; }
@@ -214,7 +215,7 @@ input[type=range]::-webkit-slider-thumb {
 .weight-row label span { font-family: var(--font-mono); color: var(--color-text); }
 
 /* ── Intelligence ───────────────────────────────────────────────── */
-#intel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* S17-δ: #intel-grid deleted; odds and intel now live in Panel 1 rows. */
 .intel-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; height: 500px; }
 .intel-panel-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-2); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
 /* S17-α: forward intel rectangles — muted variant below current intel panel. */
@@ -225,6 +226,19 @@ input[type=range]::-webkit-slider-thumb {
 .intel-panel--forward .intel-signal-row { color: var(--color-text-2); font-size: 11.5px; }
 .intel-panel--forward .intel-rider { color: var(--color-text); }
 .intel-empty--forward { color: var(--color-text-3); font-style: italic; }
+/* S17-δ: Panel 1 / Panel 2 data-coupled 2:1 grid. Each row pairs a data
+   container (left, 2/3) with the slider(s) that modify it (right, 1/3). */
+.panel-rows { display: flex; flex-direction: column; gap: 10px; }
+.panel-row { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; align-items: stretch; }
+.panel-row__left { min-width: 0; }
+.panel-row__right { min-width: 0; }
+.panel-row__right > .slider-panel { height: 100%; }
+/* Compact forward variant for Panel 2 — reduce vertical footprint */
+.intel-panel--forward-compact { padding: 8px 10px; font-size: 11.5px; }
+.intel-panel--forward-compact .panel-header-bar { margin-bottom: 6px; }
+.intel-panel--forward-compact .intel-signal-row { font-size: 11px; padding: 2px 0; }
+.intel-panel--forward-compact #forward-n1-display,
+.intel-panel--forward-compact #forward-n2-display { max-height: 220px; overflow-y: auto; }
 
 /* Odds table */
 #odds-parse-status { font-size: 10px; margin-bottom: 6px; min-height: 14px; }
@@ -540,92 +554,123 @@ input[type=range]::-webkit-slider-thumb {
     <span id="scoring-climb-label"  style="color:var(--color-text-3)">Climbs: —</span>
   </div>
 
-  <!-- ── Stage type sliders ──────────────────────────────────── -->
+  <!-- ── Panel 1 — Stage N Analysis (S17-δ) ────────────────────── -->
+  <!--    Row 1: odds (2/3) + Stage N slider + race-type tickbox (1/3) -->
+  <!--    Row 2: current intel (2/3) + expert-weight sliders (1/3)     -->
   <div class="section">
-    <div class="section-header"><h2>Stage type sliders</h2></div>
-    <div id="sliders-grid">
-      <!-- n+1, n+2, n+3 columns injected by JS -->
-      <!-- Expert weights column injected by JS -->
-    </div>
-  </div>
+    <div class="section-header"><h2>Stage <span id="panel1-stage-label">—</span> analysis</h2></div>
+    <div class="panel-rows">
 
-  <!-- ── Intelligence ────────────────────────────────────────── -->
-  <div class="section">
-    <div class="section-header"><h2>Intelligence</h2></div>
-    <div id="intel-grid">
-
-      <!-- Bookmaker odds -->
-      <div id="odds-panel" class="intel-panel">
-        <div class="panel-header-bar">
-          <span>Bookmaker odds</span>
-          <span class="panel-header-ts" id="odds-header-ts">Stage — · Not yet gathered</span>
+      <div class="panel-row">
+        <div class="panel-row__left">
+          <!-- Bookmaker odds -->
+          <div id="odds-panel" class="intel-panel">
+            <div class="panel-header-bar">
+              <span>Bookmaker odds</span>
+              <span class="panel-header-ts" id="odds-header-ts">Stage — · Not yet gathered</span>
+            </div>
+            <div style="display:flex;gap:12px;margin-bottom:8px;font-size:11px;">
+              <a href="https://www.oddschecker.com/cycling/giro-ditalia"
+                 target="_blank"
+                 style="color:var(--color-text-info);text-decoration:none;display:flex;align-items:center;gap:4px;">
+                <i class="ti ti-external-link"></i> Oddschecker — Win odds
+              </a>
+              <a href="https://www.unibet.dk/betting/sports/filter/cycling/giro_d_italia/all/competitions"
+                 target="_blank"
+                 style="color:var(--color-text-info);text-decoration:none;display:flex;align-items:center;gap:4px;">
+                <i class="ti ti-external-link"></i> Unibet — Top3 / Top10
+              </a>
+            </div>
+            <div class="odds-paste-row">
+              <div class="odds-paste-zone" id="win-paste-zone"   tabindex="0">📷 Win odds<br>click → Cmd+V</div>
+              <div class="odds-paste-zone" id="top3-paste-zone"  tabindex="0">📷 Top3 odds<br>click → Cmd+V</div>
+              <div class="odds-paste-zone" id="top10-paste-zone" tabindex="0">📷 Top10 odds<br>click → Cmd+V</div>
+            </div>
+            <div id="odds-parse-status" style="font-size:10px;color:var(--color-text-3);min-height:14px;margin-bottom:4px;"></div>
+            <div id="odds-table-wrap">
+              <table id="odds-table">
+                <thead><tr>
+                  <th>Rider</th>
+                  <th class="num">Win%<button type="button" class="odds-clear-btn" title="Clear win odds for this stage" onclick="clearOddsBucket('win')">✕</button></th>
+                  <th class="num">Top3%<button type="button" class="odds-clear-btn" title="Clear top3 odds for this stage" onclick="clearOddsBucket('top3')">✕</button></th>
+                  <th class="num">Top10%<button type="button" class="odds-clear-btn" title="Clear top10 odds for this stage" onclick="clearOddsBucket('top10')">✕</button></th>
+                  <th>Tier</th>
+                  <th>Intel</th>
+                </tr></thead>
+                <tbody id="odds-tbody"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
-        <div style="display:flex;gap:12px;margin-bottom:8px;font-size:11px;">
-          <a href="https://www.oddschecker.com/cycling/giro-ditalia"
-             target="_blank"
-             style="color:var(--color-text-info);text-decoration:none;display:flex;align-items:center;gap:4px;">
-            <i class="ti ti-external-link"></i> Oddschecker — Win odds
-          </a>
-          <a href="https://www.unibet.dk/betting/sports/filter/cycling/giro_d_italia/all/competitions"
-             target="_blank"
-             style="color:var(--color-text-info);text-decoration:none;display:flex;align-items:center;gap:4px;">
-            <i class="ti ti-external-link"></i> Unibet — Top3 / Top10
-          </a>
-        </div>
-        <div class="odds-paste-row">
-          <div class="odds-paste-zone" id="win-paste-zone"   tabindex="0">📷 Win odds<br>click → Cmd+V</div>
-          <div class="odds-paste-zone" id="top3-paste-zone"  tabindex="0">📷 Top3 odds<br>click → Cmd+V</div>
-          <div class="odds-paste-zone" id="top10-paste-zone" tabindex="0">📷 Top10 odds<br>click → Cmd+V</div>
-        </div>
-        <div id="odds-parse-status" style="font-size:10px;color:var(--color-text-3);min-height:14px;margin-bottom:4px;"></div>
-        <div id="odds-table-wrap">
-          <table id="odds-table">
-            <thead><tr>
-              <th>Rider</th>
-              <th class="num">Win%<button type="button" class="odds-clear-btn" title="Clear win odds for this stage" onclick="clearOddsBucket('win')">✕</button></th>
-              <th class="num">Top3%<button type="button" class="odds-clear-btn" title="Clear top3 odds for this stage" onclick="clearOddsBucket('top3')">✕</button></th>
-              <th class="num">Top10%<button type="button" class="odds-clear-btn" title="Clear top10 odds for this stage" onclick="clearOddsBucket('top10')">✕</button></th>
-              <th>Tier</th>
-              <th>Intel</th>
-            </tr></thead>
-            <tbody id="odds-tbody"></tbody>
-          </table>
+        <div class="panel-row__right">
+          <!-- Stage N slider host (n1) — injected by renderSliders() -->
+          <div id="n1-slider-host"></div>
         </div>
       </div>
 
-      <!-- Intel display (current + forward S17-α) -->
-      <div class="intel-column">
-        <div class="intel-panel">
-          <div class="panel-header-bar">
-            <span>Intelligence</span>
-            <span class="panel-header-ts" id="intel-header-ts">Stage — · Not yet gathered</span>
-            <button id="gather-intel-btn" class="btn btn-sm btn-ghost" onclick="gatherIntel()"><i class="ti ti-antenna"></i> Gather</button>
-          </div>
-          <div id="intel-display">
-            <div class="intel-empty">No intel gathered yet — click Gather</div>
-          </div>
-        </div>
-
-        <!-- Forward intel n+1 (S17-α) -->
-        <div class="intel-panel intel-panel--forward" id="forward-n1-panel">
-          <div class="panel-header-bar panel-header-bar--forward">
-            <span id="forward-n1-label">Stage preview · Axelgaard</span>
-            <span class="panel-header-ts panel-header-ts--forward" id="forward-n1-classification"></span>
-          </div>
-          <div id="forward-n1-display">
-            <div class="intel-empty intel-empty--forward">Forward preview not yet available</div>
+      <div class="panel-row">
+        <div class="panel-row__left">
+          <!-- Current-stage intel (key_signals table) -->
+          <div class="intel-panel">
+            <div class="panel-header-bar">
+              <span>Expert intel</span>
+              <span class="panel-header-ts" id="intel-header-ts">Stage — · Not yet gathered</span>
+              <button id="gather-intel-btn" class="btn btn-sm btn-ghost" onclick="gatherIntel()"><i class="ti ti-antenna"></i> Gather</button>
+            </div>
+            <div id="intel-display">
+              <div class="intel-empty">No intel gathered yet — click Gather</div>
+            </div>
           </div>
         </div>
+        <div class="panel-row__right">
+          <!-- Expert weights host — injected by renderSliders() -->
+          <div id="expert-weights-host"></div>
+        </div>
+      </div>
 
-        <!-- Forward intel n+2 (S17-α) -->
-        <div class="intel-panel intel-panel--forward" id="forward-n2-panel">
-          <div class="panel-header-bar panel-header-bar--forward">
-            <span id="forward-n2-label">Stage preview · Axelgaard</span>
-            <span class="panel-header-ts panel-header-ts--forward" id="forward-n2-classification"></span>
+    </div>
+  </div>
+
+  <!-- ── Panel 2 — Forward stages (S17-δ) ─────────────────────── -->
+  <!--    Row 1: forward n+1 rectangle (2/3) + Stage N+1 slider (1/3) -->
+  <!--    Row 2: forward n+2 rectangle (2/3) + Stage N+2 slider (1/3) -->
+  <div class="section">
+    <div class="section-header"><h2>Forward stages — Stages <span id="panel2-n1-label">—</span> and <span id="panel2-n2-label">—</span></h2></div>
+    <div class="panel-rows">
+
+      <div class="panel-row">
+        <div class="panel-row__left">
+          <div class="intel-panel intel-panel--forward intel-panel--forward-compact" id="forward-n1-panel">
+            <div class="panel-header-bar panel-header-bar--forward">
+              <span id="forward-n1-label">Stage preview · TV2</span>
+              <span class="panel-header-ts panel-header-ts--forward" id="forward-n1-classification"></span>
+            </div>
+            <div id="forward-n1-display">
+              <div class="intel-empty intel-empty--forward">Forward preview not yet available</div>
+            </div>
           </div>
-          <div id="forward-n2-display">
-            <div class="intel-empty intel-empty--forward">Forward preview not yet available</div>
+        </div>
+        <div class="panel-row__right">
+          <!-- Stage N+1 slider host (n2) -->
+          <div id="n2-slider-host"></div>
+        </div>
+      </div>
+
+      <div class="panel-row">
+        <div class="panel-row__left">
+          <div class="intel-panel intel-panel--forward intel-panel--forward-compact" id="forward-n2-panel">
+            <div class="panel-header-bar panel-header-bar--forward">
+              <span id="forward-n2-label">Stage preview · TV2</span>
+              <span class="panel-header-ts panel-header-ts--forward" id="forward-n2-classification"></span>
+            </div>
+            <div id="forward-n2-display">
+              <div class="intel-empty intel-empty--forward">Forward preview not yet available</div>
+            </div>
           </div>
+        </div>
+        <div class="panel-row__right">
+          <!-- Stage N+2 slider host (n3) -->
+          <div id="n3-slider-host"></div>
         </div>
       </div>
 
@@ -1127,11 +1172,23 @@ function updateHeader() {
 }
 
 /* ── Sliders ─────────────────────────────────────────────────────────── */
+// S17-δ: sliders are now distributed across Panel 1 + Panel 2 per the
+// information-coupling principle. renderSliders() injects each key's panel
+// into its dedicated host container (#n1-slider-host, #n2-slider-host,
+// #n3-slider-host, #expert-weights-host). Slider DOM IDs (sl-n1-bunch_sprint
+// etc.) and the race-type-tickbox ID are preserved so updateSlider() /
+// toggleRaceType() / localStorage persistence keep working unchanged.
 function renderSliders() {
-  const grid = $('sliders-grid');
-  grid.innerHTML = '';
+  const hosts = {
+    n1: $('n1-slider-host'),
+    n2: $('n2-slider-host'),
+    n3: $('n3-slider-host'),
+  };
+  Object.values(hosts).forEach(h => { if (h) h.innerHTML = ''; });
 
   ['n1','n2','n3'].forEach((key, ki) => {
+    const host = hosts[key];
+    if (!host) return;
     const stageNums = [targetStage, targetStage + 1, targetStage + 2];
     const labels = stageNums.map(n => n <= 21 ? `Stage ${n}` : '—');
     const div = document.createElement('div');
@@ -1168,25 +1225,42 @@ function renderSliders() {
         </div>`;
       }).join('') +
       `<div class="sum-display" id="sum-${key}"></div>`;
-    grid.appendChild(div);
+    host.appendChild(div);
     updateSumDisplay(key);
   });
 
-  // Expert weights column
-  const wDiv = document.createElement('div');
-  wDiv.className = 'slider-panel';
-  wDiv.id = 'expert-weights-panel';
-  wDiv.innerHTML = `<div class="slider-panel-title">Expert weights</div>` +
-    S.expertSources.map((src, i) => {
-      const v = src.weight;
-      const short = src.name.split('/')[0].trim().split(' ').slice(-2).join(' ');
-      return `<div class="weight-row">
-        <label title="${esc(src.name)}">${esc(short)} <span id="wlbl-${i}">${v.toFixed(1)}</span></label>
-        <input type="range" min="0.5" max="2.0" step="0.1" value="${v}"
-          oninput="updateWeight(${i},+this.value);document.getElementById('wlbl-${i}').textContent=(+this.value).toFixed(1)">
-      </div>`;
-    }).join('');
-  grid.appendChild(wDiv);
+  // Expert weights — Panel 1 bottom-right host
+  const wHost = $('expert-weights-host');
+  if (wHost) {
+    wHost.innerHTML = '';
+    const wDiv = document.createElement('div');
+    wDiv.className = 'slider-panel';
+    wDiv.id = 'expert-weights-panel';
+    wDiv.innerHTML = `<div class="slider-panel-title">Expert weights</div>` +
+      S.expertSources.map((src, i) => {
+        const v = src.weight;
+        const short = src.name.split('/')[0].trim().split(' ').slice(-2).join(' ');
+        return `<div class="weight-row">
+          <label title="${esc(src.name)}">${esc(short)} <span id="wlbl-${i}">${v.toFixed(1)}</span></label>
+          <input type="range" min="0.5" max="2.0" step="0.1" value="${v}"
+            oninput="updateWeight(${i},+this.value);document.getElementById('wlbl-${i}').textContent=(+this.value).toFixed(1)">
+        </div>`;
+      }).join('');
+    wHost.appendChild(wDiv);
+  }
+
+  // S17-δ: keep dynamic panel-title stage numbers in sync.
+  updatePanelStageLabels();
+}
+
+// S17-δ: update Panel 1 / Panel 2 section-header stage numbers based on targetStage.
+function updatePanelStageLabels() {
+  const p1 = $('panel1-stage-label');
+  const p2n1 = $('panel2-n1-label');
+  const p2n2 = $('panel2-n2-label');
+  if (p1) p1.textContent = targetStage;
+  if (p2n1) p2n1.textContent = (targetStage + 1) <= 21 ? (targetStage + 1) : '—';
+  if (p2n2) p2n2.textContent = (targetStage + 2) <= 21 ? (targetStage + 2) : '—';
 }
 
 function updateSlider(key, type, val) {
