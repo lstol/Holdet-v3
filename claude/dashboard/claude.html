@@ -217,6 +217,14 @@ input[type=range]::-webkit-slider-thumb {
 #intel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .intel-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; height: 500px; }
 .intel-panel-title { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-2); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+/* S17-α: forward intel rectangles — muted variant below current intel panel. */
+.intel-column { display: flex; flex-direction: column; gap: 10px; }
+.intel-panel--forward { height: auto; background: var(--color-bg); border-color: var(--color-text-3); padding: 10px; font-size: 12px; }
+.intel-panel--forward .panel-header-bar { color: var(--color-text-3); }
+.intel-panel--forward .panel-header-ts--forward { color: var(--color-text-3); font-style: italic; font-weight: 500; }
+.intel-panel--forward .intel-signal-row { color: var(--color-text-2); font-size: 11.5px; }
+.intel-panel--forward .intel-rider { color: var(--color-text); }
+.intel-empty--forward { color: var(--color-text-3); font-style: italic; }
 
 /* Odds table */
 #odds-parse-status { font-size: 10px; margin-bottom: 6px; min-height: 14px; }
@@ -585,15 +593,39 @@ input[type=range]::-webkit-slider-thumb {
         </div>
       </div>
 
-      <!-- Intel display -->
-      <div class="intel-panel">
-        <div class="panel-header-bar">
-          <span>Intelligence</span>
-          <span class="panel-header-ts" id="intel-header-ts">Stage — · Not yet gathered</span>
-          <button id="gather-intel-btn" class="btn btn-sm btn-ghost" onclick="gatherIntel()"><i class="ti ti-antenna"></i> Gather</button>
+      <!-- Intel display (current + forward S17-α) -->
+      <div class="intel-column">
+        <div class="intel-panel">
+          <div class="panel-header-bar">
+            <span>Intelligence</span>
+            <span class="panel-header-ts" id="intel-header-ts">Stage — · Not yet gathered</span>
+            <button id="gather-intel-btn" class="btn btn-sm btn-ghost" onclick="gatherIntel()"><i class="ti ti-antenna"></i> Gather</button>
+          </div>
+          <div id="intel-display">
+            <div class="intel-empty">No intel gathered yet — click Gather</div>
+          </div>
         </div>
-        <div id="intel-display">
-          <div class="intel-empty">No intel gathered yet — click Gather</div>
+
+        <!-- Forward intel n+1 (S17-α) -->
+        <div class="intel-panel intel-panel--forward" id="forward-n1-panel">
+          <div class="panel-header-bar panel-header-bar--forward">
+            <span id="forward-n1-label">Stage preview · Axelgaard</span>
+            <span class="panel-header-ts panel-header-ts--forward" id="forward-n1-classification"></span>
+          </div>
+          <div id="forward-n1-display">
+            <div class="intel-empty intel-empty--forward">Forward preview not yet available</div>
+          </div>
+        </div>
+
+        <!-- Forward intel n+2 (S17-α) -->
+        <div class="intel-panel intel-panel--forward" id="forward-n2-panel">
+          <div class="panel-header-bar panel-header-bar--forward">
+            <span id="forward-n2-label">Stage preview · Axelgaard</span>
+            <span class="panel-header-ts panel-header-ts--forward" id="forward-n2-classification"></span>
+          </div>
+          <div id="forward-n2-display">
+            <div class="intel-empty intel-empty--forward">Forward preview not yet available</div>
+          </div>
         </div>
       </div>
 
@@ -1452,6 +1484,49 @@ function renderIntel() {
   el.innerHTML = sourceTables + metaBlock + signalsBlock;
 }
 
+// S17-α: render a single forward-stage intel rectangle (n+1 or n+2).
+// `data` is the inner forward_nN_intel object: {key_signals: [...], stage_classification: "..."} or null/undefined.
+// `position` is 'n1' or 'n2' (selects the DOM target rectangle).
+function renderForwardIntel(data, stageNum, position) {
+  const elDisplay = $(`forward-${position}-display`);
+  const elLabel   = $(`forward-${position}-label`);
+  const elClass   = $(`forward-${position}-classification`);
+  if (!elDisplay || !elLabel) return;
+
+  elLabel.textContent = `Stage ${stageNum} preview · Axelgaard`;
+
+  const signals = (data && Array.isArray(data.key_signals)) ? data.key_signals : [];
+  if (!data || signals.length === 0) {
+    if (elClass) elClass.textContent = '';
+    elDisplay.innerHTML = `<div class="intel-empty intel-empty--forward">Stage ${stageNum} preview not yet available from Axelgaard</div>`;
+    return;
+  }
+
+  if (elClass) elClass.textContent = data.stage_classification || '';
+
+  const arrowMap = { up: '↑', down: '↓', neutral: '→' };
+  const acMap    = { up: 'up', down: 'down', neutral: 'neutral' };
+
+  elDisplay.innerHTML = signals.map(s => {
+    const dir = s.direction || 'neutral';
+    const str = s.strength  || 'weak';
+    return `<div class="intel-signal-row">
+      <span class="intel-arrow ${acMap[dir] || 'neutral'}">${arrowMap[dir] || '→'}</span>
+      <span class="intel-strength strength-${str}">${str}</span>
+      <span class="intel-rider">${esc(s.rider || '')}</span>
+      <span class="intel-signal-text">${esc(s.signal || '')}</span>
+    </div>`;
+  }).join('');
+}
+
+// S17-α: render both forward rectangles in one shot (n+1 and n+2 from S.intelData).
+// Safe to call when S.intelData is null — both rectangles fall into empty state.
+function renderForwardIntelAll() {
+  const inner = S.intelData || null;
+  renderForwardIntel(inner && inner.forward_n1_intel, targetStage + 1, 'n1');
+  renderForwardIntel(inner && inner.forward_n2_intel, targetStage + 2, 'n2');
+}
+
 async function gatherIntel() {
   const btn = $('gather-intel-btn');
   btn.disabled = true;
@@ -1467,6 +1542,7 @@ async function gatherIntel() {
     if (data.status === 'error') throw new Error(data.message);
     S.intelData = data;
     renderIntel();
+    renderForwardIntelAll();
     renderOdds();
     updateIntelHeader(targetStage, data._gathered_at || new Date().toISOString());
     fetch(`${SERVER}/save-intel`, {
@@ -1494,11 +1570,13 @@ async function loadSavedIntel() {
     if (data && data.key_signals) {
       S.intelData = data;
       renderIntel();
+      renderForwardIntelAll();
       renderOdds();
       updateIntelHeader(targetStage, data._gathered_at);
     } else {
       S.intelData = null;
       renderIntel();
+      renderForwardIntelAll();
     }
   } catch(_) {}
 }
