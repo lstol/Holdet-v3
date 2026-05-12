@@ -1,6 +1,11 @@
 """
 Basin landscape diagnostic — S17-22-followup Phase 1 + Phase 2A.
 
+NOTE (S17-26): the `low-transfer` strategy was retired from the live
+optimizer. This diagnostic retains the `low_transfer` cell and objective
+mapping for archaeological re-runs against pre-retirement git revisions.
+Current-codebase invocations should omit `low-transfer` from `--cells`.
+
 Phase 1: characterises per-strategy basin landscape across three slider
 configurations of Stage 2 (3 configs × 4 strategies × 50 chains = 600 SA
 runs). Drives the case classification (A/B/C/D) for the lookahead strategy

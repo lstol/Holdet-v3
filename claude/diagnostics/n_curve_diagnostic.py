@@ -1,6 +1,13 @@
 """
 N-curve diagnostic — canonical reproducer for multi-start SA sampling calibration.
 
+NOTE (S17-26): the `low-transfer` strategy was retired from the live
+optimizer. This diagnostic retains the strategy entry for archaeological
+re-runs against pre-retirement git revisions. Current-codebase invocations
+will produce a different output shape (3 strategies, not 4) — re-run from
+a checkout of an earlier commit if you need the historical N-curve including
+low-transfer.
+
 Originally produced for S17-21 Phase 1.5 (May 10 2026) to determine the right
 N value for Phase 2's uniform-N choice. Re-run when:
   - hyperparameter changes (S17-22 lookahead sweep, future SA tuning)

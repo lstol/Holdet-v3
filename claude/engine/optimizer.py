@@ -784,9 +784,12 @@ def compute_objective(team, probabilities, all_riders, objective='ev',
         )
         return base_ev + DEPTH_BONUS.get(min(8, round(expected_top15)), 0) * 2
 
-    elif objective == 'low_transfer':
-        tc = compute_transfer_cost(team, team_n1 or []) if team_n1 else 0
-        return base_ev - tc * 3
+    # S17-26: 'low_transfer' branch removed. Phase 2A (S17-22-followup) showed
+    # the `base_ev − 3·tc` objective produces EV-inversion under sprint-heavy
+    # n2/n3 inputs (327k gap on Stage 4). Rather than re-tune the 3× multiplier,
+    # the strategy was retired — lookahead's objective already optimizes against
+    # forward transfer cost with an explicit stage-EV horizon, making
+    # low_transfer architecturally redundant.
 
     elif objective == 'lookahead':
         # S16-4: align internal objective with the user-facing transfer-adj EV
@@ -1015,14 +1018,19 @@ def generate_candidate_teams(candidates, probabilities,
                               stage_config, scoring, all_riders,
                               current_team=None, seed=None):
     """
-    Run four strategy-differentiated SA chains and return all four results.
+    Run three strategy-differentiated SA chains and return all three results.
     No deduplication — each strategy has a distinct objective.
 
     Strategies:
-      optimal      — maximise stage EV
-      depth        — maximise expected riders in top-15
-      low-transfer — minimise transfer cost to n+1
-      lookahead    — EV minus discounted two-stage transfer costs
+      optimal   — maximise stage EV
+      depth     — maximise expected riders in top-15
+      lookahead — EV minus discounted two-stage transfer costs
+
+    `low-transfer` was retired in S17-26 (objective was architecturally
+    redundant with lookahead and exhibited EV-inversion under sprint-heavy
+    n2/n3 inputs per S17-22-followup Phase 2A). Strategy XOR sub-seed `0x3`
+    is reserved-historical; do not reuse — preserves bit-identical
+    reproducibility of pre-retirement cached results.
 
     seed: base seed (typically from compute_seed). Each strategy uses a
     sub-seed (base_seed XOR strategy_idx) so strategies don't share an
@@ -1090,14 +1098,10 @@ def generate_candidate_teams(candidates, probabilities,
             'n_iter': 200_000, 'max_seconds': 5,
             'sa_overrides': {},
         },
-        {
-            'name': 'low-transfer', 'label': 'Low transfer cost',
-            'description': f'Minimise transfers needed for stage n+1 ({n_tr_n1} expected from optimal)',
-            'strategy_xor': 0x3, 'legacy_seed': 777,
-            'objective': 'low_transfer', 'max_budget': budget,
-            'n_iter': 200_000, 'max_seconds': 5,
-            'sa_overrides': {},
-        },
+        # S17-26: 'low-transfer' strategy retired here. XOR sub-seed 0x3 is
+        # reserved-historical; do NOT reuse — preserves bit-identical
+        # reproducibility of pre-retirement cached results for optimal/depth/
+        # lookahead, whose seeds are unaffected by this gap.
         {
             'name': 'lookahead', 'label': 'Two-stage lookahead',
             'description': f'EV minus transfer costs n+1 ({n_tr_n1}) and n+2 ({n_tr_n2})',
