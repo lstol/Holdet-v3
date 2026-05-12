@@ -617,36 +617,26 @@ SCENARIO_TO_TERRAIN = {
 }
 
 
-def build_forward_probabilities(riders, sliders, intel=None):
+def build_forward_probabilities(riders, sliders):
     """
     Approximate probability distribution for a future stage where no odds exist.
     Score each rider by combining slider weights × SCENARIO_TO_TERRAIN ×
     rider.terrain_affinity, then renormalize to win probabilities.
 
-    S17-16: forward intel parameter accepts a dict shaped like
-    `stage_N_intel.json`'s `forward_n1_intel` / `forward_n2_intel` value —
-    `{key_signals: [{rider, direction, strength, ...}, ...]}`. Multiplies
-    each rider's raw score by the matching `INTEL_MULT[(direction, strength)]`
-    factor (same table consumed by `build_probabilities` at line 337); the
-    existing renormalisation below preserves total probability mass per
-    bucket. Forward and current intel are now symmetric: same multiplier
-    table, same renormalisation invariant. `intel=None` (default) preserves
-    pre-S17-16 slider-only behaviour bit-identically.
+    S17-γ: forward intel consumption (S17-16, optimizer.py:620 prior shape)
+    reverted. `INTEL_MULT` is a re-ranking operation on a bookmaker
+    distribution — the renormalisation invariant requires ground-truth
+    bookmaker odds. Forward stages have no bookmaker distribution, only
+    the synthetic terrain × slider product below, so multiplying that
+    synthetic distribution by per-rider intel ratings is not the same
+    operation. Forward intel (forward_n1_intel / forward_n2_intel from
+    S17-15, source-tagged per S17-β) remains UI substrate via S17-α's
+    dashboard rectangles; it just doesn't feed the optimizer.
     """
     s = {
         bucket: sliders.get(bucket, 0) / 100.0
         for bucket in ('bunch_sprint', 'reduced_sprint', 'breakaway', 'gc')
     }
-
-    # S17-16: build per-rider intel multipliers (mirror build_probabilities line 330-339)
-    adj = {}
-    if isinstance(intel, dict):
-        for sig in intel.get('key_signals', []) or []:
-            key  = (sig.get('direction', 'neutral'), sig.get('strength', 'weak'))
-            mult = INTEL_MULT.get(key, 1.0)
-            rider_name = sig.get('rider')
-            if rider_name:
-                adj[rider_name] = mult
 
     raw = {}
     for r in riders:
@@ -657,7 +647,7 @@ def build_forward_probabilities(riders, sliders, intel=None):
                 continue
             for dim, dim_weight in SCENARIO_TO_TERRAIN[bucket].items():
                 score += weight * dim_weight * ta.get(dim, 0)
-        raw[r['name']] = max(0.001, score) * adj.get(r['name'], 1.0)
+        raw[r['name']] = max(0.001, score)
 
     total = sum(raw.values())
     probs = {}

@@ -573,14 +573,13 @@ def run_optimizer_py():
             use_race_type=use_race_type,
         )
 
-        # Forward stages: slider-based inference + S17-16 forward-intel multipliers.
-        # `forward_nN_intel` keys are populated by /gather-intel (S17-15) and have
-        # the same `key_signals` shape as top-level intel; absent → slider-only.
-        intel_inner          = intel_data.get('intel', intel_data) if isinstance(intel_data, dict) else {}
-        forward_n1_intel     = intel_inner.get('forward_n1_intel') if isinstance(intel_inner, dict) else None
-        forward_n2_intel     = intel_inner.get('forward_n2_intel') if isinstance(intel_inner, dict) else None
-        probs_n1 = build_forward_probabilities(active_riders, sliders.get('n2', {}), intel=forward_n1_intel)
-        probs_n2 = build_forward_probabilities(active_riders, sliders.get('n3', {}), intel=forward_n2_intel)
+        # Forward stages: slider-based inference. S17-16 forward-intel
+        # multipliers reverted in S17-γ — INTEL_MULT is a re-ranking op on a
+        # bookmaker distribution; forward stages have no such distribution.
+        # forward_nN_intel keys still populated on disk by /gather-intel and
+        # surfaced in dashboard rectangles (S17-15 + S17-α), just unconsumed here.
+        probs_n1 = build_forward_probabilities(active_riders, sliders.get('n2', {}))
+        probs_n2 = build_forward_probabilities(active_riders, sliders.get('n3', {}))
 
         teams = generate_candidate_teams(
             active_riders, probs_current,
@@ -1178,10 +1177,11 @@ Rules:
         # came from Axelgaard's detailed Playwright scrape (or the generic URL's
         # redirect to it) versus the lighter generic preview page.
         result['source'] = current_source
-        # S17-15: nest forward intel inside the inner intel dict so the consumer's
-        # intel_data.get('intel', intel_data).get('forward_nN_intel') unwrap at
-        # server.py:578-580 finds it. Omit the key entirely when extraction failed
-        # — consumer falls back to slider-only forward EV via build_forward_probabilities(intel=None).
+        # S17-15: nest forward intel inside the inner intel dict so the dashboard's
+        # /load-intel unwrap pattern finds it. Omit the key entirely when extraction
+        # failed. S17-γ note: forward intel is now UI substrate only (rendered by
+        # S17-α dashboard rectangles); the optimizer's build_forward_probabilities
+        # no longer consumes it (architectural revert — see CLAUDE_SESSION).
         # S17-β: forward intel blocks gain `source` (axelgaard | generic_preview | both_failed)
         # tracking the final-URL inspection from fetch_tv2_generic_preview.
         if n1_intel is not None:
