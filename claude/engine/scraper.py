@@ -4,6 +4,8 @@ No web_search API calls. Playwright handles login where required.
 """
 
 import os, re, asyncio
+import requests
+from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 from dotenv import load_dotenv
 
@@ -404,12 +406,14 @@ def scrape_tv2_standings(stage: int) -> dict:
 
 
 def scrape_all_intel(stage: int, include_forward: bool = False) -> dict:
-    """Scrapes all three sources concurrently. Returns raw text per source.
+    """Scrapes all three current-stage sources concurrently. Returns raw text per source.
 
-    S17-15: when include_forward=True, also fetches TV2/Axelgaard previews
-    for stage+1 and stage+2 in the same asyncio.gather. Returned dict gains
-    `tv2_n1` and `tv2_n2` keys. Feltet and Inner Ring rarely cover n+1/n+2
-    ahead of race day, so forward intel is TV2-only by design.
+    Note: as of S17-β, `include_forward=True` is retained for backward compatibility
+    but forward stages are no longer fetched here — `/gather-intel` now orchestrates
+    forward scrapes via `fetch_tv2_generic_preview` directly (HTTP, not Playwright).
+    When include_forward=True, returned dict still gains `tv2_n1` / `tv2_n2` keys for
+    legacy callers, populated with the not-found sentinel so downstream consumers
+    treat them as absent.
     """
     async def _run():
         tasks = [
@@ -417,9 +421,6 @@ def scrape_all_intel(stage: int, include_forward: bool = False) -> dict:
             fetch_feltet_stage_analysis(stage),
             fetch_inner_ring_preview(stage),
         ]
-        if include_forward:
-            tasks.append(fetch_tv2_stage_preview(stage + 1))
-            tasks.append(fetch_tv2_stage_preview(stage + 2))
         results = await asyncio.gather(*tasks, return_exceptions=True)
         tv2, feltet, inner_ring = results[0], results[1], results[2]
         out = {
@@ -428,11 +429,91 @@ def scrape_all_intel(stage: int, include_forward: bool = False) -> dict:
             'inner_ring': str(inner_ring) if not isinstance(inner_ring, Exception) else f'[Inner Ring error: {inner_ring}]',
         }
         if include_forward:
-            tv2_n1, tv2_n2 = results[3], results[4]
-            out['tv2_n1'] = str(tv2_n1) if not isinstance(tv2_n1, Exception) else f'[TV2 n+1 error: {tv2_n1}]'
-            out['tv2_n2'] = str(tv2_n2) if not isinstance(tv2_n2, Exception) else f'[TV2 n+2 error: {tv2_n2}]'
+            out['tv2_n1'] = f'[TV2/Axelgaard: Stage {stage + 1} preview not found]'
+            out['tv2_n2'] = f'[TV2/Axelgaard: Stage {stage + 2} preview not found]'
         return out
     return asyncio.run(_run())
+
+
+# ── S17-β: TV2 generic preview (HTTP, no Playwright) + per-stage source strategy ──
+
+_TV2_GENERIC_URL_TEMPLATE = 'https://sport.tv2.dk/cykling/2026-04-14-{stage}-etape-eller-giro-ditalia-2026'
+
+
+def fetch_tv2_generic_preview(stage: int) -> dict:
+    """Fetch TV2's generic stage preview at the stable creation-date URL.
+
+    Returns {'prose': str, 'source': str, 'url': str}.
+
+    source ∈ {'axelgaard', 'generic_preview', 'not_found'}:
+      - 'axelgaard'        — generic URL 301-redirected to Axelgaard's detailed article
+                             (his column has been published; we get the richer prose
+                             via the redirect for free).
+      - 'generic_preview'  — landed on the lighter generic preview page (Axelgaard
+                             not yet published).
+      - 'not_found'        — HTTP 4xx, empty body, or stage out of range (e.g. stage 22).
+
+    No Playwright, no login. ~1–2s per call.
+    """
+    url = _TV2_GENERIC_URL_TEMPLATE.format(stage=stage)
+    try:
+        resp = requests.get(
+            url,
+            timeout=10,
+            allow_redirects=True,
+            headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Holdet/1.0'},
+        )
+        if resp.status_code != 200:
+            return {'prose': '', 'source': 'not_found', 'url': url}
+        # Per CLAUDE_SESSION UTF-8 rule (S17-25): force encoding for Danish content.
+        resp.encoding = 'utf-8'
+        final_url = resp.url
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        article = soup.find('article')
+        if not article:
+            return {'prose': '', 'source': 'not_found', 'url': final_url}
+        prose = article.get_text(' ', strip=True)
+        if not prose or len(prose) < 200:
+            return {'prose': '', 'source': 'not_found', 'url': final_url}
+        # Inspect final URL to detect whether we followed a redirect into Axelgaard's
+        # detailed article path. The author slug pattern is `axelgaards-optakt-til-N-etape`.
+        source = 'axelgaard' if 'axelgaards-optakt-til' in final_url else 'generic_preview'
+        return {'prose': prose, 'source': source, 'url': final_url}
+    except Exception as e:
+        return {'prose': '', 'source': 'not_found', 'url': url, 'error': str(e)}
+
+
+def fetch_stage_intel(stage: int, role: str) -> dict:
+    """Role-dependent TV2 intel scraper.
+
+    role='current':  try Axelgaard Playwright scraper first (primary); fall back to
+                     the generic URL (HTTP) when the Axelgaard scraper returns the
+                     not-found sentinel. Both yield the same prose shape.
+    role='forward':  use the generic URL only (n+1, n+2). No Playwright cost.
+
+    Returns {'prose': str, 'source': str}.
+      source ∈ {'axelgaard', 'generic_preview', 'both_failed'}.
+    """
+    if role == 'current':
+        prose = scrape_tv2_intel(stage)  # sync wrapper around fetch_tv2_stage_preview
+        if not (prose.startswith('[TV2/Axelgaard:') or prose.startswith('[TV2 ')):
+            return {'prose': prose, 'source': 'axelgaard'}
+        fallback = fetch_tv2_generic_preview(stage)
+        if fallback['source'] != 'not_found':
+            return {'prose': fallback['prose'], 'source': fallback['source']}
+        return {'prose': '', 'source': 'both_failed'}
+    elif role == 'forward':
+        result = fetch_tv2_generic_preview(stage)
+        if result['source'] != 'not_found':
+            return {'prose': result['prose'], 'source': result['source']}
+        return {'prose': '', 'source': 'both_failed'}
+    else:
+        raise ValueError(f"Unknown role: {role!r}; expected 'current' or 'forward'")
+
+
+def scrape_tv2_intel(stage: int) -> str:
+    """Sync wrapper for fetch_tv2_stage_preview (Axelgaard via Playwright)."""
+    return asyncio.run(fetch_tv2_stage_preview(stage))
 
 
 # 2026-05-10: deprecated alongside fetch_feltet_ingemann_team above.

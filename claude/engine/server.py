@@ -1045,19 +1045,50 @@ def gather_intel():
     stage = request.json.get('stage', '?')
     raw = ''
     try:
-        # Step 1: scrape current-stage triple + forward n+1/n+2 TV2 previews (S17-15)
+        # Step 1: scrape current-stage triple (Playwright) + forward n+1/n+2 (S17-β: generic
+        # preview via HTTP, no Playwright) — all in parallel. After scrape, detect Axelgaard
+        # not-found sentinel on current-stage TV2 and fall back to the generic URL.
         app.logger.info(f"Scraping intel for Stage {stage}...")
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        from scraper import scrape_all_intel
-        raw_sources = scrape_all_intel(int(stage), include_forward=True)
+        from scraper import scrape_all_intel, fetch_tv2_generic_preview
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as scrape_executor:
+            current_scrape_future = scrape_executor.submit(scrape_all_intel, int(stage))
+            n1_fwd_future = scrape_executor.submit(fetch_tv2_generic_preview, int(stage) + 1)
+            n2_fwd_future = scrape_executor.submit(fetch_tv2_generic_preview, int(stage) + 2)
+            raw_sources = current_scrape_future.result()
+            n1_fwd = n1_fwd_future.result()
+            n2_fwd = n2_fwd_future.result()
+
+        # S17-β: current-stage Axelgaard fallback. If the Playwright scraper returned the
+        # not-found sentinel (Axelgaard hasn't published his detailed column yet), substitute
+        # the generic preview prose. The generic URL 301-redirects to Axelgaard when his
+        # detailed article exists, so source detection from the final URL is authoritative.
+        current_source = 'axelgaard'
+        tv2_prose = raw_sources['tv2']
+        if tv2_prose.startswith('[TV2/Axelgaard:') or tv2_prose.startswith('[TV2 '):
+            fallback = fetch_tv2_generic_preview(int(stage))
+            if fallback['source'] != 'not_found':
+                tv2_prose = fallback['prose']
+                raw_sources['tv2'] = tv2_prose
+                current_source = fallback['source']
+            else:
+                current_source = 'both_failed'
+
         app.logger.info(
-            f"TV2: {len(raw_sources['tv2'])} chars | "
+            f"TV2: {len(raw_sources['tv2'])} chars (source={current_source}) | "
             f"Feltet: {len(raw_sources['feltet'])} chars | "
             f"Inner Ring: {len(raw_sources['inner_ring'])} chars | "
-            f"TV2 n+1: {len(raw_sources.get('tv2_n1', ''))} chars | "
-            f"TV2 n+2: {len(raw_sources.get('tv2_n2', ''))} chars"
+            f"TV2 n+1: {len(n1_fwd.get('prose', ''))} chars (source={n1_fwd.get('source')}) | "
+            f"TV2 n+2: {len(n2_fwd.get('prose', ''))} chars (source={n2_fwd.get('source')})"
         )
-        _log(f"gather-intel stage={stage} scraped tv2={len(raw_sources['tv2'])} feltet={len(raw_sources['feltet'])} inrng={len(raw_sources['inner_ring'])} tv2_n1={len(raw_sources.get('tv2_n1',''))} tv2_n2={len(raw_sources.get('tv2_n2',''))}")
+        _log(
+            f"gather-intel stage={stage} scraped "
+            f"tv2={len(raw_sources['tv2'])}/{current_source} "
+            f"feltet={len(raw_sources['feltet'])} "
+            f"inrng={len(raw_sources['inner_ring'])} "
+            f"tv2_n1={len(n1_fwd.get('prose',''))}/{n1_fwd.get('source')} "
+            f"tv2_n2={len(n2_fwd.get('prose',''))}/{n2_fwd.get('source')}"
+        )
 
         # Step 2: structure with 3 parallel Haiku calls — current stage + forward n+1 + forward n+2 (S17-15)
         sources = yaml.safe_load(open(EXPERT_SOURCES))['sources']
@@ -1122,13 +1153,15 @@ Rules:
         # Forward Haiku helpers swallow their own errors (return None) so a
         # forward failure can't kill the current-stage write; current-stage
         # exceptions propagate to the outer try/except as before.
+        # S17-β: forward prose now comes from the generic-preview HTTP fetch above,
+        # not from a (now-removed) Playwright forward scrape.
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             current_future = executor.submit(_haiku_current)
             n1_future = executor.submit(
-                _haiku_extract_forward, int(stage) + 1, raw_sources.get('tv2_n1', ''), client
+                _haiku_extract_forward, int(stage) + 1, n1_fwd.get('prose', ''), client
             )
             n2_future = executor.submit(
-                _haiku_extract_forward, int(stage) + 2, raw_sources.get('tv2_n2', ''), client
+                _haiku_extract_forward, int(stage) + 2, n2_fwd.get('prose', ''), client
             )
             structure_message = current_future.result()
             n1_intel = n1_future.result()
@@ -1141,25 +1174,38 @@ Rules:
         result = json.loads(m.group())
         result['gathered_at'] = _dt.now().isoformat()
         result['stage'] = stage
+        # S17-β: source field on current-stage intel block tracks whether the prose
+        # came from Axelgaard's detailed Playwright scrape (or the generic URL's
+        # redirect to it) versus the lighter generic preview page.
+        result['source'] = current_source
         # S17-15: nest forward intel inside the inner intel dict so the consumer's
         # intel_data.get('intel', intel_data).get('forward_nN_intel') unwrap at
         # server.py:578-580 finds it. Omit the key entirely when extraction failed
         # — consumer falls back to slider-only forward EV via build_forward_probabilities(intel=None).
+        # S17-β: forward intel blocks gain `source` (axelgaard | generic_preview | both_failed)
+        # tracking the final-URL inspection from fetch_tv2_generic_preview.
         if n1_intel is not None:
             result['forward_n1_intel'] = {
                 'key_signals': n1_intel.get('key_signals', []),
                 'stage_classification': n1_intel.get('stage_classification', ''),
+                'source': n1_fwd.get('source', 'unknown'),
             }
         if n2_intel is not None:
             result['forward_n2_intel'] = {
                 'key_signals': n2_intel.get('key_signals', []),
                 'stage_classification': n2_intel.get('stage_classification', ''),
+                'source': n2_fwd.get('source', 'unknown'),
             }
         intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
         with open(intel_path, 'w') as f:
             json.dump({'stage': stage, 'intel': result,
                        'gathered_at': _dt.now().isoformat()}, f, indent=2, ensure_ascii=False)
-        _log(f"gather-intel saved to {intel_path} forward_n1={'present' if n1_intel else 'absent'} forward_n2={'present' if n2_intel else 'absent'}")
+        _log(
+            f"gather-intel saved to {intel_path} "
+            f"source={current_source} "
+            f"forward_n1={'present/'+n1_fwd.get('source','?') if n1_intel else 'absent'} "
+            f"forward_n2={'present/'+n2_fwd.get('source','?') if n2_intel else 'absent'}"
+        )
         result['_gathered_at'] = _dt.now().isoformat()
         return jsonify(result)
     except json.JSONDecodeError as e:

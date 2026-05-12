@@ -1485,20 +1485,26 @@ function renderIntel() {
 }
 
 // S17-α: render a single forward-stage intel rectangle (n+1 or n+2).
-// `data` is the inner forward_nN_intel object: {key_signals: [...], stage_classification: "..."} or null/undefined.
+// `data` is the inner forward_nN_intel object: {key_signals: [...], stage_classification: "...", source: "..."} or null/undefined.
 // `position` is 'n1' or 'n2' (selects the DOM target rectangle).
+// S17-β: source label in header reflects which TV2 path produced the prose
+//   (Axelgaard detailed via redirect vs lighter generic preview).
 function renderForwardIntel(data, stageNum, position) {
   const elDisplay = $(`forward-${position}-display`);
   const elLabel   = $(`forward-${position}-label`);
   const elClass   = $(`forward-${position}-classification`);
   if (!elDisplay || !elLabel) return;
 
-  elLabel.textContent = `Stage ${stageNum} preview · Axelgaard`;
+  const sourceLabel = (data && data.source === 'axelgaard')
+    ? 'Axelgaard detailed'
+    : 'TV2 generic preview';
+  elLabel.textContent = `Stage ${stageNum} preview · ${sourceLabel}`;
 
   const signals = (data && Array.isArray(data.key_signals)) ? data.key_signals : [];
   if (!data || signals.length === 0) {
     if (elClass) elClass.textContent = '';
-    elDisplay.innerHTML = `<div class="intel-empty intel-empty--forward">Stage ${stageNum} preview not yet available from Axelgaard</div>`;
+    elDisplay.innerHTML = `<div class="intel-empty intel-empty--forward">Stage ${stageNum} preview not yet available from TV2</div>`;
+    elLabel.textContent = `Stage ${stageNum} preview · TV2`;
     return;
   }
 
