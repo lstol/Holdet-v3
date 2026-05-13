@@ -32,12 +32,29 @@ When any of these appear, re-fetch ROADMAP first. Then answer. Never compose a
 queue answer from memory or from a stale session-state doc. userMemories
 lossy-summarize the queue; the ROADMAP is the only authoritative source.
 
-### Rule 3 — Part 0 ROADMAP + CLAUDE_SESSION delta is mandatory in every handoff
+### Rule 3 — Part 0 captures the conversational accumulation
 
-Every Claude Code handoff begins with Part 0: a delta against ROADMAP and (when
-relevant) CLAUDE_SESSION, capturing closures, new items, scope shifts, and
-corrections since the last roadmap update. If genuinely no deltas, Part 0 states
-"no roadmap deltas this handoff" explicitly. Never omitted.
+Every Claude Code handoff begins with Part 0: a delta against ROADMAP and
+CLAUDE_SESSION. Part 0 captures everything that has changed since the last
+commit, including:
+
+- **Item closures** (work delivered, ✅ flips)
+- **Scope shifts** (re-sequencing, deferrals, dependency changes)
+- **Decisions made conversationally** between handoffs (priority changes,
+  deprioritizations, re-elevations, definitions refined)
+- **Corrections** (errors discovered, attribution fixes, supersessions)
+- **New items** (work surfaced and queued)
+
+If genuinely no deltas, Part 0 explicitly states "no roadmap deltas this
+handoff." Never omitted.
+
+**Conversational decisions don't ship to the repo until Part 0 lands them.**
+When the user makes a sequencing or priority decision mid-conversation, that
+decision rides on the next handoff's Part 0. The conversational layer
+accumulates pending deltas; the next handoff's Part 0 commits them. This is
+why every handoff has Part 0 — even single-concern implementation handoffs —
+because the accumulated deltas between handoffs need a vehicle to reach the
+repo.
 
 Commit Part 0 separately from the rest of the handoff so the documentation
 delta lands as its own atomic change.
