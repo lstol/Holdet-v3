@@ -1,0 +1,1063 @@
+{
+  "stage": 5,
+  "payload": {
+    "stage": 5,
+    "sliders": {
+      "n1": {
+        "bunch_sprint": 0,
+        "reduced_sprint": 20,
+        "gc": 0,
+        "breakaway": 80
+      },
+      "n2": {
+        "bunch_sprint": 100,
+        "reduced_sprint": 0,
+        "gc": 0,
+        "breakaway": 0
+      },
+      "n3": {
+        "bunch_sprint": 0,
+        "reduced_sprint": 0,
+        "gc": 80,
+        "breakaway": 20
+      }
+    },
+    "force_in": [],
+    "force_out": [],
+    "use_race_type_adjustment": false
+  },
+  "pool": {
+    "top_n_pool_size": 51,
+    "full_pool_size": 174,
+    "top_n_added_via_current_team_union": 1,
+    "riders": [
+      {
+        "name": "Christian Scaroni",
+        "holdet_id": 47331,
+        "price": 5710000,
+        "team": "XDS Astana",
+        "current_stage_total_ev": 193916.69180931305,
+        "terrain_affinity": {
+          "climbing": 0.58,
+          "sprint": 0.42,
+          "time_trial": 0.42,
+          "mixed": 0.62
+        }
+      },
+      {
+        "name": "Giulio Ciccone",
+        "holdet_id": 47357,
+        "price": 8686000,
+        "team": "Lidl-Trek",
+        "current_stage_total_ev": 172237.2100935516,
+        "terrain_affinity": {
+          "climbing": 0.76,
+          "sprint": 0.3,
+          "time_trial": 0.48,
+          "mixed": 0.58
+        }
+      },
+      {
+        "name": "Jonas Vingegaard",
+        "holdet_id": 47372,
+        "price": 17583000,
+        "team": "Team Visma Lease a Bike",
+        "current_stage_total_ev": 171239.55103064806,
+        "terrain_affinity": {
+          "climbing": 0.92,
+          "sprint": 0.2,
+          "time_trial": 0.85,
+          "mixed": 0.72
+        }
+      },
+      {
+        "name": "Lennert Van Eetvelt",
+        "holdet_id": 47377,
+        "price": 7741000,
+        "team": "Lotto-Intermarch\u00e9",
+        "current_stage_total_ev": 141678.5542894037,
+        "terrain_affinity": {
+          "climbing": 0.78,
+          "sprint": 0.22,
+          "time_trial": 0.55,
+          "mixed": 0.65
+        }
+      },
+      {
+        "name": "Jan Christen",
+        "holdet_id": 47365,
+        "price": 6364000,
+        "team": "UAE Team Emirates XRG",
+        "current_stage_total_ev": 140253.32705668436,
+        "terrain_affinity": {
+          "climbing": 0.65,
+          "sprint": 0.2,
+          "time_trial": 0.42,
+          "mixed": 0.55
+        }
+      },
+      {
+        "name": "Javier Romo",
+        "holdet_id": 47367,
+        "price": 6079000,
+        "team": "Movistar Team",
+        "current_stage_total_ev": 122197.29971834403,
+        "terrain_affinity": {
+          "climbing": 0.65,
+          "sprint": 0.2,
+          "time_trial": 0.42,
+          "mixed": 0.55
+        }
+      },
+      {
+        "name": "Giulio Pellizzari",
+        "holdet_id": 47358,
+        "price": 9690000,
+        "team": "Red Bull BORA hansgrohe",
+        "current_stage_total_ev": 110850.575136638,
+        "terrain_affinity": {
+          "climbing": 0.88,
+          "sprint": 0.2,
+          "time_trial": 0.62,
+          "mixed": 0.72
+        }
+      },
+      {
+        "name": "Michael Valgren",
+        "holdet_id": 47390,
+        "price": 4083000,
+        "team": "EF Education EasyPost",
+        "current_stage_total_ev": 96685.86412728282,
+        "terrain_affinity": {
+          "climbing": 0.52,
+          "sprint": 0.62,
+          "time_trial": 0.4,
+          "mixed": 0.72
+        }
+      },
+      {
+        "name": "Andreas Leknessund",
+        "holdet_id": 48626,
+        "price": 4101000,
+        "team": "Uno-X Mobility",
+        "current_stage_total_ev": 85120.94598387227,
+        "terrain_affinity": {
+          "climbing": 0.74,
+          "sprint": 0.22,
+          "time_trial": 0.7,
+          "mixed": 0.65
+        }
+      },
+      {
+        "name": "Alessandro Pinarello",
+        "holdet_id": 47415,
+        "price": 4669000,
+        "team": "NSN Cycling",
+        "current_stage_total_ev": 85120.94598387227,
+        "terrain_affinity": {
+          "climbing": 0.65,
+          "sprint": 0.2,
+          "time_trial": 0.42,
+          "mixed": 0.55
+        }
+      },
+      {
+        "name": "Orluis Aular",
+        "holdet_id": 48525,
+        "price": 6306000,
+        "team": "Movistar Team",
+        "current_stage_total_ev": 78249.43491290486,
+        "terrain_affinity": {
+          "climbing": 0.58,
+          "sprint": 0.42,
+          "time_trial": 0.42,
+          "mixed": 0.62
+        }
+      },
+      {
+        "name": "Igor Arrieta",
+        "holdet_id": 47362,
+        "price": 4051000,
+        "team": "UAE Team Emirates XRG",
+        "current_stage_total_ev": 77394.29857327328,
+        "terrain_affinity": {
+          "climbing": 0.68,
+          "sprint": 0.25,
+          "time_trial": 0.48,
+          "mixed": 0.58
+        }
+      },
+      {
+        "name": "Diego Ulissi",
+        "holdet_id": 47340,
+        "price": 4171000,
+        "team": "XDS Astana",
+        "current_stage_total_ev": 76966.73040345748,
+        "terrain_affinity": {
+          "climbing": 0.65,
+          "sprint": 0.25,
+          "time_trial": 0.48,
+          "mixed": 0.58
+        }
+      },
+      {
+        "name": "Ant\u00f3nio Morgado",
+        "holdet_id": 47326,
+        "price": 4053000,
+        "team": "UAE Team Emirates XRG",
+        "current_stage_total_ev": 60215.00897488604,
+        "terrain_affinity": {
+          "climbing": 0.68,
+          "sprint": 0.25,
+          "time_trial": 0.48,
+          "mixed": 0.58
+        }
+      },
+      {
+        "name": "Guillermo Thomas Silva",
+        "holdet_id": 48633,
+        "price": 5079000,
+        "team": "XDS Astana Team",
+        "current_stage_total_ev": 59644.918081798314,
+        "terrain_affinity": {}
+      },
+      {
+        "name": "Felix Engelhardt",
+        "holdet_id": 48583,
+        "price": 3500000,
+        "team": "Team Jayco AlUla",
+        "current_stage_total_ev": 59502.39535852638,
+        "terrain_affinity": {
+          "climbing": 0.65,
+          "sprint": 0.2,
+          "time_trial": 0.42,
+          "mixed": 0.55
+        }
+      },
+      {
+        "name": "Ben Turner",
+        "holdet_id": 48526,
+        "price": 6168000,
+        "team": "Netcompany INEOS",
+        "current_stage_total_ev": 58647.25901889479,
+        "terrain_affinity": {
+          "climbing": 0.65,
+          "sprint": 0.25,
+          "time_trial": 0.48,
+          "mixed": 0.58
+        }
+      },
+      {
+        "name": "Florian Stork",
+        "holdet_id": 48598,
+        "price": 4079000,
+        "team": "Tudor Pro Cycling",
+        "current_stage_total_ev": 58504.73629562285,
+        "terrain_affinity": {
+          "climbing": 0.5,
+          "sprint": 0.35,
+          "time_trial": 0.42,
+          "mixed": 0.52
+        }
+      },
+      {
+        "name": "Tobias Lund Andresen",
+        "holdet_id": 47405,
+        "price": 9457000,
+        "team": "Decathlon CMA CGM",
+        "current_stage_total_ev": 48735.60446543865,
+        "terrain_affinity": {
+          "climbing": 0.22,
+          "sprint": 0.82,
+          "time_trial": 0.38,
+          "mixed": 0.4
+        }
+      },
+      {
+        "name": "Filippo Ganna",
+        "holdet_id": 47351,
+        "price": 8973000,
+        "team": "Netcompany INEOS",
+        "current_stage_total_ev": 48735.60446543865,
+        "terrain_affinity": {
+          "climbing": 0.42,
+          "sprint": 0.72,
+          "time_trial": 0.96,
+          "mixed": 0.52
+        }
+      },
+      {
+        "name": "Fabio Christen",
+        "holdet_id": 48569,
+        "price": 3979000,
+        "team": "Pinarello Q36.5",
+        "current_stage_total_ev": 48735.60446543865,
+        "terrain_affinity": {
+          "climbing": 0.5,
+          "sprint": 0.35,
+          "time_trial": 0.42,
+          "mixed": 0.52
+        }
+      },
+      {
+        "name": "Alberto Bettiol",
+        "holdet_id": 47322,
+        "price": 3503000,
+        "team": "XDS Astana",
+        "current_stage_total_ev": 40739.633706221844,
+        "terrain_affinity": {
+          "climbing": 0.52,
+          "sprint": 0.62,
+          "time_trial": 0.4,
+          "mixed": 0.72
+        }
+      },
+      {
+        "name": "Gianmarco Garofoli",
+        "holdet_id": 48580,
+        "price": 4087000,
+        "team": "Soudal Quick-Step",
+        "current_stage_total_ev": 40739.633706221844,
+        "terrain_affinity": {}
+      },
+      {
+        "name": "Corbin Strong",
+        "holdet_id": 47332,
+        "price": 6508000,
+        "team": "NSN Cycling",
+        "current_stage_total_ev": 40169.54281313412,
+        "terrain_affinity": {
+          "climbing": 0.22,
+          "sprint": 0.8,
+          "time_trial": 0.38,
+          "mixed": 0.4
+        }
+      },
+      {
+        "name": "Aleksandr Vlasov",
+        "holdet_id": 47324,
+        "price": 5991000,
+        "team": "Red Bull BORA hansgrohe",
+        "current_stage_total_ev": 36670.38696497748,
+        "terrain_affinity": {
+          "climbing": 0.76,
+          "sprint": 0.22,
+          "time_trial": 0.55,
+          "mixed": 0.65
+        }
+      },
+      {
+        "name": "Filippo Zana",
+        "holdet_id": 47353,
+        "price": 4620000,
+        "team": "Soudal Quick-Step",
+        "current_stage_total_ev": 36670.38696497748,
+        "terrain_affinity": {
+          "climbing": 0.75,
+          "sprint": 0.22,
+          "time_trial": 0.55,
+          "mixed": 0.65
+        }
+      },
+      {
+        "name": "Edoardo Zambanini",
+        "holdet_id": 47344,
+        "price": 3988000,
+        "team": "Bahrain Victorious",
+        "current_stage_total_ev": 33313.75384009277,
+        "terrain_affinity": {
+          "climbing": 0.65,
+          "sprint": 0.2,
+          "time_trial": 0.42,
+          "mixed": 0.55
+        }
+      },
+      {
+        "name": "Egan Bernal",
+        "holdet_id": 47419,
+        "price": 7730000,
+        "team": "Netcompany INEOS",
+        "current_stage_total_ev": 33028.708393548906,
+        "terrain_affinity": {
+          "climbing": 0.86,
+          "sprint": 0.2,
+          "time_trial": 0.62,
+          "mixed": 0.72
+        }
+      },
+      {
+        "name": "Jasper Stuyven",
+        "holdet_id": 47366,
+        "price": 4160000,
+        "team": "Soudal Quick-Step",
+        "current_stage_total_ev": 33028.708393548906,
+        "terrain_affinity": {
+          "climbing": 0.32,
+          "sprint": 0.75,
+          "time_trial": 0.4,
+          "mixed": 0.72
+        }
+      },
+      {
+        "name": "Alec Segaert",
+        "holdet_id": 47323,
+        "price": 3991000,
+        "team": "Bahrain Victorious",
+        "current_stage_total_ev": 29101.984375576467,
+        "terrain_affinity": {
+          "climbing": 0.4,
+          "sprint": 0.55,
+          "time_trial": 0.88,
+          "mixed": 0.52
+        }
+      },
+      {
+        "name": "Simone Gualdi",
+        "holdet_id": 47402,
+        "price": 3488000,
+        "team": "Lotto-Intermarch\u00e9",
+        "current_stage_total_ev": 17859.267304026765,
+        "terrain_affinity": {
+          "climbing": 0.65,
+          "sprint": 0.2,
+          "time_trial": 0.42,
+          "mixed": 0.55
+        }
+      },
+      {
+        "name": "Koen Bouwman",
+        "holdet_id": 47376,
+        "price": 2988000,
+        "team": "Team Jayco AlUla",
+        "current_stage_total_ev": 14882.722753355636,
+        "terrain_affinity": {
+          "climbing": 0.68,
+          "sprint": 0.42,
+          "time_trial": 0.42,
+          "mixed": 0.62
+        }
+      },
+      {
+        "name": "Matteo Malucelli",
+        "holdet_id": 48634,
+        "price": 5637000,
+        "team": "XDS Astana",
+        "current_stage_total_ev": 14882.722753355636,
+        "terrain_affinity": {
+          "climbing": 0.22,
+          "sprint": 0.82,
+          "time_trial": 0.38,
+          "mixed": 0.4
+        }
+      },
+      {
+        "name": "Paul Magnier",
+        "holdet_id": 47397,
+        "price": 10045000,
+        "team": "Soudal Quick-Step",
+        "current_stage_total_ev": 14882.722753355636,
+        "terrain_affinity": {
+          "climbing": 0.58,
+          "sprint": 0.55,
+          "time_trial": 0.42,
+          "mixed": 0.62
+        }
+      },
+      {
+        "name": "Felix Gall",
+        "holdet_id": 47349,
+        "price": 9030000,
+        "team": "Decathlon CMA CGM",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.8,
+          "sprint": 0.22,
+          "time_trial": 0.58,
+          "mixed": 0.65
+        }
+      },
+      {
+        "name": "Tord Gudmestad",
+        "holdet_id": 47406,
+        "price": 3081000,
+        "team": "Decathlon CMA CGM",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.65,
+          "sprint": 0.2,
+          "time_trial": 0.42,
+          "mixed": 0.55
+        }
+      },
+      {
+        "name": "Gregor M\u00fchlberger",
+        "holdet_id": 47359,
+        "price": 3524000,
+        "team": "Decathlon CMA CGM",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.65,
+          "sprint": 0.2,
+          "time_trial": 0.42,
+          "mixed": 0.55
+        }
+      },
+      {
+        "name": "Oliver Naesen",
+        "holdet_id": 47395,
+        "price": 2985000,
+        "team": "Decathlon CMA CGM",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.52,
+          "sprint": 0.62,
+          "time_trial": 0.4,
+          "mixed": 0.72
+        }
+      },
+      {
+        "name": "Rasmus S\u00f8jberg Pedersen",
+        "holdet_id": 48481,
+        "price": 2991000,
+        "team": "Decathlon CMA CGM",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.65,
+          "sprint": 0.25,
+          "time_trial": 0.48,
+          "mixed": 0.58
+        }
+      },
+      {
+        "name": "Callum Scotson",
+        "holdet_id": 48479,
+        "price": 2506000,
+        "team": "Decathlon CMA CGM",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.5,
+          "sprint": 0.35,
+          "time_trial": 0.68,
+          "mixed": 0.52
+        }
+      },
+      {
+        "name": "Johannes Staune-Mittet",
+        "holdet_id": 48480,
+        "price": 3000000,
+        "team": "Decathlon CMA CGM",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.76,
+          "sprint": 0.22,
+          "time_trial": 0.66,
+          "mixed": 0.65
+        }
+      },
+      {
+        "name": "Thymen Arensman",
+        "holdet_id": 47403,
+        "price": 7700000,
+        "team": "Netcompany INEOS",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.76,
+          "sprint": 0.22,
+          "time_trial": 0.74,
+          "mixed": 0.65
+        }
+      },
+      {
+        "name": "Jack Haig",
+        "holdet_id": 48529,
+        "price": 2979000,
+        "team": "Netcompany INEOS",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.65,
+          "sprint": 0.25,
+          "time_trial": 0.48,
+          "mixed": 0.58
+        }
+      },
+      {
+        "name": "Embret Svestad-B\u00e5rdseng",
+        "holdet_id": 48528,
+        "price": 3455000,
+        "team": "Netcompany INEOS",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.65,
+          "sprint": 0.2,
+          "time_trial": 0.42,
+          "mixed": 0.55
+        }
+      },
+      {
+        "name": "Connor Swift",
+        "holdet_id": 48527,
+        "price": 2428000,
+        "team": "Netcompany INEOS",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.5,
+          "sprint": 0.35,
+          "time_trial": 0.42,
+          "mixed": 0.52
+        }
+      },
+      {
+        "name": "Will Barta",
+        "holdet_id": 48602,
+        "price": 2521000,
+        "team": "Tudor Pro Cycling",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.65,
+          "sprint": 0.2,
+          "time_trial": 0.42,
+          "mixed": 0.55
+        }
+      },
+      {
+        "name": "Robin Froideveaux",
+        "holdet_id": 48601,
+        "price": 3519000,
+        "team": "Tudor Pro Cycling",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.5,
+          "sprint": 0.35,
+          "time_trial": 0.42,
+          "mixed": 0.52
+        }
+      },
+      {
+        "name": "Luca Mozzato",
+        "holdet_id": 48600,
+        "price": 3961000,
+        "team": "Tudor Pro Cycling",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.22,
+          "sprint": 0.8,
+          "time_trial": 0.38,
+          "mixed": 0.4
+        }
+      },
+      {
+        "name": "Mathys Rondel",
+        "holdet_id": 47386,
+        "price": 5616000,
+        "team": "Tudor Pro Cycling",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.58,
+          "sprint": 0.42,
+          "time_trial": 0.42,
+          "mixed": 0.62
+        }
+      },
+      {
+        "name": "Michael Storer",
+        "holdet_id": 47389,
+        "price": 7030000,
+        "team": "Tudor Pro Cycling",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {
+          "climbing": 0.68,
+          "sprint": 0.25,
+          "time_trial": 0.48,
+          "mixed": 0.62
+        }
+      },
+      {
+        "name": "Jhonatan Manuel Narvaez Prado",
+        "holdet_id": 47369,
+        "price": 5895000,
+        "team": "UAE Team Emirates - XRG",
+        "current_stage_total_ev": 10294.333697482576,
+        "terrain_affinity": {}
+      }
+    ]
+  },
+  "tiers": {
+    "tier1_external_signal": {
+      "win_odds": [
+        "Afonso Eul\u00e1rio",
+        "Alberto Bettiol",
+        "Alec Segaert",
+        "Aleksandr Vlasov",
+        "Alessandro Pinarello",
+        "Andreas Leknessund",
+        "Antonio Morgado",
+        "Ant\u00f3nio Morgado",
+        "Ben Turner",
+        "Christian Scaroni",
+        "Corbin Strong",
+        "Cristian Scaroni",
+        "Diego Ulissi",
+        "Edoardo Zambanini",
+        "Egan Bernal",
+        "Fabio Christen",
+        "Felix Engelhardt",
+        "Filippo Ganna",
+        "Filippo Zana",
+        "Florian Stork",
+        "Gianmarco Garofoli",
+        "Giulio Ciccone",
+        "Giulio Pellizzari",
+        "Guillermo Thomas Silva",
+        "Harold Mart\u00edn L\u00f3pez",
+        "Igor Arrieta",
+        "Jan Christen",
+        "Jasper Stuyven",
+        "Javier Romo",
+        "Jhonatan Narvaez",
+        "Jhonatan Narv\u00e1ez",
+        "Jonas Vingegaard",
+        "Jonas Vingegaard Hansen",
+        "Koen Bouwman",
+        "Lennert Van Eetvelt",
+        "Matteo Malucelli",
+        "Michael Valgren",
+        "Orluis Aular",
+        "Oruis Aular",
+        "Paul Magnier",
+        "Simone Gualdi",
+        "Tobias Lund Andresen"
+      ],
+      "strong_intel": [
+        "Christian Scaroni",
+        "Giulio Ciccone",
+        "Jhonatan Narvaez"
+      ],
+      "union": [
+        "Afonso Eul\u00e1rio",
+        "Alberto Bettiol",
+        "Alec Segaert",
+        "Aleksandr Vlasov",
+        "Alessandro Pinarello",
+        "Andreas Leknessund",
+        "Antonio Morgado",
+        "Ant\u00f3nio Morgado",
+        "Ben Turner",
+        "Christian Scaroni",
+        "Corbin Strong",
+        "Cristian Scaroni",
+        "Diego Ulissi",
+        "Edoardo Zambanini",
+        "Egan Bernal",
+        "Fabio Christen",
+        "Felix Engelhardt",
+        "Filippo Ganna",
+        "Filippo Zana",
+        "Florian Stork",
+        "Gianmarco Garofoli",
+        "Giulio Ciccone",
+        "Giulio Pellizzari",
+        "Guillermo Thomas Silva",
+        "Harold Mart\u00edn L\u00f3pez",
+        "Igor Arrieta",
+        "Jan Christen",
+        "Jasper Stuyven",
+        "Javier Romo",
+        "Jhonatan Narvaez",
+        "Jhonatan Narv\u00e1ez",
+        "Jonas Vingegaard",
+        "Jonas Vingegaard Hansen",
+        "Koen Bouwman",
+        "Lennert Van Eetvelt",
+        "Matteo Malucelli",
+        "Michael Valgren",
+        "Orluis Aular",
+        "Oruis Aular",
+        "Paul Magnier",
+        "Simone Gualdi",
+        "Tobias Lund Andresen"
+      ],
+      "in_pool": [
+        "Alberto Bettiol",
+        "Alec Segaert",
+        "Aleksandr Vlasov",
+        "Alessandro Pinarello",
+        "Andreas Leknessund",
+        "Ant\u00f3nio Morgado",
+        "Ben Turner",
+        "Christian Scaroni",
+        "Corbin Strong",
+        "Diego Ulissi",
+        "Edoardo Zambanini",
+        "Egan Bernal",
+        "Fabio Christen",
+        "Felix Engelhardt",
+        "Filippo Ganna",
+        "Filippo Zana",
+        "Florian Stork",
+        "Gianmarco Garofoli",
+        "Giulio Ciccone",
+        "Giulio Pellizzari",
+        "Guillermo Thomas Silva",
+        "Igor Arrieta",
+        "Jan Christen",
+        "Jasper Stuyven",
+        "Javier Romo",
+        "Jonas Vingegaard",
+        "Koen Bouwman",
+        "Lennert Van Eetvelt",
+        "Matteo Malucelli",
+        "Michael Valgren",
+        "Orluis Aular",
+        "Paul Magnier",
+        "Simone Gualdi",
+        "Tobias Lund Andresen"
+      ],
+      "missing": [
+        "Afonso Eul\u00e1rio",
+        "Antonio Morgado",
+        "Cristian Scaroni",
+        "Harold Mart\u00edn L\u00f3pez",
+        "Jhonatan Narvaez",
+        "Jhonatan Narv\u00e1ez",
+        "Jonas Vingegaard Hansen",
+        "Oruis Aular"
+      ]
+    },
+    "tier2_gc_top10": {
+      "members": [
+        "Egan Bernal",
+        "Enric Mas Nicolau",
+        "Florian Stork",
+        "Giulio Ciccone",
+        "Giulio Pellizzari",
+        "Jan Christen",
+        "Jan Hirt",
+        "Lennert Van Eetvelt",
+        "Markel Beloki",
+        "Thymen Arensman"
+      ],
+      "in_pool": [
+        "Egan Bernal",
+        "Florian Stork",
+        "Giulio Ciccone",
+        "Giulio Pellizzari",
+        "Jan Christen",
+        "Lennert Van Eetvelt",
+        "Thymen Arensman"
+      ],
+      "missing": [
+        "Enric Mas Nicolau",
+        "Jan Hirt",
+        "Markel Beloki"
+      ]
+    },
+    "tier3_current_team_affinity": {
+      "current_team": [
+        "Ben Turner",
+        "Corbin Strong",
+        "Florian Stork",
+        "Guillermo Thomas Silva",
+        "Jasper Stuyven",
+        "Jhonatan Manuel Narvaez Prado",
+        "Paul Magnier",
+        "Tobias Lund Andresen"
+      ],
+      "affinity_matched": [
+        "Ben Turner"
+      ],
+      "target_dims": [
+        "climbing",
+        "flat"
+      ],
+      "in_pool": [
+        "Ben Turner",
+        "Corbin Strong",
+        "Florian Stork",
+        "Guillermo Thomas Silva",
+        "Jasper Stuyven",
+        "Jhonatan Manuel Narvaez Prado",
+        "Paul Magnier",
+        "Tobias Lund Andresen"
+      ],
+      "missing": []
+    },
+    "tier4_points_kom_top10": {
+      "members": [
+        "Alessandro Tonelli",
+        "Diego Pablo Sevilla",
+        "Einer Augusto Rubio",
+        "Enric Mas Nicolau",
+        "Ethan Vernon",
+        "Giulio Ciccone",
+        "Giulio Pellizzari",
+        "Guillermo Thomas Silva",
+        "Jhonatan Manuel Narvaez Prado",
+        "Jonas Vingegaard",
+        "Jonathan Milan",
+        "Madis Mihkels",
+        "Manuele Tarozzi",
+        "Mirco Maestri",
+        "Nelson Oliveira",
+        "Orluis Aular",
+        "Paul Magnier",
+        "Tobias Lund Andresen"
+      ],
+      "in_pool": [
+        "Giulio Ciccone",
+        "Giulio Pellizzari",
+        "Guillermo Thomas Silva",
+        "Jhonatan Manuel Narvaez Prado",
+        "Jonas Vingegaard",
+        "Orluis Aular",
+        "Paul Magnier",
+        "Tobias Lund Andresen"
+      ],
+      "missing": [
+        "Alessandro Tonelli",
+        "Diego Pablo Sevilla",
+        "Einer Augusto Rubio",
+        "Enric Mas Nicolau",
+        "Ethan Vernon",
+        "Jonathan Milan",
+        "Madis Mihkels",
+        "Manuele Tarozzi",
+        "Mirco Maestri",
+        "Nelson Oliveira"
+      ]
+    },
+    "tier5_team_fillers": {
+      "members": [
+        "Alberto Bettiol",
+        "Alec Segaert",
+        "Amanuel Ghebreigzabhier",
+        "Ant\u00f3nio Morgado",
+        "Arjen Livyns",
+        "Ayco Bastiaens",
+        "Bart Lemmen",
+        "Ben Zwiehoff",
+        "Callum Scotson",
+        "Christopher Juul Jensen",
+        "Connor Swift",
+        "Darren Rafferty",
+        "Davide Ballerini",
+        "Dion Smith",
+        "Dries Van Gestel",
+        "Edoardo Zambanini",
+        "Embret Svestad-B\u00e5rdseng",
+        "Fabio Van den Bossche",
+        "Felix Engelhardt",
+        "Fran Miholjevi\u0107",
+        "Fredrik Dversnes",
+        "Gianni Moscon",
+        "Harold Martin Lopez",
+        "Igor Arrieta",
+        "Jack Haig",
+        "James Shaw",
+        "Jan Christen",
+        "Jonas Rutsch",
+        "Juanpe Lopez",
+        "Koen Bouwman",
+        "Larry Warbasse",
+        "Lorenzo Milesi",
+        "Lorenzo Rota",
+        "Mark Donovan",
+        "Markus Hoelgaard",
+        "Mathijs Paasschens",
+        "Max Walscheid",
+        "Mick van Dijke",
+        "Nelson Oliveira",
+        "Nick Schultz",
+        "Nick Zukowsky",
+        "Oliver Naesen",
+        "Rasmus S\u00f8jberg Pedersen",
+        "Robert Donaldson",
+        "Robin Froideveaux",
+        "Ryan Mullen",
+        "Sakarias Koller L\u00f8land",
+        "Samuele Battistella",
+        "Simone Consonni",
+        "Sjoerd Bax",
+        "Tim Rex",
+        "Timo Kielich",
+        "Toon Aerts",
+        "Will Barta"
+      ],
+      "in_pool": [
+        "Alberto Bettiol",
+        "Alec Segaert",
+        "Ant\u00f3nio Morgado",
+        "Callum Scotson",
+        "Connor Swift",
+        "Edoardo Zambanini",
+        "Embret Svestad-B\u00e5rdseng",
+        "Felix Engelhardt",
+        "Igor Arrieta",
+        "Jack Haig",
+        "Jan Christen",
+        "Koen Bouwman",
+        "Oliver Naesen",
+        "Rasmus S\u00f8jberg Pedersen",
+        "Robin Froideveaux",
+        "Will Barta"
+      ],
+      "missing": [
+        "Amanuel Ghebreigzabhier",
+        "Arjen Livyns",
+        "Ayco Bastiaens",
+        "Bart Lemmen",
+        "Ben Zwiehoff",
+        "Christopher Juul Jensen",
+        "Darren Rafferty",
+        "Davide Ballerini",
+        "Dion Smith",
+        "Dries Van Gestel",
+        "Fabio Van den Bossche",
+        "Fran Miholjevi\u0107",
+        "Fredrik Dversnes",
+        "Gianni Moscon",
+        "Harold Martin Lopez",
+        "James Shaw",
+        "Jonas Rutsch",
+        "Juanpe Lopez",
+        "Larry Warbasse",
+        "Lorenzo Milesi",
+        "Lorenzo Rota",
+        "Mark Donovan",
+        "Markus Hoelgaard",
+        "Mathijs Paasschens",
+        "Max Walscheid",
+        "Mick van Dijke",
+        "Nelson Oliveira",
+        "Nick Schultz",
+        "Nick Zukowsky",
+        "Robert Donaldson",
+        "Ryan Mullen",
+        "Sakarias Koller L\u00f8land",
+        "Samuele Battistella",
+        "Simone Consonni",
+        "Sjoerd Bax",
+        "Tim Rex",
+        "Timo Kielich",
+        "Toon Aerts"
+      ]
+    }
+  },
+  "price_distribution": {
+    "min": 2428000,
+    "max": 17583000,
+    "avg": 5362333,
+    "under_3_5M": 11,
+    "buckets_M": {
+      "2": 7,
+      "3": 12,
+      "4": 10,
+      "5": 6,
+      "6": 5,
+      "7": 4,
+      "8": 2,
+      "9": 3,
+      "10": 1,
+      "17": 1
+    }
+  }
+}
