@@ -836,6 +836,182 @@ def compute_objective(team, probabilities, all_riders, objective='ev',
     return base_ev
 
 
+# ── S17-ι Phase 1: tier-union pool construction (biased-swap candidate pool) ──
+# Replaces top-50-by-`total_ev` filter for the biased-swap path. Five tiers,
+# each computed deterministically from substrate. S17-ζ-fix (d) unconditional
+# current_team union is preserved as a separate basin-search robustness layer
+# folded into the final union step. Random-swap pool unchanged elsewhere.
+
+def _affinity_argmax(affinity_dict):
+    """Return the terrain_affinity dimension with max weight, or None when empty/zero."""
+    if not affinity_dict:
+        return None
+    items = [(k, v) for k, v in affinity_dict.items() if v]
+    if not items:
+        return None
+    # Deterministic tie-break: max by (value, key) so equal-value picks alpha-first.
+    return max(items, key=lambda kv: (kv[1], -ord(kv[0][0])))[0]
+
+
+def _slider_target_dims(sliders_for_stage):
+    """Compute target terrain dimensions for a slider distribution.
+
+    Looks at the slider distribution's max-weight bucket and maps via
+    SCENARIO_TO_TERRAIN to the rider terrain_affinity dimensions that bucket
+    favours. Returns a set of dimension names (empty if no clear signal).
+    """
+    if not sliders_for_stage:
+        return set()
+    max_bucket = max(sliders_for_stage.items(), key=lambda kv: kv[1])[0]
+    return set(SCENARIO_TO_TERRAIN.get(max_bucket, {}).keys())
+
+
+def _tier1_external_signal(odds, intel, all_riders):
+    """Tier 1: win-odds > 0 + intel strong-strength signals, canonicalised."""
+    from name_match import match_rider_name as _match
+    out = set()
+    # Win-odds branch
+    for o in (odds or []):
+        if (o.get('win_pct') or 0) > 0 and o.get('name'):
+            m = _match(o['name'], all_riders)
+            if m:
+                out.add(m['name'])
+    # Intel strong-strength branch
+    if isinstance(intel, dict):
+        src = intel.get('intel', intel)
+        if isinstance(src, dict):
+            for sig in src.get('key_signals', []) or []:
+                if (sig.get('strength') or '').lower() == 'strong' and sig.get('rider'):
+                    m = _match(sig['rider'], all_riders)
+                    if m:
+                        out.add(m['name'])
+    return out
+
+
+def _tier2_gc_top10(standings, all_riders):
+    """Tier 2: top-10 GC. standings shape per fetch_tv2_standings (S17-1 Sub-A)."""
+    from name_match import match_rider_name as _match
+    if not isinstance(standings, dict):
+        return set()
+    gc = (standings.get('gc') or standings.get('classifications', {}).get('gc') or [])
+    out = set()
+    if isinstance(gc, list):
+        for e in gc[:10]:
+            n = e.get('rider') or e.get('name') if isinstance(e, dict) else None
+            if n:
+                m = _match(n, all_riders)
+                if m:
+                    out.add(m['name'])
+    return out
+
+
+def _tier3_current_team_affinity(current_team, sliders):
+    """Tier 3: current team riders whose affinity argmax matches n+1 OR n+2
+    slider's target terrain dimensions. Subset of current_team filtered by
+    affinity; distinct from S17-ζ-fix (d) unconditional union."""
+    if not current_team:
+        return set()
+    targets = _slider_target_dims(sliders.get('n2') if isinstance(sliders, dict) else None) | \
+              _slider_target_dims(sliders.get('n3') if isinstance(sliders, dict) else None)
+    if not targets:
+        return set()
+    out = set()
+    for r in current_team:
+        argmax = _affinity_argmax(r.get('terrain_affinity', {}))
+        if argmax in targets:
+            out.add(r['name'])
+    return out
+
+
+def _tier4_points_kom_top10(standings, all_riders):
+    """Tier 4: top-10 points + top-10 KOM (union)."""
+    from name_match import match_rider_name as _match
+    if not isinstance(standings, dict):
+        return set()
+    out = set()
+    for key in ('points_classification', 'kom_classification'):
+        v = standings.get(key)
+        if isinstance(v, list):
+            for e in v[:10]:
+                n = e.get('rider') or e.get('name') if isinstance(e, dict) else None
+                if n:
+                    m = _match(n, all_riders)
+                    if m:
+                        out.add(m['name'])
+    return out
+
+
+def _tier5_team_bonus_fillers(tier1_names, all_riders):
+    """Tier 5: for each Tier 1 favourite, the cheapest teammate with MATCHING
+    `terrain_affinity` argmax. Skip on no-match (no fallback to cheapest-of-any
+    — non-affinity teammates eat −90k time penalty on GC days, inverting the
+    +60k team-bonus harvest)."""
+    by_team = defaultdict(list)
+    by_name = {}
+    for r in all_riders:
+        t = r.get('team') or ''
+        by_team[t].append(r)
+        by_name[r['name']] = r
+    out = set()
+    for fav_name in sorted(tier1_names):  # sort for determinism
+        fav = by_name.get(fav_name)
+        if not fav:
+            continue
+        fav_dim = _affinity_argmax(fav.get('terrain_affinity', {}))
+        if not fav_dim:
+            continue
+        teammates = [r for r in by_team[fav.get('team') or '']
+                     if r['name'] != fav_name
+                     and _affinity_argmax(r.get('terrain_affinity', {})) == fav_dim]
+        if not teammates:
+            continue  # skip — do NOT fall back to cheapest-of-any-affinity
+        cheapest = min(teammates, key=lambda r: (r.get('price', 0), r['name']))
+        out.add(cheapest['name'])
+    return out
+
+
+def build_tier_union_pool(all_riders, odds, intel, standings, current_team,
+                          sliders, force_in_names, force_out_names):
+    """S17-ι Phase 1: assemble the biased-swap candidate pool as the union of
+    Tier 1–5 plus the S17-ζ-fix (d) unconditional current_team union, resolved
+    against the active roster and sorted deterministically by holdet_id.
+
+    Returns a list of rider dicts. Excludes force_in / force_out per existing
+    pool conventions (force_in is handled separately by `forced` at line 866;
+    force_out is excluded outright).
+
+    Defensive: returns None if any required input is missing — caller (SA)
+    then falls back to the legacy top-50-by-EV path.
+    """
+    if not all_riders:
+        return None
+    try:
+        forced_set   = set(force_in_names  or [])
+        excluded_set = set(force_out_names or [])
+        # Compute tier sets (sets of canonical rider NAMES)
+        t1 = _tier1_external_signal(odds, intel, all_riders)
+        t2 = _tier2_gc_top10(standings, all_riders)
+        t3 = _tier3_current_team_affinity(current_team, sliders)
+        t4 = _tier4_points_kom_top10(standings, all_riders)
+        t5 = _tier5_team_bonus_fillers(t1, all_riders)
+        # S17-ζ-fix (d) unconditional current_team union (separate rationale
+        # from Tier 3: basin-search robustness, not affinity-fit)
+        current_names = {r['name'] for r in (current_team or [])}
+        union_names = (t1 | t2 | t3 | t4 | t5 | current_names) - excluded_set - forced_set
+        if not union_names:
+            return None  # nothing to swap to; let caller fall back
+        # Resolve to rider objects from all_riders; preserve canonical fields.
+        by_name = {r['name']: r for r in all_riders}
+        # Stable sort by (holdet_id when present, name) for bit-identical
+        # reproducibility across runs.
+        pool = [by_name[n] for n in union_names if n in by_name]
+        pool.sort(key=lambda r: (r.get('holdet_id') if r.get('holdet_id') is not None else 1e18,
+                                  r['name']))
+        return pool
+    except Exception:
+        return None
+
+
 _SA_LOG_ITERS = {0, 50_000, 100_000, 500_000, 1_000_000, 2_000_000}
 _sa_logger = logging.getLogger(__name__)
 
@@ -848,7 +1024,8 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
                          initial_temperature=200_000.0,
                          cooling_rate=0.99997,
                          biased_swap_prob=0.7,
-                         seed_team=None):
+                         seed_team=None,
+                         biased_pool=None):
     """
     Single SA chain.  Returns (best_team_list, best_ev, diags).
 
@@ -873,6 +1050,14 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
     least one chain. Falls back to random init when seed_team invalid /
     incompatible with force_in / force_out.
 
+    S17-ι Phase 1: biased_pool kwarg overrides the legacy top-50-by-`total_ev`
+    biased-swap candidate pool when provided. Caller (generate_candidate_teams)
+    builds it via build_tier_union_pool from substrate (odds + intel +
+    standings + current_team + sliders). When biased_pool is None, falls back
+    to the pre-Phase-1 top-50 + S17-ζ-fix (d) current_team union path —
+    preserves backward compat with diagnostics that call simulated_annealing
+    directly without tier-union substrate.
+
     S17-22 hyperparameter override surface: initial_temperature, cooling_rate,
     biased_swap_prob accept per-strategy overrides; defaults preserve the
     pre-S17-22 behavior (so non-overridden strategies remain bit-identical).
@@ -892,29 +1077,34 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
     ev_cache = {r['name']: probs.get(r['name'], {}).get('total_ev', 0.0) for r in pool}
     ev_cache.update({r['name']: probs.get(r['name'], {}).get('total_ev', 0.0) for r in forced})
 
-    # Pre-sort pool for biased swaps: top-50 by EV
-    sorted_pool  = sorted(pool, key=lambda r: ev_cache[r['name']], reverse=True)
-    top_n_pool   = sorted_pool[:min(50, len(sorted_pool))]
-
-    # S17-ζ-fix (d): union current_team members into top_n_pool regardless of
-    # EV rank. Current team members are zero-transfer-cost baseline and must
-    # always be reachable as biased-swap proposals; otherwise riders with low
-    # current-stage EV (e.g. a sprinter on a hilly stage) get locked out of
-    # the proposal pool and the SA chain can't swap them back in. Appended
-    # in current_team order for determinism; bit-identical when all current
-    # team members are already in top-50 by EV (the common case).
-    if current_team:
-        top_n_names = {r['name'] for r in top_n_pool}
-        for ct_r in current_team:
-            n = ct_r.get('name')
-            if (n and n not in top_n_names
-                    and n not in excluded_set
-                    and n not in forced_set):
-                # Use the canonical all_riders object (consistent terrain_affinity
-                # etc.) rather than the current_team object reference if available.
-                canonical = next((r for r in pool if r.get('name') == n), ct_r)
-                top_n_pool.append(canonical)
-                top_n_names.add(n)
+    # S17-ι Phase 1: biased-swap candidate pool. When caller provides a
+    # pre-built tier-union pool, use it directly (already includes
+    # S17-ζ-fix (d) current_team union internally per build_tier_union_pool).
+    # Otherwise fall back to the legacy top-50-by-`total_ev` ∪ current_team
+    # path — preserves backward compat for diagnostics + bit-identical
+    # reproducibility on paths that don't thread substrate data.
+    if biased_pool is not None and biased_pool:
+        # Filter caller-provided pool against force_in / force_out (defensive;
+        # builder already excludes but force constraints can shift between
+        # construction and SA invocation).
+        top_n_pool = [r for r in biased_pool
+                      if r['name'] not in excluded_set
+                      and r['name'] not in forced_set]
+    else:
+        # Legacy path: top-50 by EV
+        sorted_pool  = sorted(pool, key=lambda r: ev_cache[r['name']], reverse=True)
+        top_n_pool   = sorted_pool[:min(50, len(sorted_pool))]
+        # S17-ζ-fix (d): union current_team members regardless of EV rank.
+        if current_team:
+            top_n_names = {r['name'] for r in top_n_pool}
+            for ct_r in current_team:
+                n = ct_r.get('name')
+                if (n and n not in top_n_names
+                        and n not in excluded_set
+                        and n not in forced_set):
+                    canonical = next((r for r in pool if r.get('name') == n), ct_r)
+                    top_n_pool.append(canonical)
+                    top_n_names.add(n)
     top_n_len    = len(top_n_pool)
     pool_len     = len(pool)
 
@@ -1090,7 +1280,9 @@ def generate_candidate_teams(candidates, probabilities,
                               probs_n1, probs_n2,
                               force_in, force_out, budget,
                               stage_config, scoring, all_riders,
-                              current_team=None, seed=None):
+                              current_team=None, seed=None,
+                              odds=None, intel=None, standings=None,
+                              sliders=None):
     """
     Run three strategy-differentiated SA chains and return all three results.
     No deduplication — each strategy has a distinct objective.
@@ -1190,6 +1382,25 @@ def generate_candidate_teams(candidates, probabilities,
         },
     ]
 
+    # S17-ι Phase 1: build the tier-union biased-swap pool once per
+    # generate_candidate_teams call (pool composition is strategy-independent
+    # — it's about which riders are reachable proposals, not which objective
+    # to optimise). Returns None when substrate is missing (odds / intel /
+    # standings / sliders not threaded by caller); SA then falls back to
+    # legacy top-50-by-EV path. Caller-provided pool excludes force_in /
+    # force_out per build_tier_union_pool contract.
+    biased_pool = None
+    if odds is not None and intel is not None and standings is not None and sliders is not None:
+        biased_pool = build_tier_union_pool(
+            candidates, odds, intel, standings, current_team,
+            sliders, force_in, force_out,
+        )
+        if biased_pool is not None:
+            _log_optimizer(
+                f"tier-union pool: size={len(biased_pool)} "
+                f"(replaces top-50-by-EV; substrate-derived)"
+            )
+
     results = []
     for strategy in strategies:
         # Build the per-strategy chain seeds. Multi-start when a base seed is
@@ -1227,6 +1438,7 @@ def generate_candidate_teams(candidates, probabilities,
                 **sa_overrides,
                 current_team=current_team,
                 seed_team=ch_seed_team,
+                biased_pool=biased_pool,
             )
             if team_ci is None:
                 continue

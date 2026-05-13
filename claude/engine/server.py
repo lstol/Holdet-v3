@@ -418,6 +418,15 @@ def run_optimizer_py():
     intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
     intel_data = json.load(open(intel_path)) if os.path.exists(intel_path) else {}
 
+    # S17-ι Phase 1: load previous-stage standings for Tier 2 (GC top-10) and
+    # Tier 4 (Points + KOM top-10) of the tier-union biased-swap pool. Falls
+    # back to empty when standings haven't been gathered yet for stage N-1
+    # (e.g., Stage 1 prep before any standings exist) — optimizer.py's
+    # build_tier_union_pool then returns None and SA falls back to legacy
+    # top-50-by-EV path.
+    standings_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage - 1}_standings.json')
+    standings_data = json.load(open(standings_path)) if os.path.exists(standings_path) else {}
+
     # Bank balance still comes from the target-stage holdet snapshot.
     snapshot_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_holdet.json')
     snapshot = json.load(open(snapshot_path)) if os.path.exists(snapshot_path) else {}
@@ -497,6 +506,13 @@ def run_optimizer_py():
             stage_config, scoring, active_riders,
             current_team=current_team if current_team else None,
             seed=base_seed,
+            # S17-ι Phase 1: pass substrate so the biased-swap pool can be
+            # built as Tier 1 ∪ Tier 2 ∪ Tier 3 ∪ Tier 4 ∪ Tier 5 ∪ current_team
+            # instead of top-50-by-EV. Missing substrate → falls back to legacy.
+            odds=odds,
+            intel=intel_data,
+            standings=standings_data,
+            sliders=sliders,
         )
 
         if not teams:
