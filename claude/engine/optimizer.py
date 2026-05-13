@@ -828,7 +828,8 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
                          current_team=None,
                          initial_temperature=200_000.0,
                          cooling_rate=0.99997,
-                         biased_swap_prob=0.7):
+                         biased_swap_prob=0.7,
+                         seed_team=None):
     """
     Single SA chain.  Returns (best_team_list, best_ev, diags).
 
@@ -842,6 +843,16 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
 
     Biased swap (`biased_swap_prob`): swap lowest-EV non-forced slot for a top-50-EV
     candidate. Random swap otherwise: pure exploration across full pool.
+
+    S17-ζ-fix (d): top-N biased-swap pool unions with current_team members
+    regardless of EV rank — current team members must always be reachable as
+    biased-swap proposals because they're the zero-transfer-cost baseline.
+
+    S17-ζ-fix (a): seed_team kwarg overrides random init when provided and
+    valid under force/budget constraints. Caller uses this to seed chain 0
+    with current_team so the keep-current basin is always reachable from at
+    least one chain. Falls back to random init when seed_team invalid /
+    incompatible with force_in / force_out.
 
     S17-22 hyperparameter override surface: initial_temperature, cooling_rate,
     biased_swap_prob accept per-strategy overrides; defaults preserve the
@@ -865,11 +876,45 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
     # Pre-sort pool for biased swaps: top-50 by EV
     sorted_pool  = sorted(pool, key=lambda r: ev_cache[r['name']], reverse=True)
     top_n_pool   = sorted_pool[:min(50, len(sorted_pool))]
+
+    # S17-ζ-fix (d): union current_team members into top_n_pool regardless of
+    # EV rank. Current team members are zero-transfer-cost baseline and must
+    # always be reachable as biased-swap proposals; otherwise riders with low
+    # current-stage EV (e.g. a sprinter on a hilly stage) get locked out of
+    # the proposal pool and the SA chain can't swap them back in. Appended
+    # in current_team order for determinism; bit-identical when all current
+    # team members are already in top-50 by EV (the common case).
+    if current_team:
+        top_n_names = {r['name'] for r in top_n_pool}
+        for ct_r in current_team:
+            n = ct_r.get('name')
+            if (n and n not in top_n_names
+                    and n not in excluded_set
+                    and n not in forced_set):
+                # Use the canonical all_riders object (consistent terrain_affinity
+                # etc.) rather than the current_team object reference if available.
+                canonical = next((r for r in pool if r.get('name') == n), ct_r)
+                top_n_pool.append(canonical)
+                top_n_names.add(n)
     top_n_len    = len(top_n_pool)
     pool_len     = len(pool)
 
-    # Initial solution
-    team = get_valid_random_team(forced, pool, budget, rng=rng)
+    # Initial solution. S17-ζ-fix (a): use seed_team when caller provides a
+    # valid one (caller uses this to seed chain 0 with current_team). The
+    # seed_team must satisfy force_in / force_out / budget constraints;
+    # fall back to random init otherwise. Forced riders are placed at the
+    # front of the team so the SA loop's `out_pos = min(range(n_forced, 8))`
+    # skip-forced logic still applies.
+    team = None
+    if seed_team is not None and len(seed_team) == 8:
+        seed_names = {r.get('name') for r in seed_team}
+        valid_force = (forced_set.issubset(seed_names)
+                       and not (excluded_set & seed_names))
+        if valid_force and is_valid(seed_team, budget):
+            non_forced_in_seed = [r for r in seed_team if r.get('name') not in forced_set]
+            team = list(forced) + non_forced_in_seed
+    if team is None:
+        team = get_valid_random_team(forced, pool, budget, rng=rng)
     if team is None:
         return None, 0.0, {'iters': 0, 'accepts': 0, 'rejects': 0, 'skips': 0,
                            'acceptance_rate': 0.0}
@@ -1142,6 +1187,11 @@ def generate_candidate_teams(candidates, probabilities,
         chain_results = []
         sa_overrides = strategy.get('sa_overrides') or {}
         for ci, ch_seed in enumerate(chain_seeds):
+            # S17-ζ-fix (a): seed chain 0 with current_team. Bypasses the
+            # budget-greedy random-init bias (B1) for the current-keep basin,
+            # making it reachable from at least one chain. Other chains
+            # remain random for exploration diversity.
+            ch_seed_team = current_team if (ci == 0 and current_team) else None
             team_ci, _ev_ci, sa_diags = simulated_annealing(
                 candidates, probabilities, force_in, force_out,
                 budget=strategy['max_budget'],
@@ -1157,6 +1207,7 @@ def generate_candidate_teams(candidates, probabilities,
                 team_n2=team_n2,
                 **sa_overrides,
                 current_team=current_team,
+                seed_team=ch_seed_team,
             )
             if team_ci is None:
                 continue
@@ -1189,9 +1240,28 @@ def generate_candidate_teams(candidates, probabilities,
         if not chain_results:
             continue
 
-        # Pick the EV-best chain. Ties broken by lowest chain index for stability.
-        best_idx = max(range(len(chain_results)),
-                       key=lambda j: (chain_results[j]['ev'], -chain_results[j]['index']))
+        # S17-ζ-fix (c): for the lookahead strategy, cross-chain selection
+        # must use the user-facing transfer-adj EV (= base_ev − tc_current −
+        # cost_n1 − 0.7·cost_n2), not just stage EV (`ev`). Pre-fix, picking
+        # by stage EV could surface a higher-stage-EV / worse-lookahead-obj
+        # basin (S17-ζ-redo Stage 5 case: basin B 951k stage EV / −268k
+        # lookahead vs basin C 869k stage EV / −148k lookahead — basin C is
+        # +120k better but lower stage EV; stage-EV selection picks B).
+        # Other strategies (optimal, depth) continue picking by stage EV —
+        # their objective aligns with stage EV by design.
+        if strategy['objective'] == 'lookahead':
+            for c in chain_results:
+                team_ci = c['team']
+                tc_current_ci = compute_transfer_cost(current_team or [], team_ci) if current_team else 0
+                tc_n1_ci      = compute_transfer_cost(team_ci, team_n1 or []) if team_n1 else 0
+                tc_n2_ci      = compute_transfer_cost(team_n1 or [], team_n2 or []) if team_n1 and team_n2 else 0
+                c['look_obj'] = c['ev'] - tc_current_ci - tc_n1_ci - LOOKAHEAD_DISCOUNT * tc_n2_ci
+            best_idx = max(range(len(chain_results)),
+                           key=lambda j: (chain_results[j]['look_obj'], -chain_results[j]['index']))
+        else:
+            # Pick the EV-best chain. Ties broken by lowest chain index for stability.
+            best_idx = max(range(len(chain_results)),
+                           key=lambda j: (chain_results[j]['ev'], -chain_results[j]['index']))
         best     = chain_results[best_idx]
 
         # ── S17-22 best-corroborated reporting ───────────────────────────
