@@ -85,103 +85,12 @@ def call_with_retry(fn, max_retries=3):
             time.sleep(wait)
 
 
-def _ascii_fold(s: str) -> str:
-    """NFKD-decompose, drop combining marks, lowercase. So 'González' → 'gonzalez',
-    'Tjøtta' → 'tjotta'. Used by match_rider_name so ASCII-only paste input
-    (e.g. vision OCR dropping accents) still matches accented roster names."""
-    nfkd = unicodedata.normalize('NFKD', s)
-    return ''.join(c for c in nfkd if not unicodedata.combining(c)).lower()
-
-
-# Bidirectional nickname / formal-expansion aliases. Used when the matcher's
-# structural rules can't bridge a source-vs-canonical gap (e.g. TV2 publishes
-# Spanish riders' formal-name expansions; riders.json carries the nickname).
-# Keys/values are ASCII-folded. The reverse direction is added at module load
-# so a query in either form resolves the other.
-# If this grows past ~10 entries, lift to a dedicated aliases.json file.
-_NICKNAME_ALIASES_RAW = {
-    "juanpe lopez": "juan pedro lopez",  # roster: "Juanpe Lopez", TV2: "Juan Pedro Lopez"
-}
-_NICKNAME_ALIASES: dict = {}
-for _a, _b in _NICKNAME_ALIASES_RAW.items():
-    _NICKNAME_ALIASES[_a] = _b
-    _NICKNAME_ALIASES[_b] = _a
-
-
-def match_rider_name(query: str, roster: list):
-    """Match a free-form rider name against a roster of {'name': ...} dicts.
-    Returns the matched rider dict or None.
-
-    Resolution order (first single-match wins; multi-match returns None):
-      1. Exact accent-/case-folded equality, alias-aware
-      2. Initial+lastname  ('J. Milan' → 'Jonathan Milan')
-      3. Rule X: first-word AND last-word match  (drops middle names)
-                 ('Einer Rubio' → 'Einer Augusto Rubio')
-      4. Rule Y: every query word appears as a complete whitespace-delimited
-                 word in the rider name  (handles missing-first / extra-middle)
-                 ('Thomas Silva' → 'Guillermo Thomas Silva')
-      5. Last-word-of-query == last-word-of-rider
-                 ('Milan' → 'Jonathan Milan')
-
-    All comparisons are ASCII-folded.
-    """
-    q = query.strip()
-    if not q:
-        return None
-    qf      = _ascii_fold(q)
-    qparts  = qf.split()
-    qf_alt  = _NICKNAME_ALIASES.get(qf)  # alternative form, or None
-
-    # 1. Exact (alias-aware)
-    def _matches(rf: str) -> bool:
-        return rf == qf or (qf_alt is not None and rf == qf_alt)
-    exact = next((r for r in roster if _matches(_ascii_fold(r['name']))), None)
-    if exact:
-        return exact
-
-    # 2. Initial+lastname (e.g. "J. Milan")
-    parts = q.split()
-    if len(parts) >= 2 and len(parts[0]) <= 3 and parts[0].endswith('.'):
-        initial  = _ascii_fold(parts[0][0])
-        lastname = _ascii_fold(' '.join(parts[1:]))
-        candidates = [
-            r for r in roster
-            if _ascii_fold(r['name']).endswith(lastname)
-            and _ascii_fold(r['name'].split()[0][0]) == initial
-        ]
-        if len(candidates) == 1:
-            return candidates[0]
-
-    # 3. Rule X: first-word AND last-word match (handles middle-name drops)
-    if len(qparts) >= 2:
-        qf_first, qf_last = qparts[0], qparts[-1]
-        candidates = [
-            r for r in roster
-            if _ascii_fold(r['name'].split()[0])  == qf_first
-            and _ascii_fold(r['name'].split()[-1]) == qf_last
-        ]
-        if len(candidates) == 1:
-            return candidates[0]
-
-    # 4. Rule Y: every query word is a whole word in the rider name
-    if len(qparts) >= 2:
-        candidates = [
-            r for r in roster
-            if all(qw in _ascii_fold(r['name']).split() for qw in qparts)
-        ]
-        if len(candidates) == 1:
-            return candidates[0]
-
-    # 5. Last-word-of-query == last-word-of-rider
-    # (Pre-fix bug: compared full folded query against rider's last word —
-    # 'einer rubio' could never equal 'rubio'. Existing callers route through
-    # rules 1–2 with single-word or initial-form queries, so the bug was
-    # latent for them; multi-word "first last" queries from TV2 surfaced it.)
-    qf_last_word = qparts[-1] if qparts else qf
-    candidates = [r for r in roster if _ascii_fold(r['name']).split()[-1] == qf_last_word]
-    if len(candidates) == 1:
-        return candidates[0]
-    return None
+# name-matcher-hardening (2026-05-14): match_rider_name + _ascii_fold +
+# _NICKNAME_ALIASES extracted to claude/engine/name_match.py for cross-module
+# reuse (server.py + optimizer.py both need it; optimizer can't import server
+# without a circular dependency). Behaviour preserved bit-identically.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from name_match import _ascii_fold, _NICKNAME_ALIASES, match_rider_name  # noqa: E402, F401
 
 
 @app.after_request
@@ -808,18 +717,43 @@ def parse_odds_image():
         # Build name→row index map for merge
         existing_map = {r['name']: r for r in existing}
 
+        # name-matcher-hardening (2026-05-14): canonicalise Haiku-read rider
+        # names against the active roster before storing. Previously
+        # /parse-odds-image stored Haiku's raw output verbatim, so name
+        # mismatches (e.g. "Antonio Morgado" vs canonical "António Morgado",
+        # "Jonas Vingegaard Hansen" vs "Jonas Vingegaard") propagated into
+        # stage_N_odds.json. Downstream `build_probabilities` does
+        # `odds_map.get(r['name'], 0.0)` and silently misses, dropping the
+        # rider's bookmaker signal to EPS. Canonicalise here so the JSON is
+        # clean going forward; `build_probabilities` also canonicalises
+        # defensively at read time for historical data.
+        try:
+            _rd = json.load(open(RIDERS_FILE))
+            active_riders = [r for r in _rd.get('riders', [])
+                             if not r.get('isOut') and r.get('status') != 'dns']
+        except Exception:
+            active_riders = []
+        unmatched = []
+
         for item in parsed:
-            name = item.get('name', '')
+            raw_name = item.get('name', '')
             # Model sometimes returns field-specific keys (win_pct, top3_pct, top10_pct)
             # instead of the requested 'pct' key — accept both
             pct  = item.get('pct') or item.get(field_name) or item.get('win_pct') or 0
-            if not name:
+            if not raw_name:
                 continue
+            matched = match_rider_name(raw_name, active_riders) if active_riders else None
+            name = matched['name'] if matched else raw_name
+            if matched is None:
+                unmatched.append(raw_name)
             if name in existing_map:
                 existing_map[name][field_name] = pct
             else:
                 # New rider — create row with only the pasted field populated
                 existing_map[name] = {'name': name, field_name: pct}
+
+        if unmatched:
+            _log(f"parse-odds-image stage={stage} unmatched names ({len(unmatched)}): {unmatched[:10]}")
 
         merged = sorted(existing_map.values(), key=lambda r: r.get('win_pct', 0), reverse=True)
 

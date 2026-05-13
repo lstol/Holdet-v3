@@ -304,14 +304,27 @@ def build_probabilities(all_riders, odds, intel, sliders=None,
     bookmaker overround). Tickbox-gated; OFF by default — same behaviour as
     pre-F2a.
     """
+    # name-matcher-hardening (2026-05-14): canonicalise odds-JSON rider names
+    # against the canonical all_riders roster at read time. Defensive against
+    # historical odds JSONs that pre-date /parse-odds-image's write-time
+    # canonicalisation. Without this, names like "Antonio Morgado" (odds) vs
+    # "António Morgado" (riders.json) fall through to EPS and the rider is
+    # silently dropped from the bookmaker-signal pool.
+    from name_match import match_rider_name as _match_rider
+
     # Odds lookup — support market top3/top10 where available
-    odds_map      = {}   # name → win prob (fraction)
+    odds_map      = {}   # name → win prob (fraction); keys are CANONICAL roster names
     top3_map      = {}   # name → market top-3 prob (fraction), if pasted
     top10_map     = {}   # name → market top-10 prob (fraction), if pasted
     for o in odds:
-        name = o.get('name')
-        if not name:
+        raw_name = o.get('name')
+        if not raw_name:
             continue
+        # Canonicalise via match_rider_name; fall back to raw_name on miss
+        # (preserves legacy behaviour for unmatched riders — they just stay
+        # under their non-canonical key, same as pre-fix).
+        matched = _match_rider(raw_name, all_riders)
+        name = matched['name'] if matched else raw_name
         odds_map[name]  = o.get('win_pct', 0) / 100.0
         # Project invariant: zero means missing (S17-29). Cleared/missing
         # top3/top10 falls through to the win-derived fallback below.
@@ -328,6 +341,10 @@ def build_probabilities(all_riders, odds, intel, sliders=None,
     EPS            = max(1e-5, 0.25 * raw_odds_total / n_non_odds)
 
     # Intel multipliers
+    # name-matcher-hardening (2026-05-14): canonicalise intel key_signals
+    # rider names against all_riders roster, same rationale as odds_map above.
+    # Without this, a Haiku-emitted "Cristian Scaroni" would never match the
+    # canonical "Christian Scaroni" lookup at line 346 → silent miss.
     adj = {}
     if isinstance(intel, dict):
         src = intel.get('intel', intel)
@@ -335,8 +352,10 @@ def build_probabilities(all_riders, odds, intel, sliders=None,
             for sig in src.get('key_signals', []):
                 key  = (sig.get('direction', 'neutral'), sig.get('strength', 'weak'))
                 mult = INTEL_MULT.get(key, 1.0)
-                if sig.get('rider'):
-                    adj[sig['rider']] = mult
+                raw_rider = sig.get('rider')
+                if raw_rider:
+                    matched = _match_rider(raw_rider, all_riders)
+                    adj[matched['name'] if matched else raw_rider] = mult
 
     # Raw win probabilities
     raw = {}

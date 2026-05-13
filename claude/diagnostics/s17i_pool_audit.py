@@ -22,6 +22,16 @@ from optimizer import (
     build_probabilities, build_forward_probabilities,
     load_stage_scoring, get_stage_config,
 )
+from name_match import match_rider_name as _match_rider
+
+
+def _canonicalise(name, active):
+    """name-matcher-hardening (2026-05-14): resolve raw name to canonical
+    via match_rider_name. Falls back to raw name on miss so the audit's
+    "missing" set surfaces genuinely-absent riders, not name-mismatch
+    artefacts."""
+    m = _match_rider(name, active) if name else None
+    return m['name'] if m else name
 
 STAGE = 5
 SUBSTRATE = os.path.join(REPO, 'shared', 'data', 'tmp', 's17z_repro_state')
@@ -97,24 +107,27 @@ def _current_team_objects(active):
     return [by_name[n] for n in names if n in by_name]
 
 
-def _tier1_external_signal(odds, intel_full):
-    """Riders with non-zero win odds OR strong intel signal."""
-    win_riders = {row.get('name') for row in odds
+def _tier1_external_signal(odds, intel_full, active):
+    """Riders with non-zero win odds OR strong intel signal.
+
+    name-matcher-hardening: canonicalise odds + intel rider names via
+    match_rider_name before set construction. Pre-fix the audit reported
+    raw names which didn't match riders.json (false-missing artefact)."""
+    win_riders = {_canonicalise(row.get('name'), active) for row in odds
                   if (row.get('win_pct') or 0) > 0 and row.get('name')}
     intel_inner = intel_full.get('intel', intel_full) if isinstance(intel_full, dict) else {}
     sigs = intel_inner.get('key_signals', []) or []
-    strong_riders = {s.get('rider') for s in sigs
+    strong_riders = {_canonicalise(s.get('rider'), active) for s in sigs
                      if (s.get('strength') or '').lower() == 'strong' and s.get('rider')}
     return win_riders, strong_riders, win_riders | strong_riders
 
 
-def _tier2_gc_top10(standings):
-    """GC top-10 from previous-stage standings."""
+def _tier2_gc_top10(standings, active):
+    """GC top-10 from previous-stage standings. Canonicalised."""
     gc = standings.get('gc') or standings.get('samlet') or standings.get('classifications', {}).get('gc') or []
-    # standings.json shape varies; try common patterns
     if isinstance(gc, list) and gc and isinstance(gc[0], dict):
         names = [(e.get('rider') or e.get('name') or e.get('rider_name')) for e in gc[:10]]
-        return {n for n in names if n}
+        return {_canonicalise(n, active) for n in names if n}
     return set()
 
 
@@ -146,10 +159,10 @@ def _tier3_current_with_affinity(current_team, sliders):
     return matched, {r['name'] for r in current_team}, target_dims
 
 
-def _tier4_points_kom_top10(standings):
+def _tier4_points_kom_top10(standings, active):
     """Points + KOM top-10. Key names per actual standings JSON:
     `points_classification` (sprint) and `kom_classification` (mountain).
-    """
+    Canonicalised."""
     out = set()
     for key in ('points_classification', 'kom_classification'):
         v = standings.get(key)
@@ -157,7 +170,7 @@ def _tier4_points_kom_top10(standings):
             for e in v[:10]:
                 n = e.get('rider') or e.get('name') or e.get('rider_name')
                 if n:
-                    out.add(n)
+                    out.add(_canonicalise(n, active))
     return out
 
 
@@ -194,7 +207,7 @@ def main():
           f'{len(top_n_pool) - 50}')
 
     # Tier 1
-    win_riders, strong_riders, t1 = _tier1_external_signal(odds, intel_full)
+    win_riders, strong_riders, t1 = _tier1_external_signal(odds, intel_full, active)
     print(f'\n=== Tier 1 — current-stage favorites (external signal) ===')
     print(f'  Riders with non-zero win odds: {len(win_riders)}')
     print(f'  Riders with strong intel signal: {len(strong_riders)}')
@@ -205,7 +218,7 @@ def main():
         print(f'  Missing from pool: {missing_t1}')
 
     # Tier 2
-    t2 = _tier2_gc_top10(standings)
+    t2 = _tier2_gc_top10(standings, active)
     print(f'\n=== Tier 2 — GC top-10 ===')
     print(f'  standings.json keys: {sorted(standings.keys())[:10]}')
     print(f'  Tier 2 size: {len(t2)}')
@@ -226,7 +239,7 @@ def main():
     print(f'  In top_n_pool: {len(t3 & pool_names)}/{len(t3)} (current team union from S17-ζ-fix (d))')
 
     # Tier 4
-    t4 = _tier4_points_kom_top10(standings)
+    t4 = _tier4_points_kom_top10(standings, active)
     print(f'\n=== Tier 4 — Points + KOM top-10 ===')
     print(f'  Tier 4 size: {len(t4)}')
     if t4:
