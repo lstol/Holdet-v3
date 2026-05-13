@@ -1801,15 +1801,49 @@ function renderTableHeader() {
 }
 
 /* ── Force in / out ──────────────────────────────────────────────────── */
+// S17-ε-fix: coerce riderId to string at the boundary. The onclick template
+// at the rider-table button interpolates `${rid}` inside single quotes, so
+// every call from the dashboard already passes a string — but defensive
+// coercion makes the Set domain canonical and prevents the renderTable
+// SameValueZero mismatch with numeric rid lookup that S17-ε-redo diagnosed.
 function toggleForce(riderId, mode) {
+  const rid = String(riderId);
   if (mode === 'in') {
-    if (S.forceIn.has(riderId))  { S.forceIn.delete(riderId); }
-    else { S.forceIn.add(riderId); S.forceOut.delete(riderId); }
+    if (S.forceIn.has(rid))  { S.forceIn.delete(rid); }
+    else { S.forceIn.add(rid); S.forceOut.delete(rid); }
   } else {
-    if (S.forceOut.has(riderId)) { S.forceOut.delete(riderId); }
-    else { S.forceOut.add(riderId); S.forceIn.delete(riderId); }
+    if (S.forceOut.has(rid)) { S.forceOut.delete(rid); }
+    else { S.forceOut.add(rid); S.forceIn.delete(rid); }
   }
+  persistForce();
   renderTable();
+}
+
+// S17-ε-fix: persist force state across page reload + stage navigation.
+function persistForce() {
+  try {
+    localStorage.setItem('holdet_force_in',  JSON.stringify([...S.forceIn]));
+    localStorage.setItem('holdet_force_out', JSON.stringify([...S.forceOut]));
+  } catch (e) {
+    console.warn('[persistForce] failed:', e);
+  }
+}
+
+// S17-ε-fix: load force state from localStorage on init, BEFORE the first
+// renderTable() (called by loadRiders) so visual feedback reflects state
+// immediately on page load. Entries are coerced to string to match the Set
+// domain established by toggleForce.
+function loadForce() {
+  try {
+    const inRaw  = localStorage.getItem('holdet_force_in');
+    const outRaw = localStorage.getItem('holdet_force_out');
+    if (inRaw)  S.forceIn  = new Set((JSON.parse(inRaw)  || []).map(String));
+    if (outRaw) S.forceOut = new Set((JSON.parse(outRaw) || []).map(String));
+  } catch (e) {
+    console.warn('[loadForce] failed:', e);
+    S.forceIn  = new Set();
+    S.forceOut = new Set();
+  }
 }
 
 /* ── Rider table ─────────────────────────────────────────────────────── */
@@ -1847,7 +1881,7 @@ function renderTable() {
   tbody.innerHTML = '';
 
   riders.forEach(r => {
-    const rid      = r.rider_id || r.holdet_id || r.name;
+    const rid      = String(r.rider_id || r.holdet_id || r.name);  // S17-ε-fix: coerce for Set.has comparison
     const rtype    = r._type || 'Lead-out';
     const badgeKey = rtype.replace(/[\s\.]/g, '-').replace(/\//g, '');
     const tier     = computeTier(r);
@@ -2449,6 +2483,7 @@ async function init() {
   S.useRaceTypeAdjustment = localStorage.getItem('holdet_use_race_type') === '1';
   const savedWeights = localStorage.getItem('holdet_expert_weights');
   if (savedWeights) { try { S.expertSources = JSON.parse(savedWeights); } catch(_) {} }
+  loadForce();  // S17-ε-fix: restore force-in/out Sets from localStorage before first renderTable
   renderSliders();
   renderOdds();
   renderCarousel();
