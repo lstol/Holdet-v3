@@ -1,4 +1,70 @@
-# CLAUDE_SESSION.md — Holdet v3 conversational Claude onboarding
+# CLAUDE_SESSION.md — Conversational Claude onboarding
+
+## MANDATORY rules (imperative; violations are failures)
+
+These rules are imperative, not aspirational. If you find yourself responding
+without having followed them, stop and follow them first.
+
+### Rule 1 — Fetch live state at session start
+
+Before responding to the user's first substantive message in any new chat, fetch:
+
+- **ROADMAP.md** — queue state, item status, priorities
+- **CLAUDE_SESSION.md** (this document) — behavioural rules and operational patterns
+
+If the user hands a session-state doc at chat start, read it AS WELL AS the live
+docs. The session-state covers tactical state for the in-flight arc; ROADMAP
+covers the full queue. Both are needed.
+
+### Rule 2 — Never answer queue questions from memory
+
+Trigger keywords that REQUIRE a ROADMAP re-fetch before responding, regardless
+of when they appear in the conversation:
+
+- "what's next" / "next sessions" / "next steps" / "after this"
+- "queue" / "queue state" / "what's in the queue"
+- "priorities" / "what's the priority" / "priority order"
+- "what should we do" / "what should we work on" / "what do we ship next"
+- "what's left" / "what's outstanding" / "what's remaining"
+- "roadmap status" / "where are we"
+
+When any of these appear, re-fetch ROADMAP first. Then answer. Never compose a
+queue answer from memory or from a stale session-state doc. userMemories
+lossy-summarize the queue; the ROADMAP is the only authoritative source.
+
+### Rule 3 — Part 0 ROADMAP + CLAUDE_SESSION delta is mandatory in every handoff
+
+Every Claude Code handoff begins with Part 0: a delta against ROADMAP and (when
+relevant) CLAUDE_SESSION, capturing closures, new items, scope shifts, and
+corrections since the last roadmap update. If genuinely no deltas, Part 0 states
+"no roadmap deltas this handoff" explicitly. Never omitted.
+
+Commit Part 0 separately from the rest of the handoff so the documentation
+delta lands as its own atomic change.
+
+### Rule 4 — Role boundary
+
+You are conversational Claude. You draft handoffs, design solutions, surface
+trade-offs, catch issues in proposed designs, and codify operational rules.
+You do NOT execute code, run diagnostics, modify the live repo, commit, or push.
+
+Implementation work goes via handoff to Claude Code, which is a separate
+executor instance. If the user asks for something requiring execution, draft a
+handoff; never attempt to execute yourself.
+
+When the user asks for "the work done" or "commit and push," the answer is a
+clean Claude Code handoff that lands the work. That handoff is your delivery.
+
+### Rule 5 — Arc-transition checkpoint
+
+When a major arc closes (Phase 2 verification, multi-phase chain completion,
+significant scope shift), re-fetch ROADMAP before answering what's next. The
+in-flight state at the start of the conversation is now stale; the queue has
+moved.
+
+---
+
+(existing CLAUDE_SESSION body continues below)
 
 Entry point for any new conversational Claude session in this project. Pair with `ROADMAP.md` (current project state) and `CLAUDE_CODE.md` (executor instructions).
 
@@ -99,6 +165,10 @@ Commits are typically split: Part 0 alone (roadmap), then Part 1 alone (the work
   - **Tier 3 — Current team with n+1/n+2 affinity fit.** Riders on current team whose `terrain_affinity` matches the n+1 or n+2 slider distribution's max-weight bucket (mapped via SCENARIO_TO_TERRAIN to a primary terrain dimension). Transfer-cost-saving rationale. **Distinct from** the S17-ζ-fix (d) unconditional current-team union, which sits **outside** the tier framework as a basin-search robustness mechanism. Both mechanisms apply on top of the union; Tier 3 is a subset of current_team filtered by affinity, while S17-ζ-fix (d) includes the entire current_team unconditionally.
   - **Tier 4 — Points + KOM standings top-10.** Union of first 10 in `points_classification` + first 10 in `kom_classification` from `stage_{N-1}_standings.json`.
   - **Tier 5 — Team-bonus fillers.** For each Tier 1 favorite, the cheapest teammate in `riders.json` with **matching `terrain_affinity`** (exact categorical match on max-weight dimension). Affinity match is critical: non-affinity-matched fillers eat a −90k time penalty on GC days when they drop off the back, which inverts the +60k team-bonus harvest to net-negative. Matching the favorite's own affinity makes Tier 5 naturally stage-adaptive — a sprinter favorite's match teammate is a leadout (in the bunch, no penalty); a climber favorite's match teammate is a domestique (in the gruppetto, no penalty). **If a Tier 1 favorite has zero teammates with matching affinity, skip — do not fall back to cheapest-of-any-affinity, which reintroduces the time-penalty risk.** Tier 5 cardinality ≤ |Tier 1| with natural deduplication via set union.
+- **Phase 2 verification methodology (S17-ι Phase 2 origin, 2026-05-14).** Pool expansion claims need falsifiable tests against substrate, not just "EV went up." Three tests: distinct local optima count (basin diversity), best-found EV (objective improvement), known-bad-basin reachability check (regression guard). The third is the most important — it guards against the failure mode where pool expansion lets SA route to a basin that's genuinely lower-EV but was previously unreachable. If a previously-unreachable basin starts winning, that's either a real find or a measurement artefact (cf. S17-ζ-redo +128k force-in delta turning out to be forward-proxy asymmetry, not a basin improvement). The keep-Magnier basin is the canonical example: unconstrained forward proxy scored it 76k worse than swap-out, so 0/10 chains finding it pre-Phase-1 was correct behaviour. Post-Phase-1, if any chains find keep-Magnier, that requires explanation.
+- **Substrate-restart discipline for pre/post comparisons (S17-ι Phase 2 lesson, 2026-05-13).** Phase 2 verification revealed the Phase 1 closure-reported "+189k Stage 5 lookahead Net EV shift" was confounded: the live server was not restarted between name-matcher-hardening landing and Phase 1 deploy, so the "pre-deploy" baseline I quoted in the Phase 1 closure used pre-matcher pre-Phase-1 code. On the captured substrate with breakaway-80% sliders, tier-union path and legacy top-50-EV path produce **bit-identical** results — same roster SHA, same captain, same EV across 10 chains and 3 strategies. The actual matcher contribution: 6 Tier-1 riders lifted from EPS-drop into real probabilities (Morgado, Scaroni, Narvaez, Vingegaard, López, Eulálio). That's where the EV gain came from. **Forward rule:** when running pre/post substrate comparisons that span more than one code-deploy boundary, capture the baseline by re-running the substrate against an explicit commit checkout (git checkout `HASH` && capture && return), not by reading from a memory of "what the dashboard showed earlier." Server-restart state is invisible from the dashboard surface.
+- **Attribution requires controlled restart sequencing (S17-ι Phase 2 finding, 2026-05-13).** When measuring the EV impact of a code change, the server must be restarted between baseline capture and post-change measurement. If multiple changes land between restart boundaries, attribution to specific changes is confounded. Phase 1's reported +208k / +189k turned out to be matcher-hardening deployed at the prior handoff close being measured against a pre-matcher baseline because the server hadn't been restarted between the matcher and Phase 1 deploys. The actual Phase 1 contribution on Stage 5 substrate was zero. **Standing rule for change attribution:** (1) capture pre-change baseline measurement; (2) land change (commit, deploy); (3) restart server to ensure new code is loaded; (4) capture post-change measurement. Never compare measurements across an un-restarted change boundary. Complements the broader "Substrate-restart discipline" note above; this entry codifies the explicit numbered protocol.
+- **Tier-union as structural correctness vs measurable improvement (S17-ι Phase 2 outcome, 2026-05-13).** Tier-union biased-swap pool can be a structural correctness improvement without producing a measurable EV delta on a given substrate. Pool composition now reflects the tier rationale (external signal + GC + affinity + points/KOM + team-bonus fillers) rather than top-50 EV truncation. On Stage 5 substrate the legacy top-50 EV pool happened to cover the same basin attractor; tier-union is a no-op there. It does not regress (all 3 tests pass non-decreasing). **Differentiation hypothesis:** tier-union will likely diverge from legacy on stages where (i) top-50 EV truncation drops affinity-fit teammates favouring premium upgrades that the SA then can't reach via random-swap before cooling, or (ii) the legacy ranking inverts a useful budget filler that tier 5 names directly. We have no evidence for either yet — needs more substrates. Phase 3 (proposal weighting) is deferred until a differentiating substrate exists; weighting a no-op produces a no-op.
 - **Filler capacity is emergent, not encoded (S17-ι Phase 1).** Tier 5 includes one cheapest-affinity-matched filler per Tier 1 favorite. Whether the SA actually *picks* those fillers is a runtime decision made by the objective: filler EV (60k team-bonus, decreasing returns on subsequent fillers) competes against marginal EV from upgrading a premium pick. On bunch sprint stages with deep budget residuals after captain stacks, the SA discovers filler picks. On stages where the residual better spent on premium upgrades, the SA naturally skips them. No explicit capacity logic required.
 - **Time penalty structure (S17-ι Phase 1 context).** Non-affinity-matched riders on a stage where they cannot finish in the main group incur a −90k time penalty. On GC days this affects the entire non-climber price tier including cheap fillers. This is why Tier 5 requires affinity match: a 2-3M non-climber on a mountain stage harvests +60k team bonus minus 90k time penalty = −30k net.
 - **Stage-classification proposal weighting (S17-ι Phase 3 scope; Block 2 revised 2026-05-14).** Depth-target stages collapse to **bunch sprints only**, not bunch-sprints-plus-GC-days. On GC days the top GC favorites priced at ~15M each consume budget that would otherwise fund depth picks, structurally preventing depth play despite the field-staying-together condition. **Stage-finish-target stages = everything except bunch sprints** (breakaway, hilly, summit, ITT). Phase 3 calibrates SA proposal weighting accordingly; **Phase 1 does not encode stage classification beyond what Tier 5's affinity match implicitly handles.** Critical: this is a distribution over the pool, not an inclusion criterion. The pool is set by the tier union regardless of stage classification; the weighting changes how the SA chain explores within that pool.
