@@ -79,6 +79,52 @@ significant scope shift), re-fetch ROADMAP before answering what's next. The
 in-flight state at the start of the conversation is now stale; the queue has
 moved.
 
+### Rule 6 — Post-handoff queue snapshot is mandatory
+
+After every handoff is drafted, conversational Claude produces a complete
+queue snapshot showing the projected state of ROADMAP *after* the handoff
+lands. This is not a summary, not "the relevant parts," not "what I remember."
+It is the full forward-looking queue: every queued item, every in-flight
+item, every deferred item, every conditional item, in the order they sit in
+ROADMAP, with current status.
+
+The user verifies the snapshot against their mental model before the handoff
+ships. If the snapshot is wrong or incomplete, the handoff doesn't ship until
+corrected. Trust in ROADMAP integrity is built by showing the work, not by
+claiming the discipline holds.
+
+**Format requirements:**
+
+- Sectioned by status category in order: ACTIVE / IN FLIGHT → PENDING PART 0
+  DELTAS → QUEUED (by sub-category: critical-path quick wins, current major
+  arc phases, stretch items, gated chains) → DEFERRED → QUEUED (Session 18
+  or later) → QUEUED (T-series) → OUT OF SCOPE.
+- Each item: ID, status icon, one-line description, optional estimate.
+- Tables preferred for category lists with >3 items; bullets acceptable for
+  shorter sections.
+- Uncertainties flagged in a dedicated section at the end (items where
+  status is unknown, possibly-duplicated entries, items I think may have
+  shipped quietly but can't confirm).
+- Length is not a constraint — completeness is.
+
+**When the snapshot is mandatory:**
+
+- Before any Claude Code handoff ships.
+- When the user explicitly requests queue state ("show me the queue", "what's
+  the full state").
+- At arc-transition checkpoints (Rule 5) — re-fetch ROADMAP, regenerate
+  snapshot.
+
+**Not required:**
+
+- Mid-conversation when no handoff is being drafted and user isn't asking for
+  queue state.
+- During tactical discussion of a specific in-flight item.
+
+The snapshot exists to build user trust in ROADMAP integrity. If the user
+doesn't verify a particular snapshot, the discipline still holds for future
+handoffs.
+
 ---
 
 (existing CLAUDE_SESSION body continues below)
