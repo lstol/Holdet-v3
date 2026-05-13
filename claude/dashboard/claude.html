@@ -363,6 +363,133 @@ input[type=range]::-webkit-slider-thumb {
 .badge-TTT-Spec    { background: rgba(240,77,94,.12); color: #f07080; }
 .badge-Lead-out    { background: rgba(123,130,168,.12); color: #8b90a8; }
 
+/* S17-AFFINITY: terrain_affinity bar widget + popover editor */
+.aff-cell {
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 3px;
+  transition: background .12s;
+}
+.aff-cell:hover { background: rgba(91,114,240,.08); }
+.aff-bars {
+  display: grid;
+  grid-template-rows: repeat(4, 4px);
+  row-gap: 2px;
+  width: 56px;
+}
+.aff-bar {
+  height: 4px;
+  background: var(--color-surface-3);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+.aff-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+.aff-bar-fill.dim-sprint     { background: #8da4f8; }
+.aff-bar-fill.dim-climbing   { background: #3ecf8e; }
+.aff-bar-fill.dim-mixed      { background: #f0c850; }
+.aff-bar-fill.dim-time_trial { background: #f07080; }
+.aff-empty {
+  font-size: 9px;
+  color: var(--color-text-3);
+  font-style: italic;
+}
+.aff-override-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--color-warning);
+  margin-left: 4px;
+  vertical-align: middle;
+  box-shadow: 0 0 4px rgba(240,168,50,.6);
+}
+
+.aff-popover {
+  position: fixed;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  z-index: 1000;
+  min-width: 280px;
+  font-size: 12px;
+}
+.aff-popover-header {
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.aff-popover-header .price {
+  font-family: var(--font-mono);
+  color: var(--color-text-2);
+  font-size: 11px;
+}
+.aff-popover-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.aff-popover-row .label {
+  font-size: 11px;
+  color: var(--color-text-2);
+  text-transform: capitalize;
+}
+.aff-popover-row input[type=range] {
+  width: 100%;
+  accent-color: var(--color-primary);
+}
+.aff-popover-row .val {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text);
+  text-align: right;
+}
+.aff-popover-row .orig {
+  grid-column: 2 / 4;
+  font-size: 9px;
+  color: var(--color-text-3);
+  font-family: var(--font-mono);
+  margin-top: -2px;
+}
+.aff-popover-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+  justify-content: flex-end;
+}
+.aff-popover-buttons button {
+  padding: 5px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .12s;
+}
+.aff-popover-buttons button.primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+.aff-popover-buttons button.danger { color: var(--color-danger); }
+.aff-popover-buttons button:hover { filter: brightness(1.15); }
+.aff-popover-buttons button:disabled { opacity: .4; cursor: not-allowed; }
+
 /* Tier badges */
 .tier-a { font-size: 10px; font-weight: 700; color: var(--color-warning); font-family: var(--font-mono); }
 .tier-b { font-size: 10px; color: var(--color-text-3); font-family: var(--font-mono); }
@@ -744,6 +871,7 @@ input[type=range]::-webkit-slider-thumb {
               <th class="num">Price</th>
               <th>Tier</th>
               <th class="num">P(win)</th>
+              <th>Affinity</th>
               <th>Force in</th>
               <th>Force out</th>
               <th>Status</th>
@@ -1760,6 +1888,7 @@ const COLS = [
   { key: 'price', label: 'Price',     num: true,  sortable: true  },
   { key: 'tier',  label: 'Tier',      num: false, sortable: true  },
   { key: 'pwin',  label: 'P(win)',    num: true,  sortable: true  },
+  { key: null,    label: 'Affinity',  num: false, sortable: false }, // S17-AFFINITY
   { key: null,    label: 'Force in',  num: false, sortable: false },
   { key: null,    label: 'Force out', num: false, sortable: false },
   { key: null,    label: 'Status',    num: false, sortable: false },
@@ -1894,13 +2023,14 @@ function renderTable() {
     tr.className = (isIn ? 'force-in' : isOut ? 'force-out' : '');
     tr.innerHTML = `
       <td>
-        <div class="rider-name">${esc(r.name || '')}</div>
+        <div class="rider-name">${esc(r.name || '')}${affinityOverrideDot(r.name)}</div>
         <div class="rider-team">${esc(r.team || '')}</div>
       </td>
       <td><span class="type-badge badge-${badgeKey}">${esc(rtype)}</span></td>
       <td class="num">${fmt_price(r.price || r.startPrice || 0)}</td>
       <td><span class="${tier === 'A' ? 'tier-a' : 'tier-b'}">${tier}</span></td>
       <td class="num">${fmt_pct(pw)}</td>
+      <td>${renderAffinityCell(r)}</td>
       <td><button class="force-btn${isIn ? ' active-in' : ''}" onclick="toggleForce('${rid}','in')">IN</button></td>
       <td><button class="force-btn${isOut ? ' active-out' : ''}" onclick="toggleForce('${rid}','out')">OUT</button></td>
       <td><span class="${isElim ? 'status-out' : 'status-active'}">${isElim ? 'OUT' : 'Active'}</span></td>
@@ -1910,6 +2040,208 @@ function renderTable() {
 
   const countEl = $('rider-count');
   if (countEl) countEl.textContent = `${riders.length} riders`;
+}
+
+/* ── S17-AFFINITY: terrain_affinity bar widget + popover editor ──────── */
+
+// Dimension order is data-driven; first seen in a rider's terrain_affinity sets
+// the order globally so bars are visually consistent across rows. Fallback to
+// the canonical 4-dimension set when no rider has affinity data yet.
+const AFFINITY_DIM_DEFAULT = ['sprint', 'climbing', 'mixed', 'time_trial'];
+let AFFINITY_DIM_ORDER = null;
+
+function affinityDimOrder() {
+  if (AFFINITY_DIM_ORDER) return AFFINITY_DIM_ORDER;
+  for (const r of (S.riders || [])) {
+    const ta = r.terrain_affinity;
+    if (ta && Object.keys(ta).length) {
+      // Preserve canonical order where possible; append any new dims at end.
+      const seen = new Set(Object.keys(ta));
+      const ordered = AFFINITY_DIM_DEFAULT.filter(d => seen.has(d));
+      const extras = [...seen].filter(d => !AFFINITY_DIM_DEFAULT.includes(d));
+      AFFINITY_DIM_ORDER = [...ordered, ...extras];
+      return AFFINITY_DIM_ORDER;
+    }
+  }
+  return AFFINITY_DIM_DEFAULT;
+}
+
+// Override state — populated from GET /terrain-affinity-overrides on load.
+let S_AFFINITY_OVERRIDES = {};
+
+async function loadAffinityOverrides() {
+  try {
+    const res = await fetch('/terrain-affinity-overrides');
+    if (!res.ok) throw new Error('fetch failed');
+    S_AFFINITY_OVERRIDES = await res.json();
+  } catch (e) {
+    console.warn('affinity overrides load failed (acceptable in file:// mode):', e);
+    S_AFFINITY_OVERRIDES = {};
+  }
+}
+
+function hasOverride(name) {
+  return !!(S_AFFINITY_OVERRIDES && S_AFFINITY_OVERRIDES[name]);
+}
+
+function affinityOverrideDot(name) {
+  return hasOverride(name)
+    ? '<span class="aff-override-dot" title="Terrain affinity overridden"></span>'
+    : '';
+}
+
+function renderAffinityCell(r) {
+  const ta = r.terrain_affinity || {};
+  if (!Object.keys(ta).length) {
+    return `<div class="aff-cell" onclick="openAffinityPopover(event, '${esc(r.name)}')"><span class="aff-empty">no data</span></div>`;
+  }
+  const dims = affinityDimOrder();
+  const bars = dims.map(d => {
+    const v = Math.max(0, Math.min(1, +(ta[d] ?? 0)));
+    const pct = Math.round(v * 100);
+    return `<div class="aff-bar" title="${d} ${v.toFixed(2)}"><div class="aff-bar-fill dim-${d}" style="width:${pct}%"></div></div>`;
+  }).join('');
+  return `<div class="aff-cell" onclick="openAffinityPopover(event, '${esc(r.name)}')"><div class="aff-bars">${bars}</div></div>`;
+}
+
+/* Popover */
+let _affPopoverEl = null;
+let _affPopoverRider = null;
+let _affPopoverEscHandler = null;
+let _affPopoverClickHandler = null;
+
+function openAffinityPopover(evt, riderName) {
+  evt?.stopPropagation();
+  closeAffinityPopover();
+
+  const rider = (S.riders || []).find(r => r.name === riderName);
+  if (!rider) return;
+
+  _affPopoverRider = riderName;
+  const dims = affinityDimOrder();
+  const overrideEntry = S_AFFINITY_OVERRIDES[riderName] || null;
+  const current = overrideEntry?.overrides || rider.terrain_affinity || {};
+  // For original: prefer snapshot from override file; else use what's on the rider
+  // (riders.json values come through unchanged for non-overridden riders).
+  const original = overrideEntry?.original || rider.terrain_affinity || {};
+
+  const rows = dims.map(d => {
+    const v = +(current[d] ?? 0);
+    const o = +(original[d] ?? 0);
+    return `
+      <div class="aff-popover-row">
+        <span class="label">${d.replace('_', ' ')}</span>
+        <input type="range" min="0" max="1" step="0.05" value="${v}"
+               data-dim="${d}"
+               oninput="this.parentNode.querySelector('.val').textContent=(+this.value).toFixed(2)">
+        <span class="val">${v.toFixed(2)}</span>
+        <div class="orig">orig ${o.toFixed(2)}</div>
+      </div>
+    `;
+  }).join('');
+
+  const price = rider.price || rider.startPrice || 0;
+  const popover = document.createElement('div');
+  popover.className = 'aff-popover';
+  popover.innerHTML = `
+    <div class="aff-popover-header">
+      <span>${esc(riderName)}</span>
+      <span class="price">${fmt_price(price)}</span>
+    </div>
+    ${rows}
+    <div class="aff-popover-buttons">
+      <button onclick="closeAffinityPopover()">Cancel</button>
+      <button class="danger" onclick="resetAffinity()" ${overrideEntry ? '' : 'disabled'}>Reset to original</button>
+      <button class="primary" onclick="saveAffinity()">Save</button>
+    </div>
+  `;
+
+  // Anchor to click target
+  const rect = evt.currentTarget.getBoundingClientRect();
+  document.body.appendChild(popover);
+  const pwRect = popover.getBoundingClientRect();
+  let left = rect.right + 8;
+  let top  = rect.top;
+  if (left + pwRect.width > window.innerWidth - 8) {
+    left = Math.max(8, rect.left - pwRect.width - 8);
+  }
+  if (top + pwRect.height > window.innerHeight - 8) {
+    top = Math.max(8, window.innerHeight - pwRect.height - 8);
+  }
+  popover.style.left = `${left}px`;
+  popover.style.top  = `${top}px`;
+  _affPopoverEl = popover;
+
+  // Outside-click + Escape handlers
+  _affPopoverClickHandler = (e) => {
+    if (_affPopoverEl && !_affPopoverEl.contains(e.target)) closeAffinityPopover();
+  };
+  _affPopoverEscHandler = (e) => {
+    if (e.key === 'Escape') closeAffinityPopover();
+  };
+  setTimeout(() => {
+    document.addEventListener('click', _affPopoverClickHandler);
+    document.addEventListener('keydown', _affPopoverEscHandler);
+  }, 0);
+}
+
+function closeAffinityPopover() {
+  if (_affPopoverEl) {
+    _affPopoverEl.remove();
+    _affPopoverEl = null;
+    _affPopoverRider = null;
+  }
+  if (_affPopoverClickHandler) {
+    document.removeEventListener('click', _affPopoverClickHandler);
+    _affPopoverClickHandler = null;
+  }
+  if (_affPopoverEscHandler) {
+    document.removeEventListener('keydown', _affPopoverEscHandler);
+    _affPopoverEscHandler = null;
+  }
+}
+
+async function saveAffinity() {
+  if (!_affPopoverEl || !_affPopoverRider) return;
+  const overrides = {};
+  _affPopoverEl.querySelectorAll('input[type=range]').forEach(inp => {
+    overrides[inp.dataset.dim] = +inp.value;
+  });
+  try {
+    const res = await fetch('/terrain-affinity-overrides', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({rider_name: _affPopoverRider, overrides}),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(`Save failed: ${err.message || res.statusText}`);
+      return;
+    }
+    closeAffinityPopover();
+    await loadAffinityOverrides();
+    await loadRiders();
+  } catch (e) {
+    alert(`Save failed: ${e.message}`);
+  }
+}
+
+async function resetAffinity() {
+  if (!_affPopoverRider) return;
+  try {
+    const res = await fetch(`/terrain-affinity-overrides/${encodeURIComponent(_affPopoverRider)}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      alert(`Reset failed: ${res.statusText}`);
+      return;
+    }
+    closeAffinityPopover();
+    await loadAffinityOverrides();
+    await loadRiders();
+  } catch (e) {
+    alert(`Reset failed: ${e.message}`);
+  }
 }
 
 /* ── Optimizer prompt ────────────────────────────────────────────────── */
@@ -2489,6 +2821,7 @@ async function init() {
   renderCarousel();
   updateHeader();
 
+  await loadAffinityOverrides();  // S17-AFFINITY: populate override state before first render
   await loadRiders();
   await loadSnapshot();
   await loadSavedOdds();

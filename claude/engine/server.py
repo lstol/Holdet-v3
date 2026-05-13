@@ -53,6 +53,7 @@ app = Flask(__name__)
 BASE_DIR          = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SNAPSHOT_DIR      = os.path.join(BASE_DIR, 'shared', 'data', 'snapshots')
 RIDERS_FILE       = os.path.join(BASE_DIR, 'shared', 'data', 'riders', 'giro_2026', 'riders.json')
+AFFINITY_OVERRIDES_FILE = os.path.join(BASE_DIR, 'shared', 'data', 'riders', 'giro_2026', 'terrain_affinity_overrides.json')
 STAGE_SCORING_FILE= os.path.join(BASE_DIR, 'shared', 'data', 'stages', 'giro_2026', 'stage_scoring.json')
 EXPERT_SOURCES    = os.path.join(BASE_DIR, 'claude', 'engine', 'expert_sources.yaml')
 FETCH_RIDERS      = os.path.join(BASE_DIR, 'claude', 'engine', 'fetch_riders.py')
@@ -63,6 +64,73 @@ def _load_stage_scoring():
         with open(STAGE_SCORING_FILE) as f:
             return json.load(f)
     return {}
+
+
+# ── S17-AFFINITY: terrain_affinity override merge ────────────────────────────
+
+def _load_affinity_overrides() -> dict:
+    """Return dict mapping canonical rider name → override entry, or {} if file
+    missing/empty/malformed. Tolerant on read; bad file logs and falls through
+    rather than failing the whole riders load."""
+    if not os.path.exists(AFFINITY_OVERRIDES_FILE):
+        return {}
+    try:
+        with open(AFFINITY_OVERRIDES_FILE) as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except Exception as e:
+        _log(f"affinity_overrides_load_error: {e}")
+        return {}
+
+
+def _save_affinity_overrides(data: dict) -> None:
+    """Write override dict back to disk. Caller is responsible for canonicalising
+    rider-name keys and validating dimension values before invoking."""
+    os.makedirs(os.path.dirname(AFFINITY_OVERRIDES_FILE), exist_ok=True)
+    with open(AFFINITY_OVERRIDES_FILE, 'w') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write('\n')
+
+
+def _apply_affinity_overrides(riders: list) -> list:
+    """Return a new list of rider dicts with `terrain_affinity` replaced by
+    override values for any rider with an override entry. Riders without
+    entries are passed through unchanged. Does NOT mutate the input list."""
+    overrides = _load_affinity_overrides()
+    if not overrides:
+        return riders
+    out = []
+    for r in riders:
+        entry = overrides.get(r.get('name'))
+        if entry and isinstance(entry.get('overrides'), dict):
+            r2 = dict(r)
+            r2['terrain_affinity'] = dict(entry['overrides'])
+            out.append(r2)
+        else:
+            out.append(r)
+    return out
+
+
+def _load_riders_merged(prefer_snapshot: bool = False) -> dict:
+    """Load riders from RIDERS_FILE (or stage_1_holdet.json snapshot if
+    `prefer_snapshot=True` and snapshot exists), apply terrain_affinity
+    overrides, return the same `{riders, ...}` envelope as the source file.
+
+    Single boundary for terrain_affinity override merge — every read site that
+    previously did `json.load(open(RIDERS_FILE))` should call this helper.
+    """
+    if prefer_snapshot:
+        snap = os.path.join(SNAPSHOT_DIR, 'stage_1_holdet.json')
+        if os.path.exists(snap):
+            data = json.load(open(snap))
+            data = dict(data)
+            data['riders'] = _apply_affinity_overrides(data.get('riders', []))
+            return data
+    with open(RIDERS_FILE) as f:
+        data = json.load(f)
+    data = dict(data)
+    data['riders'] = _apply_affinity_overrides(data.get('riders', []))
+    return data
 
 
 def _log(msg: str) -> None:
@@ -134,7 +202,11 @@ def stage_scoring(stage_num):
 
 @app.route('/riders', methods=['GET'])
 def riders():
-    """Return riders from latest snapshot (live pricing) or riders.json (static)."""
+    """Return riders from latest snapshot (live pricing) or riders.json (static).
+
+    S17-AFFINITY: applies terrain_affinity overrides via `_apply_affinity_overrides`
+    at the load boundary; clients (dashboard, optimizer) see merged values.
+    """
     try:
         # S17-27: read stage_1 directly (canonical rider master list per
         # fetch_riders.py). The prior sorted([…])[-1] pattern silently fell
@@ -143,7 +215,7 @@ def riders():
         if os.path.exists(path):
             data = json.load(open(path))
             return jsonify({
-                'riders': data.get('riders', []),
+                'riders': _apply_affinity_overrides(data.get('riders', [])),
                 'timestamp': data.get('timestamp'),
                 'source': 'snapshot',
                 '_filename': 'stage_1_holdet.json',
@@ -153,9 +225,109 @@ def riders():
     try:
         with open(RIDERS_FILE) as f:
             data = json.load(f)
-        return jsonify({'riders': data.get('riders', []), 'source': 'riders.json'})
+        return jsonify({
+            'riders': _apply_affinity_overrides(data.get('riders', [])),
+            'source': 'riders.json',
+        })
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+# ── S17-AFFINITY: terrain_affinity override endpoints ───────────────────────
+
+@app.route('/terrain-affinity-overrides', methods=['GET'])
+def terrain_affinity_overrides_get():
+    """Return raw contents of terrain_affinity_overrides.json (empty dict if file
+    missing). No transformation."""
+    return jsonify(_load_affinity_overrides())
+
+
+@app.route('/terrain-affinity-overrides', methods=['POST'])
+def terrain_affinity_overrides_post():
+    """Upsert a rider's terrain_affinity override.
+
+    Body: {"rider_name": "<name>", "overrides": {"sprint": 0.88, ...}}
+
+    Server-side: (a) canonicalise rider_name via match_rider_name against active
+    roster (error 400 if no match); (b) if no prior entry, snapshot the current
+    riders.json terrain_affinity into `original`; (c) write `overrides` (full
+    dimension set expected; missing keys default to whatever was there);
+    (d) write `updated_at` ISO timestamp; (e) persist.
+
+    All values must be numbers in [0.0, 1.0]. Returns 400 otherwise.
+    """
+    try:
+        body = request.get_json(force=True) or {}
+    except Exception:
+        return jsonify({'status': 'error', 'message': 'invalid json body'}), 400
+
+    raw_name  = (body.get('rider_name') or '').strip()
+    new_over  = body.get('overrides')
+    if not raw_name:
+        return jsonify({'status': 'error', 'message': 'rider_name required'}), 400
+    if not isinstance(new_over, dict) or not new_over:
+        return jsonify({'status': 'error', 'message': 'overrides dict required'}), 400
+
+    # Validate values in range
+    for k, v in new_over.items():
+        if not isinstance(v, (int, float)) or v < 0.0 or v > 1.0:
+            return jsonify({
+                'status': 'error',
+                'message': f'value out of [0.0, 1.0] for dimension {k!r}: {v}',
+            }), 400
+
+    # Canonicalise name against active roster (read riders.json directly so
+    # canonical-name resolution is not influenced by prior overrides).
+    with open(RIDERS_FILE) as f:
+        riders_data = json.load(f)
+    active = [r for r in riders_data.get('riders', [])
+              if not r.get('isOut') and r.get('status') != 'dns']
+    match = match_rider_name(raw_name, active)
+    if not match:
+        return jsonify({
+            'status': 'error',
+            'message': f'rider_name {raw_name!r} did not match any active rider',
+        }), 400
+    canonical = match['name']
+
+    overrides = _load_affinity_overrides()
+    entry = overrides.get(canonical, {})
+    # Snapshot original on first override creation (not overwritten on re-edit).
+    if 'original' not in entry:
+        original_ta = next(
+            (r.get('terrain_affinity', {}) for r in riders_data.get('riders', [])
+             if r['name'] == canonical),
+            {},
+        )
+        entry['original'] = dict(original_ta)
+    entry['overrides']  = {k: float(v) for k, v in new_over.items()}
+    entry['updated_at'] = _dt.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+
+    overrides[canonical] = entry
+    _save_affinity_overrides(overrides)
+    _log(f"terrain_affinity_override_saved rider={canonical!r} overrides={entry['overrides']}")
+    return jsonify({'status': 'ok', 'rider_name': canonical, 'entry': entry})
+
+
+@app.route('/terrain-affinity-overrides/<path:rider_name>', methods=['DELETE'])
+def terrain_affinity_overrides_delete(rider_name):
+    """Remove a rider's override entry. Returns 200 even if no entry existed
+    (idempotent)."""
+    overrides = _load_affinity_overrides()
+    # Try direct match, then canonicalised match.
+    if rider_name in overrides:
+        canonical = rider_name
+    else:
+        with open(RIDERS_FILE) as f:
+            active = [r for r in json.load(f).get('riders', [])
+                      if not r.get('isOut') and r.get('status') != 'dns']
+        match = match_rider_name(rider_name, active)
+        canonical = match['name'] if match else rider_name
+    removed = overrides.pop(canonical, None)
+    _save_affinity_overrides(overrides)
+    if removed is not None:
+        _log(f"terrain_affinity_override_removed rider={canonical!r}")
+    return jsonify({'status': 'ok', 'rider_name': canonical, 'removed': removed is not None})
 
 
 # ── Refresh ───────────────────────────────────────────────────────────────────
@@ -225,7 +397,7 @@ def _run_optimizer_claude_api_legacy():
     else:
         odds = []
 
-    rider_data = json.load(open(RIDERS_FILE))
+    rider_data = _load_riders_merged()
     active_riders = [r for r in rider_data['riders'] if not r.get('isOut') and r.get('status') != 'dns']
 
     intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
@@ -412,7 +584,7 @@ def run_optimizer_py():
             ),
         }), 400
 
-    rider_data    = json.load(open(RIDERS_FILE))
+    rider_data    = _load_riders_merged()
     active_riders = [r for r in rider_data['riders'] if not r.get('isOut') and r.get('status') != 'dns']
 
     intel_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_intel.json')
@@ -744,7 +916,7 @@ def parse_odds_image():
         # clean going forward; `build_probabilities` also canonicalises
         # defensively at read time for historical data.
         try:
-            _rd = json.load(open(RIDERS_FILE))
+            _rd = _load_riders_merged()
             active_riders = [r for r in _rd.get('riders', [])
                              if not r.get('isOut') and r.get('status') != 'dns']
         except Exception:
@@ -1191,7 +1363,7 @@ def gather_standings():
                  ('gc', 'points_classification', 'kom_classification', 'young_rider')}
         _log(f"gather-standings stage={stage} rows={sizes} errors={len(scrape_errors)}")
 
-        rider_data = json.load(open(RIDERS_FILE))
+        rider_data = _load_riders_merged()
         active     = [r for r in rider_data['riders']
                       if not r.get('isOut') and r.get('status') != 'dns']
 
@@ -1341,7 +1513,7 @@ def paste_expert_team():
                             'raw': raw}), 400
 
         # Name-match against active roster, collect warnings for unresolved names.
-        rider_data = json.load(open(RIDERS_FILE))
+        rider_data = _load_riders_merged()
         active     = [r for r in rider_data['riders'] if not r.get('isOut') and r.get('status') != 'dns']
 
         resolved_riders = []   # what we write to the snapshot (canonical names if matched)
@@ -1449,7 +1621,7 @@ def score_ingemann():
         rider_names  = ingemann.get('riders', [])
         captain_name = ingemann.get('captain', '')
 
-        rider_data    = json.load(open(RIDERS_FILE))
+        rider_data    = _load_riders_merged()
         active        = [r for r in rider_data['riders'] if not r.get('isOut') and r.get('status') != 'dns']
 
         odds_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_odds.json')
@@ -1541,7 +1713,7 @@ def current_team_endpoint():
 
     snapshot = json.load(open(path))
     team_ids  = set(snapshot.get('team_composition', []))
-    rider_data = json.load(open(RIDERS_FILE))
+    rider_data = _load_riders_merged()
     team = [r for r in rider_data['riders']
             if r['name'] in team_ids or str(r.get('holdet_id', '')) in team_ids]
 
