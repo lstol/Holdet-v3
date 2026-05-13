@@ -47,6 +47,12 @@ _NICKNAME_ALIASES_RAW = {
     # carries the patronymic that riders.json drops. Rules X / Y / 5 all fail
     # because the trailing token "hansen" doesn't appear in the canonical name.
     "jonas vingegaard hansen": "jonas vingegaard",
+    # name-matcher-hardening 2026-05-14: Oddschecker's "Afonso Eulário" is a
+    # single-character source typo for canonical "Afonso Eulálio" (R vs L in
+    # surname). Same shape as Oruis/Orluis (which Rule 5 caught because the
+    # canonical surname was unique); here Rule 5 fails because the last-word
+    # differs from canonical.
+    "afonso eulario": "afonso eulalio",
 }
 _NICKNAME_ALIASES: dict = {}
 for _a, _b in _NICKNAME_ALIASES_RAW.items():
