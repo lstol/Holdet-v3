@@ -661,10 +661,13 @@ def run_optimizer_py():
         base_seed = compute_seed(stage, sliders, force_in, force_out, use_race_type)
 
         # Current stage: real odds + intel (+ optional race-type adjustment from n1 slider)
+        # Sub-B2 (2026-05-14): pass standings_data through so build_probabilities
+        # can use standings-aware retention path for in-GC-top-10 riders.
         probs_current = build_probabilities(
             active_riders, odds, intel_data, sliders.get('n1', {}),
             stage_config=stage_config, scoring=scoring,
             use_race_type=use_race_type,
+            standings=standings_data,
         )
 
         # Forward stages: slider-based inference. S17-16 forward-intel
@@ -1261,6 +1264,9 @@ Return ONLY the JSON object below. No text before or after. No markdown fences.
   "key_signals": [
     {{"rider": "Name", "signal": "what was said", "direction": "up/down/neutral", "strength": "strong/moderate/weak"}}
   ],
+  "stage_signals": {{
+    "stage_type": "sprint"
+  }},
   "weather": "weather summary if mentioned, else empty string",
   "stage_notes": "key tactical notes in 1-2 sentences",
   "summary": "two sentence summary"
@@ -1271,7 +1277,14 @@ Rules:
 - strength: strong / moderate / weak
 - Include every rider mentioned by either source in source_ratings
 - TV2 content is in Danish — translate and summarise each rider mention in English
-- Keep stage_notes and summary short (max 2 sentences each)"""}]
+- Keep stage_notes and summary short (max 2 sentences each)
+- stage_signals.stage_type — classify the stage into ONE of these categories:
+  * "sprint" — flat or rolling, expected bunch sprint finish, minimal GC movement
+  * "gc_day" — mountain stage with summit finish or hard climb in final 20km, GC time gaps expected to be significant (>30s)
+  * "breakaway" — terrain favors a breakaway sticking (transitional mountain stages, classics-style profiles), GC peloton may finish together
+  * "itt" — individual time trial
+  * "hybrid_mountain" — mountain stage that doesn't fit cleanly into gc_day or breakaway (long descent after final climb, medium-mountain with multiple small climbs, etc.)
+  Pick the closest single category. If genuinely ambiguous, prefer the more conservative (smaller-GC-movement) option."""}]
             ))
 
         # Run current-stage Haiku + forward n+1 + forward n+2 in parallel.
