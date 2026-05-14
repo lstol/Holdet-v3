@@ -2071,7 +2071,7 @@ let S_AFFINITY_OVERRIDES = {};
 
 async function loadAffinityOverrides() {
   try {
-    const res = await fetch('/terrain-affinity-overrides');
+    const res = await fetch(`${SERVER}/terrain-affinity-overrides`);
     if (!res.ok) throw new Error('fetch failed');
     S_AFFINITY_OVERRIDES = await res.json();
   } catch (e) {
@@ -2208,7 +2208,7 @@ async function saveAffinity() {
     overrides[inp.dataset.dim] = +inp.value;
   });
   try {
-    const res = await fetch('/terrain-affinity-overrides', {
+    const res = await fetch(`${SERVER}/terrain-affinity-overrides`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({rider_name: _affPopoverRider, overrides}),
@@ -2229,7 +2229,7 @@ async function saveAffinity() {
 async function resetAffinity() {
   if (!_affPopoverRider) return;
   try {
-    const res = await fetch(`/terrain-affinity-overrides/${encodeURIComponent(_affPopoverRider)}`, {
+    const res = await fetch(`${SERVER}/terrain-affinity-overrides/${encodeURIComponent(_affPopoverRider)}`, {
       method: 'DELETE',
     });
     if (!res.ok) {
