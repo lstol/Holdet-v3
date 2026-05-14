@@ -165,7 +165,7 @@ from name_match import _ascii_fold, _NICKNAME_ALIASES, match_rider_name  # noqa:
 def cors(r):
     r.headers['Access-Control-Allow-Origin'] = '*'
     r.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-    r.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    r.headers['Access-Control-Allow-Methods'] = 'GET, POST, DELETE, OPTIONS'
     return r
 
 
@@ -242,8 +242,10 @@ def terrain_affinity_overrides_get():
     return jsonify(_load_affinity_overrides())
 
 
-@app.route('/terrain-affinity-overrides', methods=['POST'])
+@app.route('/terrain-affinity-overrides', methods=['POST', 'OPTIONS'])
 def terrain_affinity_overrides_post():
+    if request.method == 'OPTIONS':
+        return ('', 204)
     """Upsert a rider's terrain_affinity override.
 
     Body: {"rider_name": "<name>", "overrides": {"sprint": 0.88, ...}}
@@ -309,10 +311,12 @@ def terrain_affinity_overrides_post():
     return jsonify({'status': 'ok', 'rider_name': canonical, 'entry': entry})
 
 
-@app.route('/terrain-affinity-overrides/<path:rider_name>', methods=['DELETE'])
+@app.route('/terrain-affinity-overrides/<path:rider_name>', methods=['DELETE', 'OPTIONS'])
 def terrain_affinity_overrides_delete(rider_name):
     """Remove a rider's override entry. Returns 200 even if no entry existed
     (idempotent)."""
+    if request.method == 'OPTIONS':
+        return ('', 204)
     overrides = _load_affinity_overrides()
     # Try direct match, then canonicalised match.
     if rider_name in overrides:
