@@ -41,8 +41,28 @@ Items currently executing — handoff mid-flight or feature work in active devel
 
 Short, scoped work at top of critical path.
 
-- ⏳ **tc_n2-staleness** *(queued 2026-05-13)* — Forward Stage n+2 transfer cost is chain-team-independent. Surfaced as secondary finding in S17-ζ-redo. [optimizer.py:814](claude/engine/optimizer.py:814) — `tc_n2 = compute_transfer_cost(team_n1 or [], team_n2 or [])` doesn't depend on SA chain's current iteration team. Constant offset during chain iteration; doesn't affect within-chain ranking but means SA optimizes blind to chain-team-dependent stage-n+2 forward cost. Not load-bearing for Magnier case (B1+B2+budget amplifier explains that completely) but is a latent architectural issue worth fixing. Probably small scope (~30 min) when scheduled. **Test gate:** confirm `tc_n2` changes with chain team variation, doesn't break determinism, doesn't introduce nondeterminism through `team_n2` fast_optimize re-runs.
-- ⏳ **S17-1 Sub-B-plumbing** — Verify dashboard expert weight slider plumbing. ~5-min read-only follow-up to Sub-B Design Diagnostic. Read `claude.html` slider handler + `server.py` `/gather-intel` to confirm whether the dashboard slider rides the YAML→prompt-string pathway, plumbs to a different numerical pathway, or is partially wired. Result feeds S18-1 design and S18-7 architecture.
+- ✅ **tc_n2-staleness** — Closed-no-bug 2026-05-14. Per-chain instrumentation (10 lookahead chains on Stage 6 substrate) confirmed `tc_n2` is identical (198,600) across all chains despite 8 distinct `team_ci` and 9 distinct `tc_current`/`tc_n1` values.
+
+  **Root cause: architectural, not a function-level bug.** `team_n1` and `team_n2` are produced by `fast_optimize(probs_n1)` and `fast_optimize(probs_n2)` ([optimizer.py:767-768](claude/engine/optimizer.py:767)) — in-vacuum global optima that don't take a starting-team argument. Therefore `tc_n2 = compute_transfer_cost(team_n1, team_n2)` is chain-invariant by construction.
+
+  **The "staleness" framing was a mislabeling** of an architectural property as a bug. Inherited from S17-ζ-redo secondary diagnostic notes; reasonable as initial suspicion but wrong on inspection.
+
+  **What would make tc_n2 vary per chain:** forward proxies would need to be per-candidate transfer-aware (joint optimization of forward EV minus transfer cost from `team_ci`). See S17-θ for related force-in-scoped work. If general-lookahead per-candidate forward proxies become a priority, queue as new item under S17-stretch (suggested name: S17-FWDPROXY). Not queued at present.
+
+  **Diagnostic instrumentation removed cleanly** — `git diff claude/engine/optimizer.py` shows 0 changes.
+- ✅ **S17-1 Sub-B-plumbing** — Closed 2026-05-14. Dashboard expert-weight slider plumbing classified as **(b) YAML-live (numerical-via-prompt-string)**.
+
+  **Save handler:** [claude.html:1447](claude/dashboard/claude.html:1447) `updateWeight(i, val)`. Persists to both localStorage AND POST `${SERVER}/save-weights`.
+
+  **Server destination:** Single file, single destination — [`claude/engine/expert_sources.yaml`](claude/engine/expert_sources.yaml).
+
+  **Runtime read:** [server.py:1219](claude/engine/server.py:1219) — `yaml.safe_load(...)` inside `/gather-intel`, on every call (not at server start). Slider changes take effect on next intel gather without server restart.
+
+  **Consumption:** `tv2_w` / `feltet_w` interpolated as f-string into Haiku prompt: `"SOURCE WEIGHTS:\n- TV2/Axelgaard: {tv2_w}..."`. Weight is a prompt-string nudge to Haiku, not a numerical multiplier on EV.
+
+  **S17-INTEL Phase 4 reusability assessment:**
+  - **Transport layer reusable:** UI → POST → YAML → live runtime read path can carry per-source weights for Phase 4.
+  - **Consumption layer NOT reusable:** Phase 4 wants numerical multipliers on per-rider EV; current consumption is prompt-string nudge to Haiku. Phase 4 must build new consumption plumbing past `/gather-intel` into `build_probabilities` (or a per-rider EV-adjustment step).
 
 ---
 
@@ -121,6 +141,19 @@ Gated behind S17-INTEL Phase 1.
 Active items in deferred state. Re-elevation conditions noted per item.
 
 - ⏸️ **S17-θ** *(deprioritized 2026-05-13, re-confirmed 2026-05-14)* — Asymmetric forward proxy under force-in. Force-in propagation to `estimate_forward_costs` makes constrained vs unconstrained objectives apples-to-oranges. Reframed as deprioritized because force-in is emergency-only override, not the operational quality path. Re-elevate only if new evidence shows the asymmetry is biting non-emergency use. *(My S17-ι Phase 0 closure incorrectly listed this as "needs user direction" — contradicted yesterday's session-state. Restored.)* Original technical scope retained for reference: `force_in` / `force_out` propagate to `estimate_forward_costs` at [optimizer.py:741](claude/engine/optimizer.py:741), which means: when the user force-ins a rider, the forward proxy (`team_n1`, `team_n2`) is computed WITH that rider; when unconstrained, the forward proxy is computed WITHOUT. The lookahead objective is thus measured against different forward calibrations in the two cases, making force-in vs unconstrained objective comparisons apples-to-oranges. **Concrete impact (S17-ζ-fix V4b):** the +128k "Magnier delta" the user observed was the proxy-recomputation effect, not a basin-search failure. **Design surface:** to make lookahead objective consistent across force-in modes, the forward proxy should be either (i) computed independently of force constraints (most conservative; force-in only constrains current stage), or (ii) re-computed per candidate team during SA chain iteration (most accurate; matches the "what's optimal forward GIVEN current-stage choice" question), or (iii) a hybrid (proxy computed against current team and unconstrained forward, but per-candidate adjustment of tc_n1 to account for actual rider overlap with team_n1). **Trade-off:** (ii) is the most theoretically correct but expensive (re-running fast_optimize per SA iteration); (iii) is faster but partial. **Trigger:** user direction on whether (i), (ii), or (iii) is the right semantics. Until S17-θ lands, force-in vs unconstrained look_obj comparisons should be treated as informational only, not as basin-search-failure evidence.
+- ⏸️ **S17-LOOKAHEAD-TRACKING** — Track lookahead corroboration count per stage through Stage 6→9. Observation item; no Claude Code work needed. Origin: Stage 6 prep 2026-05-14, Two-stage lookahead card surfaced `no corroborated team across 10 chains — landscape rugged, recommendation is best single-chain finding` while Optimal and Depth-maximiser cards both corroborated at 2/10.
+
+  **Hypothesis to test:** Stage 8 ITT as n+2 amplifies basin fragmentation (TT specialists vs regular-stage riders produce divergent local optima in lookahead transfer-value calculations).
+
+  **Falsifiable prediction:** Corroboration count worsens at Stage 7 (Stage 8 in n+1), recovers post-Stage 8.
+
+  **If hypothesis confirms:** Re-elevate S17-22-followup Phase 2B (`LOOKAHEAD_TC_WEIGHT` sweep) from Deferred. The rugged landscape finding is genuine race-state signal, not calibration artifact.
+
+  **If hypothesis fails** (corroboration stays rugged stage-after-stage independent of ITT proximity): promote to S17-stretch as calibration bug; the lookahead has a more fundamental basin-fragmentation issue.
+
+  **Operational implication while tracking:** "Best single-chain finding" is structurally weaker evidence than corroborated findings. When the Two-stage lookahead card shows the rugged-landscape warning, weight Optimal and Depth-maximiser cards more heavily in decisions for that stage — unless making a high-variance deliberate bet.
+
+  **Discipline note:** This item is the S17-22 Phase 2 reporting infrastructure (best-seen vs best-corroborated) paying off in a real operational moment. The discipline of distinguishing "lucky single chain" from "corroborated basin" is what makes this trackable.
 - ⏪ **S17-η** — **Superseded by S17-ι** (2026-05-14). Original "proposal pool architectural expansion (multi-dimensional weighting)" absorbed into S17-ι's tier-based redesign with explicit phasing (audit → implementation → verification → proposal weighting).
 - ⏸️ **S17-ι Phase 3** *(deferred 2026-05-13 pending differentiating substrate)* — SA proposal weighting calibration. Original scope: distribution OVER the tier-union pool weighted by stage classification (depth-target → mid-tier; stage-finish-target → Tier 1 favorites). **Deferral rationale:** Phase 2 found tier-union is bit-identical to legacy on Stage 5; weighting a no-op produces a no-op. Re-elevate only after capturing 2–3 additional substrates with diverse slider configs and finding at least one where tier-union differentiates with positive Δ. Suggested next action instead: S17-6 TT bucket (hard deadline 2026-05-17).
 - ⏪ **S17-α-followup** — **Superseded by S17-δ** (2026-05-12). Original scope (move sliders alongside their data) absorbed and expanded into S17-δ's full Panel 1 + Panel 2 information architecture redesign. Slider reorganization happens within S17-δ's broader layout work; the column-header tickbox pattern for expert weights defers to S17-INTEL Phase 2.
