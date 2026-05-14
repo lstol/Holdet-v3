@@ -222,10 +222,132 @@ def _norm_team(name):
 
 # ── Stage-type EV annotation ──────────────────────────────────────────────────
 
-def add_stage_evs(probs, stage_config=None, scoring=None):
+# ── Sub-B2: standings-aware GC retention path (S17-ι Phase 3 Phase 1) ────────
+# Replaces bookmaker-derived gc_ev/jersey_ev for riders currently in GC top-10.
+# Outside-top-10 riders keep existing bookmaker-derived values (Phase 1
+# retention-only; acquisition modeling deferred as T-8).
+#
+# Constants per S17-ι Phase 3 Phase 1 handoff direction 2026-05-14. These
+# bias the entire Tier 2 EV calculation — surface before adjusting.
+
+GC_BONUS_TOP10      = 80_000   # retention in top-10 (per-stage standings bonus)
+GC_BONUS_TOP3       = 50_000   # additional value of being in top-3 (incremental)
+JERSEY_BONUS_LEADER = 40_000   # additional value of currently wearing maglia rosa
+
+
+def _python_rider_type(rider):
+    """Port of dashboard's deriveType() at claude.html:940. Used by Sub-B2
+    retention curves to determine GC-contender status."""
+    ta = rider.get('terrain_affinity') or {}
+    sp = ta.get('sprint', 0) or 0
+    cl = ta.get('climbing', 0) or 0
+    tt = ta.get('time_trial', 0) or 0
+    mx = ta.get('mixed', 0) or 0
+    if sp >= 0.72: return 'Sprinter'
+    if cl >= 0.72: return 'GC-Climber'
+    if cl >= 0.52 and sp >= 0.42: return 'Puncheur'
+    if tt >= 0.65: return 'TTT Spec.'
+    if cl >= 0.42 or mx >= 0.48: return 'All-rounder'
+    return 'Lead-out'
+
+
+def _retention_sprint(current_rank, rider_type):
+    """Sprint stages — GC doesn't move (peloton stays together)."""
+    return (1.0 if current_rank <= 3 else 0.0,
+            1.0 if current_rank <= 10 else 0.0)
+
+
+def _retention_gc_day(current_rank, rider_type):
+    """GC day — non-GC riders drop hard; GC contenders cluster."""
+    is_gc_rider = rider_type in ('GC-Climber', 'TTT Spec.', 'Puncheur', 'All-rounder')
+    if is_gc_rider:
+        p_top3  = 0.85 if current_rank <= 3 else 0.15
+        p_top10 = 0.95 if current_rank <= 10 else 0.30
+    else:
+        p_top3  = max(0.0, 0.05 - 0.01 * (current_rank - 1))
+        p_top10 = max(0.10, 0.50 - 0.05 * current_rank)
+    return (p_top3, p_top10)
+
+
+def _retention_breakaway(current_rank, rider_type):
+    """Breakaway — top-3 GC stable, mid-top-10 churns from successful breaks."""
+    if current_rank <= 3:
+        return (0.90, 0.95)
+    return (max(0.0, 0.10 - 0.02 * (current_rank - 3)),
+            max(0.30, 0.75 - 0.05 * current_rank))
+
+
+def _retention_itt(current_rank, rider_type):
+    """ITT — top-3 stable for GC favourites who can TT; pure climbers can lose ground."""
+    is_strong_tt = rider_type in ('TTT Spec.', 'GC-Climber')
+    if is_strong_tt:
+        return (0.85 if current_rank <= 3 else 0.30,
+                0.90 if current_rank <= 10 else 0.40)
+    return (0.40 if current_rank <= 3 else 0.0,
+            max(0.20, 0.70 - 0.06 * current_rank))
+
+
+def _retention_hybrid(current_rank, rider_type):
+    """Hybrid mountain — 70% sprint-like / 30% gc-day-like blend."""
+    sp3, sp10 = _retention_sprint(current_rank, rider_type)
+    gc3, gc10 = _retention_gc_day(current_rank, rider_type)
+    return (0.7 * sp3 + 0.3 * gc3,
+            0.7 * sp10 + 0.3 * gc10)
+
+
+_RETENTION_CURVES = {
+    'sprint':          _retention_sprint,
+    'gc_day':          _retention_gc_day,
+    'breakaway':       _retention_breakaway,
+    'itt':             _retention_itt,
+    'hybrid_mountain': _retention_hybrid,
+}
+
+
+def compute_retention_probabilities(current_rank, rider_type, stage_type):
+    """Return (p_top3_retention, p_top10_retention) ∈ [0,1]² for a rider
+    currently at `current_rank` in GC, classified as `rider_type`, on a stage
+    classified as `stage_type`. Falls back to sprint-curves (conservative
+    "no GC movement") when stage_type is unknown — per CLAUDE_SESSION
+    operational note 2026-05-14."""
+    fn = _RETENTION_CURVES.get(stage_type, _retention_sprint)
+    p3, p10 = fn(current_rank, rider_type)
+    # Clamp defensively even though all curves should produce in-range.
+    return (max(0.0, min(1.0, p3)), max(0.0, min(1.0, p10)))
+
+
+def _standings_rank_map(standings):
+    """Extract {canonical_rider_name: gc_rank} for rank ≤ 10 from a
+    standings dict. Tolerates the two known shapes (top-level 'gc' or
+    nested under 'classifications.gc')."""
+    if not isinstance(standings, dict):
+        return {}
+    gc = (standings.get('gc') or standings.get('classifications', {}).get('gc') or [])
+    out = {}
+    if isinstance(gc, list):
+        for e in gc[:10]:
+            if not isinstance(e, dict):
+                continue
+            name = e.get('name') or e.get('rider')
+            rank = e.get('rank')
+            if name and isinstance(rank, int) and rank >= 1:
+                out[name] = rank
+    return out
+
+
+def add_stage_evs(probs, stage_config=None, scoring=None,
+                   standings=None, intel_stage_type=None,
+                   all_riders=None):
     """
     Annotate each rider's probs entry with stage-specific EV fields (in-place).
     Adds: sprint_ev, jersey_ev, gc_ev, kom_ev, total_ev.
+
+    Sub-B2 (2026-05-14): when `standings` (a stage_{N-1}_standings.json dict)
+    and `intel_stage_type` (from Haiku stage_signals.stage_type) are provided,
+    overrides bookmaker-derived gc_ev/jersey_ev for riders currently in GC
+    top-10 with standings-aware retention values. Outside-top-10 riders keep
+    the bookmaker-derived path. `all_riders` is the canonical roster list
+    used to map rider names → terrain_affinity for rider-type classification.
 
     stage_config: dict from stage_scoring.json['stages']['N']
     scoring:      full stage_scoring.json dict (for point_value_kr, climb_points, etc.)
@@ -245,9 +367,24 @@ def add_stage_evs(probs, stage_config=None, scoring=None):
     sprint_type = stage_config.get('sprint_type', 'A')
     stage_type  = sprint_type_to_stage_type(sprint_type)
 
+    # Sub-B2 setup (2026-05-14): precompute standings rank map + rider-type
+    # map once per add_stage_evs call. Normalised stage_type with fallback
+    # documented in CLAUDE_SESSION operational note ("Sub-B chain depends on
+    # stage_type from Haiku intel"): unknown / missing → "sprint" (conservative
+    # no-GC-movement default).
+    rank_map = _standings_rank_map(standings) if standings else {}
+    if intel_stage_type and intel_stage_type not in _RETENTION_CURVES:
+        logging.getLogger(__name__).warning(
+            f'add_stage_evs: unknown stage_type {intel_stage_type!r}; falling back to "sprint"'
+        )
+        intel_stage_type = 'sprint'
+    rider_by_name = {r['name']: r for r in (all_riders or [])}
+    leader_name = next((n for n, r in rank_map.items() if r == 1), None)
+
     for p in probs.values():
         fp = p.get('finish_probs', [0.0] * 15)
         pw = p.get('win', 0.0)
+        rider_name = p.get('name')
 
         # Sprint EV (zero on mountain stages — Type C)
         if stage_type in ('sprint', 'hilly'):
@@ -271,6 +408,22 @@ def add_stage_evs(probs, stage_config=None, scoring=None):
         kom_ev = sum(fp[i] * compute_climb_ev(i + 1, climbs, scoring)
                      for i in range(len(fp)) if fp[i] > 0)
 
+        # Sub-B2 override (2026-05-14): if rider is currently in GC top-10
+        # and the consumer passed standings + stage_type, replace bookmaker-
+        # derived gc_ev/jersey_ev with retention-aware values. Outside-top-10
+        # riders keep the bookmaker-derived path (Phase 1 retention-only).
+        current_rank = rank_map.get(rider_name)
+        if current_rank is not None and intel_stage_type:
+            rider_obj  = rider_by_name.get(rider_name, {})
+            rider_type = _python_rider_type(rider_obj)
+            p_top3, p_top10 = compute_retention_probabilities(
+                current_rank, rider_type, intel_stage_type,
+            )
+            p['gc_retention_top3']  = p_top3
+            p['gc_retention_top10'] = p_top10
+            gc_ev     = p_top10 * GC_BONUS_TOP10 + p_top3 * GC_BONUS_TOP3
+            jersey_ev = (p_top3 * JERSEY_BONUS_LEADER) if rider_name == leader_name else 0.0
+
         p['sprint_ev'] = sprint_ev
         p['jersey_ev'] = jersey_ev
         p['gc_ev']     = gc_ev
@@ -282,7 +435,7 @@ def add_stage_evs(probs, stage_config=None, scoring=None):
 
 def build_probabilities(all_riders, odds, intel, sliders=None,
                         stage_config=None, scoring=None,
-                        use_race_type=False):
+                        use_race_type=False, standings=None):
     """
     Returns dict: {rider_name: {win, top3, top10, top15, finish_probs,
                                 finish_ev, team_bonus_ev, p2, p3, p_top15,
@@ -488,7 +641,16 @@ def build_probabilities(all_riders, odds, intel, sliders=None,
                     + d1115*5* _FP_W11_15
                 )
 
-    add_stage_evs(result, stage_config=stage_config, scoring=scoring)
+    # Sub-B2 (2026-05-14): extract Haiku-derived stage_type from intel for
+    # standings-aware GC/jersey retention path. intel may be either the raw
+    # parsed JSON (with `intel` envelope) or the inner dict — handle both.
+    intel_inner = intel.get('intel', intel) if isinstance(intel, dict) else {}
+    stage_signals = intel_inner.get('stage_signals') if isinstance(intel_inner, dict) else None
+    intel_stage_type = stage_signals.get('stage_type') if isinstance(stage_signals, dict) else None
+
+    add_stage_evs(result, stage_config=stage_config, scoring=scoring,
+                  standings=standings, intel_stage_type=intel_stage_type,
+                  all_riders=all_riders)
     return result
 
 
