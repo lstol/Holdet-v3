@@ -1841,6 +1841,11 @@ def snapshot():
         if not os.path.exists(path):
             return jsonify({'status': 'no_snapshot'}), 404
         data = json.load(open(path))
+        # S17-AFFINITY: apply terrain_affinity overrides at the load boundary
+        # so the dashboard's loadRiders() sees merged values and deriveType()
+        # re-classifies based on the override (e.g., Magnier sprint 0.55 → 0.88
+        # flips Puncheur → Sprinter). Symmetric with the /riders endpoint.
+        data['riders'] = _apply_affinity_overrides(data.get('riders', []))
         data['_filename'] = 'stage_1_holdet.json'
         return jsonify(data)
     except Exception as e:
