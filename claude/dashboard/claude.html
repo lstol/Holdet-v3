@@ -645,6 +645,12 @@ input[type=range]::-webkit-slider-thumb {
       <div class="stage-meta" id="h-stage-meta">—</div>
     </div>
     <div id="header-right">
+      <!-- S18-2 (2026-05-15): live bank display. Consumes bank_balance from
+           /stage-results endpoint (same source as "How it unfolded" panel
+           and optimizer's budget read). Updated by renderStageResults(). -->
+      <div id="header-bank" style="font-size:13px; font-weight:600; color:var(--color-text); margin-right:4px;">
+        Bank: <span id="header-bank-value" style="color:var(--color-success);">—</span>
+      </div>
       <button class="btn btn-ghost" id="refresh-btn" onclick="refreshData()">
         <i class="ti ti-refresh"></i> Refresh pre-stage data
       </button>
@@ -1061,6 +1067,15 @@ function renderStageResults(data) {
 
   const fmt  = n => n > 0 ? `+${(n/1000).toFixed(0)}k` : n < 0 ? `${(n/1000).toFixed(0)}k` : '—';
   const fmtM = n => (n/1e6).toFixed(3) + 'M kr';
+
+  // S18-2 (2026-05-15): live header bank display. Updates whenever stage
+  // results render — same source the optimizer reads via /run-optimizer
+  // server-side. Single source of truth across optimizer + "How it
+  // unfolded" panel + header.
+  const headerBank = $('header-bank-value');
+  if (headerBank && data.bank_balance != null) {
+    headerBank.textContent = fmtM(data.bank_balance);
+  }
 
   el.innerHTML = `
   <div style="border:1px solid var(--color-border);border-radius:var(--radius-md);overflow:hidden;">
