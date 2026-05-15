@@ -251,13 +251,13 @@ def _python_rider_type(rider):
     return 'Lead-out'
 
 
-def _retention_sprint(current_rank, rider_type):
+def _retention_sprint(current_rank, rider_type, rider=None):
     """Sprint stages — GC doesn't move (peloton stays together)."""
     return (1.0 if current_rank <= 3 else 0.0,
             1.0 if current_rank <= 10 else 0.0)
 
 
-def _retention_gc_day(current_rank, rider_type):
+def _retention_gc_day(current_rank, rider_type, rider=None):
     """GC day — non-GC riders drop hard; GC contenders cluster."""
     is_gc_rider = rider_type in ('GC-Climber', 'TTT Spec.', 'Puncheur', 'All-rounder')
     if is_gc_rider:
@@ -269,7 +269,7 @@ def _retention_gc_day(current_rank, rider_type):
     return (p_top3, p_top10)
 
 
-def _retention_breakaway(current_rank, rider_type):
+def _retention_breakaway(current_rank, rider_type, rider=None):
     """Breakaway — top-3 GC stable, mid-top-10 churns from successful breaks."""
     if current_rank <= 3:
         return (0.90, 0.95)
@@ -277,9 +277,21 @@ def _retention_breakaway(current_rank, rider_type):
             max(0.30, 0.75 - 0.05 * current_rank))
 
 
-def _retention_itt(current_rank, rider_type):
-    """ITT — top-3 stable for GC favourites who can TT; pure climbers can lose ground."""
-    is_strong_tt = rider_type in ('TTT Spec.', 'GC-Climber')
+def _retention_itt(current_rank, rider_type, rider=None):
+    """ITT — top-3 stable for GC favourites who can TT; pure climbers can lose ground.
+
+    Sub-B2-followup (2026-05-15): strong-TT classifier extended with a
+    composed semantic-OR — original `rider_type` route preserved (GC
+    climbers stay strong on ITT day per docstring rationale) AND a direct
+    `terrain_affinity.time_trial >= 0.7` route added to capture hybrid-TT
+    riders that `_python_rider_type` priority order misclassifies as
+    Sprinter (canonical: Ganna with sp=0.72 wins Sprinter classification
+    over tt=0.96). `rider` kwarg may be None when caller doesn't have a
+    rider object; in that case the new route falls through and only the
+    original `rider_type` route fires — preserves backward-compat.
+    """
+    tt_affinity = ((rider or {}).get('terrain_affinity') or {}).get('time_trial', 0) or 0
+    is_strong_tt = rider_type in ('TTT Spec.', 'GC-Climber') or tt_affinity >= 0.7
     if is_strong_tt:
         return (0.85 if current_rank <= 3 else 0.30,
                 0.90 if current_rank <= 10 else 0.40)
@@ -287,10 +299,10 @@ def _retention_itt(current_rank, rider_type):
             max(0.20, 0.70 - 0.06 * current_rank))
 
 
-def _retention_hybrid(current_rank, rider_type):
+def _retention_hybrid(current_rank, rider_type, rider=None):
     """Hybrid mountain — 70% sprint-like / 30% gc-day-like blend."""
-    sp3, sp10 = _retention_sprint(current_rank, rider_type)
-    gc3, gc10 = _retention_gc_day(current_rank, rider_type)
+    sp3, sp10 = _retention_sprint(current_rank, rider_type, rider)
+    gc3, gc10 = _retention_gc_day(current_rank, rider_type, rider)
     return (0.7 * sp3 + 0.3 * gc3,
             0.7 * sp10 + 0.3 * gc10)
 
@@ -304,14 +316,21 @@ _RETENTION_CURVES = {
 }
 
 
-def compute_retention_probabilities(current_rank, rider_type, stage_type):
+def compute_retention_probabilities(current_rank, rider_type, stage_type, rider=None):
     """Return (p_top3_retention, p_top10_retention) ∈ [0,1]² for a rider
     currently at `current_rank` in GC, classified as `rider_type`, on a stage
     classified as `stage_type`. Falls back to sprint-curves (conservative
     "no GC movement") when stage_type is unknown — per CLAUDE_SESSION
-    operational note 2026-05-14."""
+    operational note 2026-05-14.
+
+    Sub-B2-followup (2026-05-15): optional `rider` kwarg threads the full
+    rider dict (including `terrain_affinity`) through to retention curves.
+    Currently only `_retention_itt` consumes it (hybrid-TT capture via
+    direct `terrain_affinity.time_trial` read); other curves accept and
+    ignore it for signature uniformity.
+    """
     fn = _RETENTION_CURVES.get(stage_type, _retention_sprint)
-    p3, p10 = fn(current_rank, rider_type)
+    p3, p10 = fn(current_rank, rider_type, rider)
     # Clamp defensively even though all curves should produce in-range.
     return (max(0.0, min(1.0, p3)), max(0.0, min(1.0, p10)))
 
@@ -423,8 +442,12 @@ def add_stage_evs(probs, stage_config=None, scoring=None,
         if current_rank is not None:
             rider_obj  = rider_by_name.get(rider_name, {})
             rider_type = _python_rider_type(rider_obj)
+            # Sub-B2-followup (2026-05-15): thread full rider dict through so
+            # _retention_itt can read terrain_affinity.time_trial directly for
+            # hybrid-TT capture (Ganna-shape: misclassified as Sprinter by
+            # _python_rider_type but should land in strong-TT retention curve).
             p_top3, p_top10 = compute_retention_probabilities(
-                current_rank, rider_type, intel_stage_type,
+                current_rank, rider_type, intel_stage_type, rider=rider_obj,
             )
             p['gc_retention_top3']  = p_top3
             p['gc_retention_top10'] = p_top10
