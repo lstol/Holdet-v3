@@ -911,9 +911,11 @@ const S = {
     { name: 'Feltet.dk',                  weight: 1.3 },
   ],
   sliders: {
-    n1: { bunch_sprint: 70, reduced_sprint: 20, gc: 5,  breakaway: 5  },
-    n2: { bunch_sprint: 50, reduced_sprint: 30, gc: 10, breakaway: 10 },
-    n3: { bunch_sprint: 30, reduced_sprint: 30, gc: 30, breakaway: 10 },
+    // S17-6 (2026-05-15): 5th time_trial bucket. Defaults to 0 on non-ITT
+    // stages; user composes for ITT (and mountain-TT blend) at run-time.
+    n1: { bunch_sprint: 70, reduced_sprint: 20, gc: 5,  breakaway: 5,  time_trial: 0 },
+    n2: { bunch_sprint: 50, reduced_sprint: 30, gc: 10, breakaway: 10, time_trial: 0 },
+    n3: { bunch_sprint: 30, reduced_sprint: 30, gc: 30, breakaway: 10, time_trial: 0 },
   },
   oddsRows: [],
   intelData: null,
@@ -1351,12 +1353,13 @@ function renderSliders() {
       : `<div class="slider-panel-title">${labels[ki]}</div>`;
 
     div.innerHTML = titleHtml +
-      ['bunch_sprint','reduced_sprint','breakaway','gc'].map(type => {
+      ['bunch_sprint','reduced_sprint','breakaway','gc','time_trial'].map(type => {
         const names = {
           bunch_sprint:   'Bunch sprint',
           reduced_sprint: 'Reduced sprint',
           breakaway:      'Breakaway',
           gc:             'GC',
+          time_trial:     'Time trial',
         };
         const v = S.sliders[key][type];
         const dimTitle = key === 'n1' && !S.useRaceTypeAdjustment
@@ -1407,18 +1410,22 @@ function updatePanelStageLabels() {
 }
 
 function updateSlider(key, type, val) {
-  const types = ['bunch_sprint','reduced_sprint','breakaway','gc'];
+  // S17-6 (2026-05-15): 5-key shape. Auto-balance denominator generalised
+  // from hardcoded 3 to others.length so the redistribution works for any
+  // bucket count.
+  const types = ['bunch_sprint','reduced_sprint','breakaway','gc','time_trial'];
   val = Math.round(val);
   S.sliders[key][type] = val;
 
-  // Distribute remainder proportionally among the other 3 sliders
+  // Distribute remainder proportionally among the other sliders
   const others = types.filter(t => t !== type);
+  const otherCount = others.length;
   const otherSum = others.reduce((s, t) => s + S.sliders[key][t], 0);
   const remainder = 100 - val;
 
   if (otherSum === 0) {
-    const each = Math.floor(remainder / 3);
-    others.forEach((t, i) => { S.sliders[key][t] = i < remainder % 3 ? each + 1 : each; });
+    const each = Math.floor(remainder / otherCount);
+    others.forEach((t, i) => { S.sliders[key][t] = i < remainder % otherCount ? each + 1 : each; });
   } else {
     let distributed = 0;
     others.forEach((t, i) => {
@@ -1452,8 +1459,9 @@ function toggleRaceType(checked) {
 }
 
 function updateSumDisplay(key) {
+  // S17-6 (2026-05-15): 5-term sum (added time_trial).
   const sl = S.sliders[key];
-  const sum = sl.bunch_sprint + sl.reduced_sprint + sl.breakaway + sl.gc;
+  const sum = sl.bunch_sprint + sl.reduced_sprint + sl.breakaway + sl.gc + sl.time_trial;
   const el = $(`sum-${key}`);
   el.textContent = `Sum: ${sum}%`;
   el.className = 'sum-display ' + (Math.abs(sum - 100) < 1 ? 'ok' : 'bad');
@@ -2285,7 +2293,8 @@ function buildOptimizerPrompt() {
 
   const slStr = key => {
     const sl = S.sliders[key];
-    return `Bunch sprint ${sl.bunch_sprint}% / Reduced sprint ${sl.reduced_sprint}% / Breakaway ${sl.breakaway}% / GC ${sl.gc}%`;
+    // S17-6 (2026-05-15): 5-term display string (added time_trial).
+    return `Bunch sprint ${sl.bunch_sprint}% / Reduced sprint ${sl.reduced_sprint}% / Breakaway ${sl.breakaway}% / GC ${sl.gc}% / Time trial ${sl.time_trial}%`;
   };
 
   const oddsStr = S.oddsRows.length
@@ -2794,6 +2803,10 @@ function migrateSliders(blob) {
   if (!blob) return null;
   const keymap = { sprint: 'bunch_sprint', hilly: 'reduced_sprint',
                    hardgc: 'gc',           mixed: 'breakaway' };
+  // S17-6 (2026-05-15): canonical 5-key set. Existing 4-key blobs in
+  // localStorage default-fill `time_trial: 0` on first load post-deploy
+  // and re-persist. No versioned schema needed.
+  const SLIDER_KEYS = ['bunch_sprint','reduced_sprint','breakaway','gc','time_trial'];
   let migrated = false;
   for (const stage of ['n1','n2','n3']) {
     if (!blob[stage]) continue;
@@ -2804,9 +2817,16 @@ function migrateSliders(blob) {
     }
     blob[stage] = fresh;
     if (Object.keys(keymap).some(k => k in old)) migrated = true;
+    // Default-fill any missing canonical key (e.g. time_trial in legacy 4-key blobs).
+    for (const k of SLIDER_KEYS) {
+      if (blob[stage][k] === undefined) {
+        blob[stage][k] = 0;
+        migrated = true;
+      }
+    }
   }
   if (migrated) {
-    console.log('[migrateSliders] migrated old bucket names to new');
+    console.log('[migrateSliders] migrated old bucket names / default-filled missing keys');
     localStorage.setItem('holdet_sliders', JSON.stringify(blob));
   }
   return blob;

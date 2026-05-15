@@ -591,9 +591,14 @@ def build_probabilities(all_riders, odds, intel, sliders=None,
     # ── Race-type odds adjustment (n1 slider, tickbox-gated) ──────────────────
     if use_race_type and sliders:
         s = {k: sliders.get(k, 0) / 100.0
-             for k in ('bunch_sprint', 'reduced_sprint', 'breakaway', 'gc')}
+             for k in ('bunch_sprint', 'reduced_sprint', 'breakaway', 'gc', 'time_trial')}
+        # S17-6 (2026-05-15): generalised uniform-baseline constant from
+        # hardcoded 0.25 (= 1/4) to 1.0 / len(s) so the 5-key shape uses
+        # 0.20. Used at both the uniform-detector check and the uniform-
+        # baseline dict for _scenario_score below.
+        uniform_frac = 1.0 / len(s)
         # Uniform sliders → multiplier = 1.0 for all riders → no-op
-        if not all(abs(v - 0.25) < 1e-6 for v in s.values()):
+        if not all(abs(v - uniform_frac) < 1e-6 for v in s.values()):
             ta_by_name = {r['name']: r.get('terrain_affinity', {}) for r in all_riders}
 
             def _scenario_score(ta, weights):
@@ -605,7 +610,7 @@ def build_probabilities(all_riders, odds, intel, sliders=None,
                     for bucket in weights
                 )
 
-            uniform = {k: 0.25 for k in s}
+            uniform = {k: uniform_frac for k in s}
             mults = {}
             for name, ta in ta_by_name.items():
                 baseline = _scenario_score(ta, uniform)
@@ -820,6 +825,7 @@ SCENARIO_TO_TERRAIN = {
     'reduced_sprint': {'sprint': 0.5, 'mixed': 0.5},
     'breakaway':      {'mixed': 1.0},
     'gc':             {'climbing': 1.0},
+    'time_trial':     {'time_trial': 1.0},   # S17-6 (2026-05-15)
 }
 
 
@@ -841,7 +847,7 @@ def build_forward_probabilities(riders, sliders):
     """
     s = {
         bucket: sliders.get(bucket, 0) / 100.0
-        for bucket in ('bunch_sprint', 'reduced_sprint', 'breakaway', 'gc')
+        for bucket in ('bunch_sprint', 'reduced_sprint', 'breakaway', 'gc', 'time_trial')
     }
 
     raw = {}
