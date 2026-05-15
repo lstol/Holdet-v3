@@ -408,10 +408,13 @@ def _run_optimizer_claude_api_legacy():
     intel_data = json.load(open(intel_path)).get('intel', {}) if os.path.exists(intel_path) else {}
 
     def sl(key):
+        # S17-6 (2026-05-15): 5-term display string (added time_trial). Legacy
+        # path not route-exposed but kept in sync for consistency.
         s = sliders.get(key, {})
         return (f"Bunch sprint {s.get('bunch_sprint',0)}%  "
                 f"Reduced sprint {s.get('reduced_sprint',0)}%  "
-                f"Breakaway {s.get('breakaway',0)}%  GC {s.get('gc',0)}%")
+                f"Breakaway {s.get('breakaway',0)}%  GC {s.get('gc',0)}%  "
+                f"Time trial {s.get('time_trial',0)}%")
 
     # Only send Tier A riders (win_pct >= 1%) to the prompt — reduces tokens significantly
     tier_a = [r for r in active_riders
