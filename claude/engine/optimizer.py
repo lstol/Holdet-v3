@@ -19,7 +19,9 @@ import math
 import os
 import re
 import random
-import time
+# S17-10 (2026-05-15): `import time` removed — wall-clock SA termination
+# replaced with iteration-count termination; no remaining callers in this
+# module.
 from collections import Counter, defaultdict
 
 import numpy as np
@@ -942,12 +944,14 @@ def fast_optimize(candidates, probabilities, all_riders, force_in, force_out, bu
     current_ev = best_ev
     T          = 50_000.0
     cooling    = 0.9995
-    start      = time.time()
+    # S17-10 (2026-05-15): replaced time.time() early-termination with pure
+    # iteration-count termination. Chain depth is now deterministic given
+    # seed. Pre-fix: 10,000-iter loop with 1.0s wall-clock cap surfaced as
+    # non-determinism in auxiliary aggregation metadata on machines under
+    # load (chain truncation depends on wall-clock duration, not seed).
     n_forced   = len(forced)
 
     for _ in range(10_000):
-        if time.time() - start > 1.0:
-            break
         # biased swap inline
         if rng.random() < 0.7 and top_n:
             out_pos   = min(range(n_forced, 8), key=lambda idx: ev_cache_local.get(team[idx]['name'], 0))
@@ -1369,15 +1373,17 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
     T       = float(initial_temperature)
     cooling = float(cooling_rate)
 
-    start = time.time()
+    # S17-10 (2026-05-15): replaced time.time() early-termination with pure
+    # iteration-count termination. `n_iter` is the sole termination
+    # condition. `max_seconds` parameter retained in signature as
+    # deprecated-but-accepted (callers still pass it; no behavioural
+    # effect post-S17-10). Pre-fix: wall-clock cap caused chain-length
+    # drift dependent on machine load, surfaced as non-determinism in
+    # auxiliary aggregation metadata (best_corroborated_count,
+    # best_seen_ev vs best_corroborated_ev divergence) across S17-6 V4a,
+    # Sub-B2-followup V4a/V4a', and S17-22-followup Phase 1-redux.
     i = 0
     while i < n_iter:
-        if time.time() - start > max_seconds:
-            _sa_logger.info(
-                f"SA stopping at iter {i} after {max_seconds}s (seed={seed}, obj={objective})"
-            )
-            break
-
         if verbose and i in _SA_LOG_ITERS:
             team_evs = sorted(
                 [(r['name'], r.get('price', 0), ev_cache.get(r['name'], 0)) for r in team],
