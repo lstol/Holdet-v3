@@ -709,11 +709,29 @@ def compute_team_ev(team, probs):
 
 # ── Step 3: Constraint checker ────────────────────────────────────────────────
 
-def is_valid(team, budget=BUDGET):
-    """Return True iff team satisfies all hard constraints."""
+def is_valid(team, current_team, budget=BUDGET):
+    """Return True iff team satisfies all hard constraints.
+
+    S17-BANK Bug B (2026-05-15): `current_team` is positionally required so
+    callsites must be explicit about transfer context. When `current_team` is
+    non-empty, the budget check subtracts transfer fees from
+    `compute_transfer_cost(current_team, team)` — fees = 1% × buy_price for
+    each rider in `team` not already in `current_team`. The constraint becomes
+    `sum(team_prices) + transfer_fees ≤ budget`, matching Holdet's real
+    accounting.
+
+    When `current_team` is empty or None (in-vacuum contexts like
+    `fast_optimize` for forward-stage proxies, or `topup_team` filling gaps
+    in a partial roster), no fees are subtracted — preserves pre-Bug-B
+    in-vacuum semantics. Empty-vs-real is the explicit signal: callers
+    holding a real "transfer-from" team pass it; callers operating in
+    vacuum pass `[]`.
+    """
     if len(team) != 8:
         return False
-    if sum(r.get('price', 0) for r in team) > budget:
+    team_price_sum = sum(r.get('price', 0) for r in team)
+    transfer_fees  = compute_transfer_cost(current_team, team) if current_team else 0
+    if team_price_sum + transfer_fees > budget:
         return False
     tc = defaultdict(int)
     for r in team:
@@ -913,7 +931,10 @@ def fast_optimize(candidates, probabilities, all_riders, force_in, force_out, bu
             T *= cooling; continue
         new_team = team[:]
         new_team[out_pos] = new_rider
-        if not is_valid(new_team, budget):
+        # S17-BANK Bug B: fast_optimize is an in-vacuum forward-stage proxy
+        # search; no real "current_team" to transfer from. Pass [] so fees
+        # are skipped (matches pre-Bug-B behaviour for this path).
+        if not is_valid(new_team, [], budget):
             T *= cooling; continue
         new_ev = compute_team_ev(new_team, probabilities)
         delta  = new_ev - current_ev
@@ -958,7 +979,10 @@ def topup_team(team, candidates, probabilities, all_riders, budget):
         if len(team) >= 8:
             break
         cand = team + [r]
-        if is_valid(cand, budget):
+        # S17-BANK Bug B: topup_team fills gaps in a partial roster; no
+        # transfer-from context (the team being topped up isn't being
+        # transferred from anything). Pass [] to skip fee subtraction.
+        if is_valid(cand, [], budget):
             team = cand
     return team
 
@@ -1288,7 +1312,11 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
         seed_names = {r.get('name') for r in seed_team}
         valid_force = (forced_set.issubset(seed_names)
                        and not (excluded_set & seed_names))
-        if valid_force and is_valid(seed_team, budget):
+        # S17-BANK Bug B: seed_team is the chain's starting roster (often
+        # equals current_team for chain 0). Validity check includes transfer
+        # fees against current_team — when seed_team == current_team, fees=0
+        # by construction (no buys); otherwise fees correctly subtracted.
+        if valid_force and is_valid(seed_team, current_team or [], budget):
             non_forced_in_seed = [r for r in seed_team if r.get('name') not in forced_set]
             team = list(forced) + non_forced_in_seed
     if team is None:
@@ -1354,7 +1382,11 @@ def simulated_annealing(all_riders, probs, force_in_names, force_out_names,
         new_team = team[:]
         new_team[out_pos] = new_rider
 
-        if not is_valid(new_team, budget):
+        # S17-BANK Bug B: SA main-loop validity. The "transfer-from" is the
+        # CURRENT TEAM (the stage-n starting roster), not the chain's
+        # intermediate state — fees are paid against the real prior team
+        # the user is starting from, regardless of how the SA explores.
+        if not is_valid(new_team, current_team or [], budget):
             skips += 1
             T *= cooling
             i += 1
