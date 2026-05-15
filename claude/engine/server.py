@@ -603,8 +603,14 @@ def run_optimizer_py():
     standings_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage - 1}_standings.json')
     standings_data = json.load(open(standings_path)) if os.path.exists(standings_path) else {}
 
-    # Bank balance still comes from the target-stage holdet snapshot.
-    snapshot_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage}_holdet.json')
+    # S17-BANK Bug A fix (2026-05-15): bank balance comes from the PREVIOUS
+    # stage's results.json (the post-race bank, which is the available budget
+    # to deploy for the upcoming stage). Same source the dashboard
+    # `/stage-results` endpoint reads for the "How it unfolded" panel — single
+    # source of truth for optimizer + display surfaces.
+    # Pre-fix: read stage_{stage}_holdet.json (target-stage snapshot, which
+    # doesn't exist pre-race) and fell through to hardcoded 50_000_000.
+    snapshot_path = os.path.join(SNAPSHOT_DIR, f'stage_{stage - 1}_results.json')
     snapshot = json.load(open(snapshot_path)) if os.path.exists(snapshot_path) else {}
     budget = int(snapshot.get('bank_balance', 50_000_000))
 
