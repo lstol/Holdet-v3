@@ -408,12 +408,19 @@ def add_stage_evs(probs, stage_config=None, scoring=None,
         kom_ev = sum(fp[i] * compute_climb_ev(i + 1, climbs, scoring)
                      for i in range(len(fp)) if fp[i] > 0)
 
-        # Sub-B2 override (2026-05-14): if rider is currently in GC top-10
-        # and the consumer passed standings + stage_type, replace bookmaker-
+        # Sub-B2 override (2026-05-14, Phase 1.6 gate fix): if rider is currently
+        # in GC top-10 and the consumer passed standings, replace bookmaker-
         # derived gc_ev/jersey_ev with retention-aware values. Outside-top-10
         # riders keep the bookmaker-derived path (Phase 1 retention-only).
+        # Phase 1.6 (2026-05-14): dropped `and intel_stage_type` from gate —
+        # compute_retention_probabilities already falls back to
+        # _retention_sprint via _RETENTION_CURVES.get(None, _retention_sprint)
+        # when stage_type is None. Pre-fix gate short-circuited entire override
+        # when intel substrate predated the Sub-B1 schema extension; Eulalio
+        # collapsed to bookmaker path = 11k EV. Documented operational-note
+        # fallback ("missing stage_type → sprint curves") now actually fires.
         current_rank = rank_map.get(rider_name)
-        if current_rank is not None and intel_stage_type:
+        if current_rank is not None:
             rider_obj  = rider_by_name.get(rider_name, {})
             rider_type = _python_rider_type(rider_obj)
             p_top3, p_top10 = compute_retention_probabilities(
