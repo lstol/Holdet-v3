@@ -1404,9 +1404,16 @@ Rules:
   * "hybrid_mountain" — mountain stage that doesn't fit cleanly into gc_day or breakaway (long descent after final climb, medium-mountain with multiple small climbs, etc.)
   Pick the closest single category. If genuinely ambiguous, prefer the more conservative (smaller-GC-movement) option."""
 
+            # S17-INTEL Phase 1b (2026-05-16): max_tokens bumped 8000 → 16384
+            # to accommodate 7-source extraction output. Phase 1a measured
+            # 3-source state at ~3,900 output tokens (49% of 8000); linear
+            # projection to 7-source state is ~9,000+ tokens, exceeding
+            # 8000 cap. Haiku 4.5 supports up to 64K output tokens; 16384
+            # is a defensive 2x headroom for Phase 1b/1c growth without
+            # over-budgeting.
             return call_with_retry(lambda: client.messages.create(
                 model='claude-haiku-4-5-20251001',
-                max_tokens=8000,
+                max_tokens=16384,
                 messages=[{'role': 'user', 'content': prompt}]
             ))
 
