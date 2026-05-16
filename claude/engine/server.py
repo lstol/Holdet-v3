@@ -1252,14 +1252,20 @@ def gather_intel():
         # not-found sentinel on current-stage TV2 and fall back to the generic URL.
         app.logger.info(f"Scraping intel for Stage {stage}...")
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        from scraper import scrape_all_intel, fetch_tv2_generic_preview
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as scrape_executor:
+        from scraper import (scrape_all_intel, fetch_tv2_generic_preview,
+                             scrape_phase1b_sources)
+        # S17-INTEL Phase 1b (2026-05-16): scrape_phase1b_sources runs in
+        # parallel with the existing scrape_all_intel + forward TV2 calls.
+        # Returns {inner_ring, touretappe, total_velo, cyclingnews}.
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as scrape_executor:
             current_scrape_future = scrape_executor.submit(scrape_all_intel, int(stage))
             n1_fwd_future = scrape_executor.submit(fetch_tv2_generic_preview, int(stage) + 1)
             n2_fwd_future = scrape_executor.submit(fetch_tv2_generic_preview, int(stage) + 2)
+            phase1b_future = scrape_executor.submit(scrape_phase1b_sources, int(stage))
             raw_sources = current_scrape_future.result()
             n1_fwd = n1_fwd_future.result()
             n2_fwd = n2_fwd_future.result()
+            phase1b_sources = phase1b_future.result()
 
         # S17-β: current-stage Axelgaard fallback. If the Playwright scraper returned the
         # not-found sentinel (Axelgaard hasn't published his detailed column yet), substitute
@@ -1276,20 +1282,35 @@ def gather_intel():
             else:
                 current_source = 'both_failed'
 
+        # S17-INTEL Phase 1b (2026-05-16): log adds Phase 1b source sizes
+        # (inner_ring / touretappe / total_velo / cyclingnews) alongside the
+        # existing TV2/Feltet/Inner-Ring-deprecated entries. Note: the
+        # `inrng` log field below references the OLD Playwright Inner Ring
+        # scrape via scrape_all_intel — kept for backward-compat with
+        # log-parsing tooling. The NEW direct-HTTP Inner Ring lives in
+        # phase1b_sources['inner_ring'] and feeds source_texts.
         app.logger.info(
             f"TV2: {len(raw_sources['tv2'])} chars (source={current_source}) | "
             f"Feltet: {len(raw_sources['feltet'])} chars | "
-            f"Inner Ring: {len(raw_sources['inner_ring'])} chars | "
+            f"Inner Ring (old PW): {len(raw_sources['inner_ring'])} chars | "
             f"TV2 n+1: {len(n1_fwd.get('prose', ''))} chars (source={n1_fwd.get('source')}) | "
-            f"TV2 n+2: {len(n2_fwd.get('prose', ''))} chars (source={n2_fwd.get('source')})"
+            f"TV2 n+2: {len(n2_fwd.get('prose', ''))} chars (source={n2_fwd.get('source')}) | "
+            f"Phase1b: inner_ring={len(phase1b_sources.get('inner_ring') or '')} "
+            f"touretappe={len(phase1b_sources.get('touretappe') or '')} "
+            f"total_velo={len(phase1b_sources.get('total_velo') or '')} "
+            f"cyclingnews={len(phase1b_sources.get('cyclingnews') or '')}"
         )
         _log(
             f"gather-intel stage={stage} scraped "
             f"tv2={len(raw_sources['tv2'])}/{current_source} "
             f"feltet={len(raw_sources['feltet'])} "
-            f"inrng={len(raw_sources['inner_ring'])} "
+            f"inrng_old={len(raw_sources['inner_ring'])} "
             f"tv2_n1={len(n1_fwd.get('prose',''))}/{n1_fwd.get('source')} "
-            f"tv2_n2={len(n2_fwd.get('prose',''))}/{n2_fwd.get('source')}"
+            f"tv2_n2={len(n2_fwd.get('prose',''))}/{n2_fwd.get('source')} "
+            f"p1b_inner_ring={len(phase1b_sources.get('inner_ring') or '')} "
+            f"p1b_touretappe={len(phase1b_sources.get('touretappe') or '')} "
+            f"p1b_total_velo={len(phase1b_sources.get('total_velo') or '')} "
+            f"p1b_cyclingnews={len(phase1b_sources.get('cyclingnews') or '')}"
         )
 
         # Step 2: structure with 3 parallel Haiku calls — current stage + forward n+1 + forward n+2 (S17-15)
@@ -1322,16 +1343,19 @@ def gather_intel():
         if not _feltet_text or _feltet_text.startswith('[Feltet'):
             _feltet_text = None
 
-        # Source-text dispatch. Phase 1b adds inner_ring/touretappe/
-        # total_velo/cyclingnews; Phase 1c adds the rest.
+        # Source-text dispatch. Phase 1a wired: tv2_axelgaard, tv2_generic,
+        # feltet. Phase 1b (2026-05-16) wired: inner_ring, touretappe,
+        # total_velo, cyclingnews via direct-HTTP scrape_phase1b_sources.
+        # Phase 1c will wire: wielerflits, indeleiderstrui, cyclingstage,
+        # todaycycling, cicloweb, spaziociclismo.
         source_texts = {
             'tv2_axelgaard': _tv2_axelgaard_text,
             'tv2_generic':   _tv2_generic_text,
             'feltet':        _feltet_text,
-            # Inner Ring scraper exists but returns stale 2024 content per S11
-            # archaeology; Phase 1a treats as placeholder. Phase 1b ships
-            # the new direct-HTTP Inner Ring scraper against
-            # inrng.com/{YYYY}/{MM}/giro-stage-{N}-preview-{slug}/.
+            'inner_ring':    phase1b_sources.get('inner_ring')  or None,
+            'touretappe':    phase1b_sources.get('touretappe')  or None,
+            'total_velo':    phase1b_sources.get('total_velo')  or None,
+            'cyclingnews':   phase1b_sources.get('cyclingnews') or None,
         }
 
         def _haiku_current():
@@ -1404,9 +1428,16 @@ Rules:
   * "hybrid_mountain" — mountain stage that doesn't fit cleanly into gc_day or breakaway (long descent after final climb, medium-mountain with multiple small climbs, etc.)
   Pick the closest single category. If genuinely ambiguous, prefer the more conservative (smaller-GC-movement) option."""
 
+            # S17-INTEL Phase 1b (2026-05-16): max_tokens bumped 8000 → 16384
+            # to accommodate 7-source extraction output. Phase 1a measured
+            # 3-source state at ~3,900 output tokens (49% of 8000); linear
+            # projection to 7-source state is ~9,000+ tokens, exceeding
+            # 8000 cap. Haiku 4.5 supports up to 64K output tokens; 16384
+            # is a defensive 2x headroom for Phase 1b/1c growth without
+            # over-budgeting.
             return call_with_retry(lambda: client.messages.create(
                 model='claude-haiku-4-5-20251001',
-                max_tokens=8000,
+                max_tokens=16384,
                 messages=[{'role': 'user', 'content': prompt}]
             ))
 

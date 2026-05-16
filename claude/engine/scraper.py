@@ -522,3 +522,193 @@ def scrape_tv2_intel(stage: int) -> str:
 #     async def _run():
 #         return await fetch_feltet_ingemann_team(stage)
 #     return asyncio.run(_run())
+
+
+# ── S17-INTEL Phase 1b (2026-05-16): 4 direct-HTTP scrapers ──────────────────
+#
+# Inner Ring (replaces deprecated Playwright fetch_inner_ring_preview above —
+# old version still in source for archaeology; not invoked by scrape_all_intel
+# post-Phase-1b. New direct-HTTP version writes against canonical inrng.com
+# URL pattern, bypassing the S11 stale-data root cause.)
+#
+# Touretappe / Total-velo / Cyclingnews — clean URL patterns per Phase 0 audit
+# §B. All use a shared <article> body extraction pattern.
+
+import json as _json
+import unicodedata as _unicodedata
+
+_REALISTIC_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+                  'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+}
+
+_STAGES_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    'shared', 'data', 'stages', 'giro_2026', 'stages_giro2026.json'
+)
+
+
+def _fetch_article_text(url: str, source_label: str, min_chars: int = 500) -> str:
+    """Shared direct-HTTP article-body extractor for Phase 1b scrapers.
+
+    Returns the article text or empty string on any failure (404, parse fail,
+    too-short content). Callers should check truthiness.
+
+    Pattern verified on Stage 8 substrate for Inner Ring / Touretappe /
+    Total-velo / Cyclingnews — all 4 sites have a top-level <article> tag
+    wrapping post body. If a site evolves a different selector later, add
+    site-specific extraction shape rather than degrading this helper.
+    """
+    try:
+        resp = requests.get(url, headers=_REALISTIC_HEADERS, timeout=15,
+                            allow_redirects=True)
+        if resp.status_code != 200:
+            return ''
+        # Per CLAUDE_SESSION UTF-8 rule (S17-25): force encoding when site
+        # omits charset header. Defensive for Dutch/French/Italian sources
+        # carrying accented characters.
+        if not resp.encoding or resp.encoding.lower() == 'iso-8859-1':
+            resp.encoding = 'utf-8'
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        article = soup.find('article')
+        if not article:
+            # Fall back to entry-content / post-content WordPress conventions
+            article = (soup.find('div', class_='entry-content')
+                       or soup.find('div', class_='post-content')
+                       or soup.find('main'))
+        if not article:
+            return ''
+        # Strip script / style / nav noise before extracting text
+        for tag in article(['script', 'style', 'nav', 'aside', 'footer']):
+            tag.decompose()
+        text = article.get_text(' ', strip=True)
+        if len(text) < min_chars:
+            return ''
+        return text
+    except Exception:
+        return ''
+
+
+def _normalise_finish_city_slug(city: str) -> str:
+    """Inner Ring URL slug from finish_city.
+
+    Lowercase, strip accents, replace non-alphanumeric runs with hyphens.
+    Verified against stages_giro2026.json:
+      Stage  8: 'Fermo'              → 'fermo'
+      Stage  2: 'Veliko Tarnovo'     → 'veliko-tarnovo'
+      Stage  9: 'Corno alle Scale'   → 'corno-alle-scale'
+      Stage 16: 'Carì'               → 'cari'
+      Stage 18: 'Pieve di Soligo'    → 'pieve-di-soligo'
+    """
+    if not city:
+        return ''
+    nfd = _unicodedata.normalize('NFD', city)
+    ascii_str = ''.join(c for c in nfd if not _unicodedata.combining(c))
+    return re.sub(r'[^a-z0-9]+', '-', ascii_str.lower()).strip('-')
+
+
+def _load_stage_meta(stage_n: int) -> dict:
+    """Read stages_giro2026.json for a single stage's metadata."""
+    try:
+        with open(_STAGES_FILE) as f:
+            data = _json.load(f)
+        for st in data.get('stages', []):
+            if int(st.get('stage_number') or 0) == int(stage_n):
+                return st
+    except Exception:
+        pass
+    return {}
+
+
+def fetch_inner_ring_preview_http(stage: int) -> str:
+    """S17-INTEL Phase 1b: direct-HTTP Inner Ring scraper.
+
+    URL pattern: inrng.com/{YYYY}/05/giro-stage-{N}-preview-{slug}/
+    where slug = lowercase finish city from stages_giro2026.json.
+
+    Replaces the deprecated Playwright version above (kept in source for
+    archaeology; no longer invoked by scrape_all_intel). The slug-based
+    URL bypasses the S11 stale-data root cause — historical 2024 content
+    no longer in the canonical 2026 path.
+
+    Note the `_http` suffix — kept distinct from the existing async
+    `fetch_inner_ring_preview` symbol so callers explicitly opt in.
+    """
+    meta = _load_stage_meta(stage)
+    finish_city = meta.get('finish_city')
+    if not finish_city:
+        return ''
+    slug = _normalise_finish_city_slug(finish_city)
+    if not slug:
+        return ''
+    url = f"https://inrng.com/2026/05/giro-stage-{stage}-preview-{slug}/"
+    return _fetch_article_text(url, source_label='inner_ring')
+
+
+def fetch_touretappe_preview(stage: int) -> str:
+    """S17-INTEL Phase 1b: direct-HTTP Touretappe.nl scraper.
+
+    URL pattern: touretappe.nl/giro-2026-favoriet/etappe-{N}-italie-kanshebber-2026/
+
+    Phase 0 audit verified clean numeric URL pattern. Touretappe carries
+    explicit star ratings inline in prose (lighter Haiku extraction load
+    per Phase 0 scope note). Returns empty string on 404 / parse failure.
+    """
+    url = f"https://www.touretappe.nl/giro-2026-favoriet/etappe-{stage}-italie-kanshebber-2026/"
+    return _fetch_article_text(url, source_label='touretappe')
+
+
+def fetch_total_velo_preview(stage: int) -> str:
+    """S17-INTEL Phase 1b: direct-HTTP Total-velo.com scraper.
+
+    URL pattern: total-velo.com/giro-2026-etape-{N}-parcours-favoris-direct/
+
+    Phase 0 audit verified clean numeric URL pattern. Total-velo carries
+    explicit star ratings inline in prose.
+    """
+    url = f"https://www.total-velo.com/giro-2026-etape-{stage}-parcours-favoris-direct/"
+    return _fetch_article_text(url, source_label='total_velo')
+
+
+def fetch_cyclingnews_preview(stage: int) -> str:
+    """S17-INTEL Phase 1b: direct-HTTP Cyclingnews.com scraper.
+
+    URL pattern: cyclingnews.com/pro-cycling/racing/2026-giro-d-italia-stage-{N}-preview/
+
+    Phase 0 audit verified Stage 7 URL works at this pattern. Mainstream
+    English source; prose-heavy (less inline star formatting — Haiku
+    derives stars from prose strength/direction signals).
+    """
+    url = f"https://www.cyclingnews.com/pro-cycling/racing/2026-giro-d-italia-stage-{stage}-preview/"
+    return _fetch_article_text(url, source_label='cyclingnews')
+
+
+def scrape_phase1b_sources(stage: int) -> dict:
+    """Parallel-fetch the 4 Phase 1b direct-HTTP scrapers.
+
+    Returns {canonical: text_or_empty_string} dict keyed by yaml canonical
+    names. Empty strings signal "scrape attempted but no content" — the
+    gather_intel orchestrator translates these to "[Article not found for
+    this stage]" placeholders for Haiku.
+
+    Uses ThreadPoolExecutor for parallelism (HTTP I/O bound; 4 concurrent
+    requests complete in roughly the slowest single request's time).
+    """
+    import concurrent.futures
+    dispatch = {
+        'inner_ring': fetch_inner_ring_preview_http,
+        'touretappe': fetch_touretappe_preview,
+        'total_velo': fetch_total_velo_preview,
+        'cyclingnews': fetch_cyclingnews_preview,
+    }
+    out = {canonical: '' for canonical in dispatch}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(dispatch)) as ex:
+        futures = {canonical: ex.submit(fn, stage) for canonical, fn in dispatch.items()}
+        for canonical, fut in futures.items():
+            try:
+                out[canonical] = fut.result(timeout=20) or ''
+            except Exception:
+                out[canonical] = ''
+    return out
