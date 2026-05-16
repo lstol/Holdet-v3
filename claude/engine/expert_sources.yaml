@@ -1,17 +1,19 @@
 # S17-INTEL Phase 1a (2026-05-16): extended from 2 entries → 13.
+# S17-INTEL Phase 2 (2026-05-16): added `enabled: true` default per
+# source. Dashboard tickbox toggles; Phase 2 ships display-only effect
+# (star matrix filters disabled sources); Phase 3 makes load-bearing
+# for optimizer consumer math (disabled sources skipped).
 # Schema per source: name (human-readable), canonical (snake_case key —
 # used in source_ratings + expert_stars + dashboard), weight (initial
 # default; tuned operationally), language (2-letter code), scraper
-# (function-name identifier dispatched by scraper.py orchestrator).
+# (function-name identifier dispatched by scraper.py orchestrator),
+# enabled (bool — dashboard tickbox state).
 #
 # Wired scrapers (Phase 1a): tv2_axelgaard, tv2_generic, feltet.
-# Placeholder scrapers (not yet wired): all others — orchestrator returns
-# None; Haiku prompt injects "[Article not found for this stage]" block.
-# Wiring schedule:
-#   Phase 1b: touretappe, total_velo, cyclingnews, inner_ring
-#   Phase 1c: wielerflits_playwright, indeleiderstrui_search,
-#             cyclingstage_hub, todaycycling_search, cicloweb_search,
-#             spaziociclismo_search
+# Wired scrapers (Phase 1b): inner_ring, touretappe, total_velo, cyclingnews.
+# Wired scrapers (Phase 1c): wielerflits_playwright, indeleiderstrui_search,
+#   cyclingstage_hub, todaycycling_search, cicloweb_search.
+# Deferred (Phase 1c → Phase 4): spaziociclismo (no per-stage preview surface).
 
 sources:
   - name: TV2/Axelgaard
@@ -19,63 +21,76 @@ sources:
     weight: 1.5
     language: da
     scraper: tv2_axelgaard
+    enabled: true
   - name: TV2 generic preview
     canonical: tv2_generic
     weight: 1.0
     language: da
     scraper: tv2_generic
+    enabled: true
   - name: Feltet
     canonical: feltet
     weight: 1.2
     language: da
     scraper: feltet
+    enabled: true
   - name: Inner Ring
     canonical: inner_ring
     weight: 1.2
     language: en
-    scraper: inner_ring  # placeholder — wired in Phase 1b
+    scraper: inner_ring
+    enabled: true
   - name: Touretappe
     canonical: touretappe
     weight: 1.0
     language: nl
-    scraper: touretappe  # placeholder — wired in Phase 1b
+    scraper: touretappe
+    enabled: true
   - name: Wielerflits
     canonical: wielerflits
     weight: 1.0
     language: nl
-    scraper: wielerflits_playwright  # placeholder — wired in Phase 1c
+    scraper: wielerflits_playwright
+    enabled: true
   - name: Indeleiderstrui
     canonical: indeleiderstrui
     weight: 0.8
     language: nl
-    scraper: indeleiderstrui_search  # placeholder — wired in Phase 1c
+    scraper: indeleiderstrui_search
+    enabled: true
   - name: Cyclingnews
     canonical: cyclingnews
     weight: 1.0
     language: en
-    scraper: cyclingnews  # placeholder — wired in Phase 1b
+    scraper: cyclingnews
+    enabled: true
   - name: Cyclingstage
     canonical: cyclingstage
     weight: 0.8
     language: en
-    scraper: cyclingstage_hub  # placeholder — wired in Phase 1c
+    scraper: cyclingstage_hub
+    enabled: true
   - name: Total-velo
     canonical: total_velo
     weight: 1.0
     language: fr
-    scraper: total_velo  # placeholder — wired in Phase 1b
+    scraper: total_velo
+    enabled: true
   - name: TodayCycling
     canonical: todaycycling
     weight: 0.8
     language: fr
-    scraper: todaycycling_search  # placeholder — wired in Phase 1c
+    scraper: todaycycling_search
+    enabled: true
   - name: Cicloweb
     canonical: cicloweb
     weight: 0.8
     language: it
-    scraper: cicloweb_search  # placeholder — wired in Phase 1c
+    scraper: cicloweb_search
+    enabled: true
   - name: SpazioCiclismo
     canonical: spaziociclismo
     weight: 0.8
     language: it
     scraper: deferred_phase_4  # S17-INTEL Phase 1c (2026-05-16): deferred. Probe found spaziociclismo.it host doesn't resolve; cyclingpro.net/spaziociclismo/ exists but search returns no per-stage preview/favoriti articles — source publishes live coverage + analysis rather than pre-race previews matching Phase 1 source-type. Phase 1 final source list narrows to 12 wired + this entry as deferred. Phase 4 source registry grows by one.
+    # No `enabled` field — Phase 2 controls + matrix filter on scraper != 'deferred_*'.
