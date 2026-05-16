@@ -229,6 +229,13 @@ async def fetch_feltet_stage_analysis(stage: int) -> str:
 
 async def fetch_inner_ring_preview(stage: int) -> str:
     """
+    DEPRECATED (S17-INTEL Phase 1c, 2026-05-16): replaced by direct-HTTP
+    `fetch_inner_ring_preview_http` (Phase 1b) which writes against the
+    canonical inrng.com/{YYYY}/{MM}/giro-stage-{N}-preview-{slug}/ URL.
+    Old Playwright link-discovery path retained in source for archaeology;
+    no longer invoked by scrape_all_intel post-Phase-1c.
+
+    Original docstring:
     Fetch Inner Ring stage preview — no login required.
     URL pattern: inrng.com/YYYY/MM/giro-stage-N-preview-[finish-city]/
     """
@@ -415,18 +422,25 @@ def scrape_all_intel(stage: int, include_forward: bool = False) -> dict:
     legacy callers, populated with the not-found sentinel so downstream consumers
     treat them as absent.
     """
+    # S17-INTEL Phase 1c (2026-05-16): Old Playwright Inner Ring invocation
+    # removed. New direct-HTTP fetch_inner_ring_preview_http (Phase 1b) is
+    # the canonical Inner Ring path, dispatched from gather_intel via
+    # scrape_phase1b_sources. The async fetch_inner_ring_preview function
+    # above is retained in source as DEPRECATED-commented archaeology;
+    # no callers reference it post-Phase-1c. Saves 5-10s of Playwright
+    # browser launch per gather-intel call (Phase 1b log surfaced
+    # `inrng_old=5772` for previously-wasted scrape).
     async def _run():
         tasks = [
             fetch_tv2_stage_preview(stage),
             fetch_feltet_stage_analysis(stage),
-            fetch_inner_ring_preview(stage),
         ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        tv2, feltet, inner_ring = results[0], results[1], results[2]
+        tv2, feltet = results[0], results[1]
         out = {
             'tv2':        str(tv2)        if not isinstance(tv2, Exception)        else f'[TV2 error: {tv2}]',
             'feltet':     str(feltet)     if not isinstance(feltet, Exception)     else f'[Feltet error: {feltet}]',
-            'inner_ring': str(inner_ring) if not isinstance(inner_ring, Exception) else f'[Inner Ring error: {inner_ring}]',
+            'inner_ring': '',  # Phase 1c: legacy key preserved for log-parsing tooling; empty per Phase 1b deprecation
         }
         if include_forward:
             out['tv2_n1'] = f'[TV2/Axelgaard: Stage {stage + 1} preview not found]'
