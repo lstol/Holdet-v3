@@ -1,0 +1,135 @@
+{
+  "stage": 1,
+  "intel": {
+    "_gathered_at": "2026-05-08T21:51:18.745647",
+    "broadcast_times": {
+      "projected_finish": "17:15 CEST",
+      "start_km0": "14:00 CEST"
+    },
+    "gathered_at": "2026-05-08T21:51:18.742157",
+    "key_signals": [
+      {
+        "direction": "down",
+        "rider": "Jonathan Milan",
+        "signal": "Among world's best sprinters but train historically error-prone",
+        "strength": "moderate"
+      },
+      {
+        "direction": "up",
+        "rider": "Tobias Lund",
+        "signal": "Proven speed beating Milan and Philipsen this season, solid leadout in place",
+        "strength": "strong"
+      },
+      {
+        "direction": "up",
+        "rider": "Dylan Groenewegen",
+        "signal": "Stage layout suits him; motivated to score before hillier stages eliminate him",
+        "strength": "moderate"
+      },
+      {
+        "direction": "neutral",
+        "rider": "Paul Magnier",
+        "signal": "Good flat finish speed, but craves hillier terrain where he has real advantage",
+        "strength": "moderate"
+      },
+      {
+        "direction": "down",
+        "rider": "Arnaud De Lie",
+        "signal": "Seeking season reset on Giro stage but recently ill",
+        "strength": "moderate"
+      },
+      {
+        "direction": "down",
+        "rider": "Pascal Ackermann",
+        "signal": "Former points winner now infrequent winner",
+        "strength": "weak"
+      },
+      {
+        "direction": "neutral",
+        "rider": "Casper van Uden",
+        "signal": "Won Giro stage last year but minimal wins since",
+        "strength": "weak"
+      },
+      {
+        "direction": "down",
+        "rider": "Kaden Groves",
+        "signal": "Recently returned from knee injuries, not regular winner despite past Giro stage wins",
+        "strength": "moderate"
+      }
+    ],
+    "source_ratings": [
+      {
+        "source": "Inner Ring",
+        "tier_1_contenders": [
+          {
+            "assessment": "Towering pick, among best sprinters in world, but train error-prone",
+            "rider": "Jonathan Milan",
+            "team": "Lidl-Trek"
+          }
+        ],
+        "tier_2_contenders": [
+          {
+            "assessment": "Season revelation, beaten Milan and Philipsen, solid leadout train",
+            "rider": "Tobias Lund",
+            "team": "Decathlon-CMA CGM"
+          },
+          {
+            "assessment": "Stage suits him, wants to score today before hillier stages eliminate him",
+            "rider": "Dylan Groenewegen",
+            "team": "Unibet-Rose Rockets"
+          },
+          {
+            "assessment": "Craves Giro stage, significant speed on flat finishes, stronger on hills",
+            "rider": "Paul Magnier",
+            "team": "Soudal-Quickstep"
+          }
+        ],
+        "tier_3_contenders": [
+          {
+            "assessment": "Former Giro points winner, infrequent winner now",
+            "rider": "Pascal Ackermann",
+            "team": "Jayco"
+          },
+          {
+            "assessment": "Wants to get season back on track, recently ill",
+            "rider": "Arnaud De Lie",
+            "team": "Lotto-Intermarché"
+          },
+          {
+            "assessment": "Won Giro sprint last year, only one other win since",
+            "rider": "Casper van Uden",
+            "team": "Picnic-PostNL-Raisin"
+          },
+          {
+            "assessment": "Two prior Giro stage wins, not regular winner, recently returned from knee injuries",
+            "rider": "Kaden Groves",
+            "team": "Alpecin-PremierTech"
+          }
+        ],
+        "weight": 1.2
+      }
+    ],
+    "sources_consulted": [
+      "Inner Ring"
+    ],
+    "sources_not_found": [
+      "TV2/Axelgaard",
+      "Feltet.dk"
+    ],
+    "stage": 1,
+    "stage_profile": {
+      "distance_km": 147,
+      "finish_gradient": "Slopes gently upward to line",
+      "finish_type": "Sprint finish",
+      "key_features": "Seaside stage along Bulgarian coast with two 22km circuit laps including intermediate sprints (6-4-2s time bonus) and climb for mountains jersey, then return to Burgas"
+    },
+    "summary": "Jonathan Milan enters as towering favourite despite his train's error-prone history, but Tobias Lund has shown genuine pace this season and Dylan Groenewegen finds a suited stage before harder terrain eliminates him. Weather should remain favourable for a sprint finish, though rain showers pose a slippery road risk on the Bulgarian coast.",
+    "weather": {
+      "conditions": "Often sunny",
+      "risk": "Potential rain showers creating slippery roads",
+      "temperature_c": 19,
+      "wind": "Light sea breeze 10km/h, no crosswinds"
+    }
+  },
+  "gathered_at": "2026-05-08T21:51:18.774237"
+}

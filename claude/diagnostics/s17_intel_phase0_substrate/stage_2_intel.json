@@ -1,0 +1,371 @@
+{
+  "stage": 2,
+  "intel": {
+    "forward_n1_intel": {
+      "key_signals": [
+        {
+          "direction": "up",
+          "rider": "Jonathan Milan",
+          "signal": "5-star favourite for pure sprint finish on wide, flat boulevard avenue into Sofia with dry roads",
+          "strength": "strong"
+        },
+        {
+          "direction": "neutral",
+          "rider": "Paul Magnier",
+          "signal": "4-star favourite; well-positioned for textbook sprinter stage",
+          "strength": "moderate"
+        },
+        {
+          "direction": "neutral",
+          "rider": "Dylan Groenewegen",
+          "signal": "4-star favourite; benefits from ideal sprint conditions on ascending finish road",
+          "strength": "moderate"
+        },
+        {
+          "direction": "neutral",
+          "rider": "Tobias Lund",
+          "signal": "3-star pick; Danish sprinter in mix for pure sprint finish",
+          "strength": "weak"
+        },
+        {
+          "direction": "neutral",
+          "rider": "Kaden Groves",
+          "signal": "3-star favourite; category 2 climb at km 85 far enough from finish to neutralize as factor",
+          "strength": "moderate"
+        }
+      ],
+      "stage_classification": "Flad etape"
+    },
+    "forward_n2_intel": {
+      "key_signals": [
+        {
+          "direction": "up",
+          "rider": "Tobias Lund",
+          "signal": "Five-star favourite rating — highest confidence pick for stage win",
+          "strength": "strong"
+        },
+        {
+          "direction": "down",
+          "rider": "Kaden Groves",
+          "signal": "Three-star rating but noted as sprinter who must work harder than in Bulgaria; finishing climb may deter; ranked by win potential rather than top-10 survival",
+          "strength": "moderate"
+        },
+        {
+          "direction": "down",
+          "rider": "Paul Magnier",
+          "signal": "Three-star rating but sprinter-type noted as having good chance for top-10 finish but unlikely to win given finishing terrain",
+          "strength": "moderate"
+        },
+        {
+          "direction": "down",
+          "rider": "Jonathan Milan",
+          "signal": "Three-star rating but sprinter-type with diminished win prospects on technical finish; ranked by top-10 potential rather than victory",
+          "strength": "moderate"
+        },
+        {
+          "direction": "neutral",
+          "rider": "Corbin Strong",
+          "signal": "Four-star favourite — strong contender for stage",
+          "strength": "strong"
+        },
+        {
+          "direction": "neutral",
+          "rider": "Jhonatan Narvaez",
+          "signal": "Four-star favourite — strong contender for stage",
+          "strength": "strong"
+        }
+      ],
+      "stage_classification": "Flat stage with steep finishing climb"
+    },
+    "gathered_at": "2026-05-12T18:40:42.267566",
+    "key_signals": [
+      {
+        "direction": "up",
+        "rider": "Jhonatan Narvaez",
+        "signal": "UAE team confirmed they are targeting Narvaez for this stage; Morgado took bonus seconds solely to secure team positioning, signalling strong focus on Narvaez despite long injury absence",
+        "strength": "strong"
+      },
+      {
+        "direction": "down",
+        "rider": "Corbin Strong",
+        "signal": "Narrowed to 4-star favorite after UAE confirmation; may struggle if Narvaez is fully fit and UAEs tactics are coordinated; vulnerable in a sprint after a 1km climb finish",
+        "strength": "strong"
+      },
+      {
+        "direction": "neutral",
+        "rider": "Paul Magnier",
+        "signal": "Won Stage 1 in a crash-affected finale with strong lead-out; positioned as dangerous sprinter on undulating terrain",
+        "strength": "moderate"
+      },
+      {
+        "direction": "down",
+        "rider": "Jonathan Milan",
+        "signal": "Lost Stage 1 maglia rosa opportunity with high-cadence, underpowered sprint performance; sore and distraught but uninjured and can attempt again",
+        "strength": "moderate"
+      },
+      {
+        "direction": "down",
+        "rider": "Kaden Groves",
+        "signal": "Came off worst in Stage 1 crash; sore heading into Stage 2 but expected to start",
+        "strength": "weak"
+      }
+    ],
+    "source_ratings": [
+      {
+        "ratings": [
+          {
+            "rider": "Jhonatan Narvaez",
+            "stars": 5
+          },
+          {
+            "rider": "Corbin Strong",
+            "stars": 4
+          },
+          {
+            "rider": "Filippo Ganna",
+            "stars": 4
+          },
+          {
+            "rider": "Andrea Vendrame",
+            "stars": 3
+          },
+          {
+            "rider": "Thomas Silva",
+            "stars": 3
+          },
+          {
+            "rider": "Ben Turner",
+            "stars": 3
+          },
+          {
+            "rider": "Orluis Aular",
+            "stars": 3
+          },
+          {
+            "rider": "Alberto Bettiol",
+            "stars": 3
+          },
+          {
+            "rider": "Antonio Morgado",
+            "stars": 2
+          },
+          {
+            "rider": "Fabio Christen",
+            "stars": 2
+          },
+          {
+            "rider": "Edoardo Zambanini",
+            "stars": 2
+          },
+          {
+            "rider": "Giulio Ciccone",
+            "stars": 2
+          },
+          {
+            "rider": "Jan Christen",
+            "stars": 2
+          },
+          {
+            "rider": "Tobias Lund",
+            "stars": 2
+          },
+          {
+            "rider": "Paul Magnier",
+            "stars": 2
+          },
+          {
+            "rider": "Kaden Groves",
+            "stars": 2
+          },
+          {
+            "rider": "Fredrik Dversnes",
+            "stars": 2
+          },
+          {
+            "rider": "Andrea Raccagni Noviero",
+            "stars": 2
+          },
+          {
+            "rider": "Christian Scaroni",
+            "stars": 2
+          },
+          {
+            "rider": "David Gonzalez",
+            "stars": 2
+          },
+          {
+            "rider": "Jasper Stuyven",
+            "stars": 2
+          },
+          {
+            "rider": "Lukas Kubis",
+            "stars": 2
+          },
+          {
+            "rider": "Simone Gualdi",
+            "stars": 2
+          },
+          {
+            "rider": "Lennert Van Eetvelt",
+            "stars": 2
+          },
+          {
+            "rider": "Thomas Pesenti",
+            "stars": 2
+          },
+          {
+            "rider": "Aleksandr Vlasov",
+            "stars": 2
+          },
+          {
+            "rider": "Ludovico Crescioli",
+            "stars": 2
+          },
+          {
+            "rider": "Toon Aerts",
+            "stars": 2
+          },
+          {
+            "rider": "Diego Ulissi",
+            "stars": 2
+          },
+          {
+            "rider": "Felix Engelhardt",
+            "stars": 2
+          },
+          {
+            "rider": "Samuele Battistella",
+            "stars": 2
+          },
+          {
+            "rider": "Gianmarco Garofoli",
+            "stars": 2
+          },
+          {
+            "rider": "Francesco Busatto",
+            "stars": 1
+          },
+          {
+            "rider": "Jonas Vingegaard",
+            "stars": 1
+          },
+          {
+            "rider": "Florian Stork",
+            "stars": 1
+          },
+          {
+            "rider": "Johannes Kulset",
+            "stars": 1
+          },
+          {
+            "rider": "Jonathan Milan",
+            "stars": 1
+          },
+          {
+            "rider": "Arnaud De Lie",
+            "stars": 1
+          },
+          {
+            "rider": "Javier Romo",
+            "stars": 1
+          },
+          {
+            "rider": "Damiano Caruso",
+            "stars": 1
+          },
+          {
+            "rider": "Frank van den Broek",
+            "stars": 1
+          },
+          {
+            "rider": "Davide Ballerini",
+            "stars": 1
+          },
+          {
+            "rider": "Niklas Larsen",
+            "stars": 1
+          },
+          {
+            "rider": "Chris Hamilton",
+            "stars": 1
+          },
+          {
+            "rider": "Matteo Sobrero",
+            "stars": 1
+          },
+          {
+            "rider": "Filippo Zana",
+            "stars": 1
+          },
+          {
+            "rider": "Jonas Geens",
+            "stars": 1
+          },
+          {
+            "rider": "Edward Planckaert",
+            "stars": 1
+          },
+          {
+            "rider": "Magnus Sheffield",
+            "stars": 1
+          },
+          {
+            "rider": "Egan Bernal",
+            "stars": 1
+          },
+          {
+            "rider": "Alessandro Pinarello",
+            "stars": 1
+          },
+          {
+            "rider": "Axel Huens",
+            "stars": 1
+          },
+          {
+            "rider": "Sakarias Løland",
+            "stars": 1
+          },
+          {
+            "rider": "Warren Barguil",
+            "stars": 1
+          },
+          {
+            "rider": "Ethan Vernon",
+            "stars": 1
+          },
+          {
+            "rider": "Timo Kielich",
+            "stars": 1
+          },
+          {
+            "rider": "Paul Penhoët",
+            "stars": 1
+          },
+          {
+            "rider": "Michael Valgren",
+            "stars": 1
+          }
+        ],
+        "source": "TV2/Axelgaard",
+        "weight": 1.5
+      },
+      {
+        "ratings": [],
+        "source": "Feltet.dk",
+        "weight": 1.0
+      }
+    ],
+    "sources_consulted": [
+      "TV2/Axelgaard",
+      "Feltet.dk"
+    ],
+    "sources_not_found": [
+      "Feltet.dk - Stage 2 analysis"
+    ],
+    "stage": 2,
+    "stage_notes": "Undulating 221km stage with decisive 1km climb 10km from finish followed by small rise to line; suited to explosive climbers who can sprint after effort, not pure sprinters. UAE's coordinated support for Narvaez may force selection and create advantage for team-based tactics.",
+    "summary": "Jhonatan Narvaez elevated to top favorite after UAE confirmed he is fully fit and the team will control the race; his superior finishing power over Corbin Strong after the climb justifies the upgrade. Paul Magnier remains dangerous as proven Stage 1 winner, but Jonathan Milan's weak sprint performance yesterday and sore condition limits his chances today.",
+    "weather": ""
+  },
+  "gathered_at": "2026-05-12T18:40:42.267566"
+}
