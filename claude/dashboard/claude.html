@@ -214,6 +214,17 @@ input[type=range]::-webkit-slider-thumb {
 .weight-row label { display: flex; justify-content: space-between; font-size: 11px; color: var(--color-text-2); margin-bottom: 3px; }
 .weight-row label span { font-family: var(--font-mono); color: var(--color-text); }
 
+/* ── S17-INTEL Phase 2 (2026-05-16): Expert star matrix ──────────── */
+.star-matrix-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.star-matrix-table th, .star-matrix-table td { padding: 4px 6px; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+.star-matrix-table thead th { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-2); text-align: center; position: sticky; top: 0; background: var(--color-surface); z-index: 1; }
+.star-matrix-table th.sm-rider-col, .star-matrix-table td.sm-rider { text-align: left; font-weight: 500; color: var(--color-text); }
+.star-matrix-table td.sm-cell { text-align: center; color: #f5a623; font-family: var(--font-mono); }
+.star-matrix-table td.sm-cell-null { color: var(--color-text-3); }
+.star-matrix-table .sm-empty { color: var(--color-text-3); }
+.star-matrix-table td.sm-avg, .star-matrix-table td.sm-total { text-align: right; font-family: var(--font-mono); font-weight: 600; color: var(--color-text); }
+.sm-scroll { overflow: auto; max-height: 480px; }
+
 /* ── Intelligence ───────────────────────────────────────────────── */
 /* S17-δ: #intel-grid deleted; odds and intel now live in Panel 1 rows. */
 .intel-panel { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; height: 500px; }
@@ -810,6 +821,17 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 
+  <!-- ── S17-INTEL Phase 2 (2026-05-16): Expert Star Matrix ───── -->
+  <!--    Per-rider × per-source star table populated from               -->
+  <!--    intel.expert_stars (Phase 1 substrate); columns filtered by    -->
+  <!--    S.sourcesConfig enabled state; AVG STARS desc / TOTAL tie.     -->
+  <div class="section">
+    <div class="section-header"><h2>Expert star matrix</h2></div>
+    <div id="star-matrix-host" class="intel-panel" style="height:auto;max-height:520px;overflow:auto;padding:8px;">
+      <div class="intel-empty">Gather intel to populate star matrix.</div>
+    </div>
+  </div>
+
   <!-- ── Stage results panel ───────────────────────────────────── -->
   <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
     <button id="fetch-results-btn" class="btn btn-sm btn-ghost"
@@ -919,6 +941,8 @@ const S = {
   },
   oddsRows: [],
   intelData: null,
+  sourcesConfig: [],   // S17-INTEL Phase 2 — 12-source yaml-driven controls
+
   forceIn:  new Set(),
   forceOut: new Set(),
   search: '',
@@ -1375,25 +1399,12 @@ function renderSliders() {
     updateSumDisplay(key);
   });
 
-  // Expert weights — Panel 1 bottom-right host
-  const wHost = $('expert-weights-host');
-  if (wHost) {
-    wHost.innerHTML = '';
-    const wDiv = document.createElement('div');
-    wDiv.className = 'slider-panel';
-    wDiv.id = 'expert-weights-panel';
-    wDiv.innerHTML = `<div class="slider-panel-title">Expert weights</div>` +
-      S.expertSources.map((src, i) => {
-        const v = src.weight;
-        const short = src.name.split('/')[0].trim().split(' ').slice(-2).join(' ');
-        return `<div class="weight-row">
-          <label title="${esc(src.name)}">${esc(short)} <span id="wlbl-${i}">${v.toFixed(1)}</span></label>
-          <input type="range" min="0.5" max="2.0" step="0.1" value="${v}"
-            oninput="updateWeight(${i},+this.value);document.getElementById('wlbl-${i}').textContent=(+this.value).toFixed(1)">
-        </div>`;
-      }).join('');
-    wHost.appendChild(wDiv);
-  }
+  // S17-INTEL Phase 2 (2026-05-16): Expert source controls — 12-source
+  // table (tickbox + weight slider per source, Save button). Replaces
+  // the prior 2-source Phase 1a-era expert-weights panel; yaml-driven
+  // shape consumes /sources-config endpoint. Data lives in
+  // S.sourcesConfig (populated by loadSourcesConfig() in init).
+  renderSourceControls();
 
   // S17-δ: keep dynamic panel-title stage numbers in sync.
   updatePanelStageLabels();
@@ -1481,6 +1492,171 @@ async function saveWeights() {
       body: JSON.stringify({ weights: S.expertSources })
     });
   } catch(_) { /* server not running — no-op */ }
+}
+
+/* ── S17-INTEL Phase 2 (2026-05-16): per-source controls + star matrix ─── */
+
+async function loadSourcesConfig() {
+  try {
+    const res = await fetch(`${SERVER}/sources-config`);
+    if (!res.ok) return;
+    S.sourcesConfig = await res.json();
+  } catch (_) {
+    S.sourcesConfig = [];
+  }
+}
+
+function renderSourceControls() {
+  // 12-source per-source controls panel — tickbox + weight slider per source,
+  // Save button. Panel injected into #expert-weights-host (legacy 2-source
+  // panel host repurposed). Consumes S.sourcesConfig populated by
+  // loadSourcesConfig() during init.
+  const wHost = $('expert-weights-host');
+  if (!wHost) return;
+  wHost.innerHTML = '';
+  const wDiv = document.createElement('div');
+  wDiv.className = 'slider-panel';
+  wDiv.id = 'expert-source-controls-panel';
+
+  const sources = S.sourcesConfig || [];
+  const rowsHtml = sources.map((src, i) => {
+    const wLabel = (Number(src.weight) || 0).toFixed(1);
+    const checked = src.enabled !== false ? 'checked' : '';
+    return `<div class="source-row" style="display:grid;grid-template-columns:18px 1fr 80px 28px;gap:6px;align-items:center;font-size:11px;padding:2px 0;">
+      <input type="checkbox" data-canonical="${esc(src.canonical)}"
+             onchange="onSourceToggle('${esc(src.canonical)}', this.checked)"
+             ${checked} title="Include in extraction + consumption">
+      <label title="${esc(src.name)} (${esc(src.language)})">${esc(src.name)}</label>
+      <input type="range" min="0" max="2.0" step="0.1" value="${src.weight}"
+             data-canonical="${esc(src.canonical)}"
+             oninput="onSourceWeightInput('${esc(src.canonical)}', +this.value)"
+             onchange="onSourceWeightCommit('${esc(src.canonical)}', +this.value)">
+      <span id="src-w-${esc(src.canonical)}" style="text-align:right;color:var(--color-text-2);">${wLabel}</span>
+    </div>`;
+  }).join('');
+
+  wDiv.innerHTML = `
+    <div class="slider-panel-title" style="display:flex;justify-content:space-between;align-items:center;">
+      <span>Expert sources (${sources.length})</span>
+      <button class="btn btn-sm btn-ghost" onclick="saveSourceConfig()" id="save-source-config" title="Persist tickbox + weight state to expert_sources.yaml">Save</button>
+    </div>
+    ${rowsHtml || '<div class="intel-empty">No sources configured</div>'}`;
+  wHost.appendChild(wDiv);
+}
+
+// Slider drag — live label update (does not POST until commit/save)
+function onSourceWeightInput(canonical, val) {
+  const el = $(`src-w-${canonical}`);
+  if (el) el.textContent = (Number(val) || 0).toFixed(1);
+  const src = (S.sourcesConfig || []).find(s => s.canonical === canonical);
+  if (src) src.weight = val;
+}
+
+// Slider release — opportunistic persist (autosave on change)
+function onSourceWeightCommit(canonical, val) {
+  saveSourceConfig({ silent: true });
+}
+
+function onSourceToggle(canonical, checked) {
+  const src = (S.sourcesConfig || []).find(s => s.canonical === canonical);
+  if (src) src.enabled = checked;
+  saveSourceConfig({ silent: true });
+  // Re-render star matrix to reflect new enabled set
+  if (S.intelData) renderStarMatrix();
+}
+
+async function saveSourceConfig(opts) {
+  opts = opts || {};
+  const payload = {};
+  for (const src of (S.sourcesConfig || [])) {
+    payload[src.canonical] = {
+      weight: Number(src.weight),
+      enabled: src.enabled !== false,
+    };
+  }
+  try {
+    const res = await fetch(`${SERVER}/save-weights`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!opts.silent) {
+      const btn = $('save-source-config');
+      if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = res.ok ? 'Saved ✓' : 'Save failed';
+        setTimeout(() => { btn.textContent = orig; }, 1500);
+      }
+    }
+  } catch (_) { /* server not running — no-op */ }
+}
+
+function renderStarMatrix() {
+  // Per-rider × per-source star matrix render. Reads S.intelData.expert_stars
+  // (Phase 1 schema substrate) and S.sourcesConfig (Phase 2 controls). Filters
+  // disabled sources from column set; sorts riders by AVG STARS desc with
+  // TOTAL tiebreaker. AVG STARS = unweighted across non-null ratings; TOTAL
+  // = Σ(stars × source_weight) — Phase 2 display-only, becomes load-bearing
+  // input to optimizer voting-power-α math in Phase 3.
+  const host = $('star-matrix-host');
+  if (!host) return;
+  if (!S.intelData || !S.intelData.expert_stars) {
+    host.innerHTML = '<div class="intel-empty" style="padding:12px;">Gather intel to populate star matrix.</div>';
+    return;
+  }
+  const expertStars = S.intelData.expert_stars || {};
+  const sources = (S.sourcesConfig || []).filter(s => s.enabled !== false);
+  if (!sources.length) {
+    host.innerHTML = '<div class="intel-empty" style="padding:12px;">No sources enabled.</div>';
+    return;
+  }
+  const rows = [];
+  for (const [rider, ratings] of Object.entries(expertStars)) {
+    const r = ratings || {};
+    const enabled = sources.map(s => ({ src: s, stars: r[s.canonical] }))
+                            .filter(x => x.stars !== null && x.stars !== undefined);
+    if (!enabled.length) continue;
+    const avg = enabled.reduce((acc, x) => acc + Number(x.stars), 0) / enabled.length;
+    const total = enabled.reduce((acc, x) => acc + Number(x.stars) * Number(x.src.weight || 0), 0);
+    rows.push({ rider, ratings: r, avg, total });
+  }
+  rows.sort((a, b) => (b.avg - a.avg) || (b.total - a.total));
+
+  const headerCols = sources.map(s =>
+    `<th class="sm-src-col" title="${esc(s.name)} (weight ${s.weight})">${esc(s.name)}</th>`
+  ).join('');
+  const bodyRows = rows.map(({ rider, ratings, avg, total }) => {
+    const cells = sources.map(s => {
+      const stars = ratings[s.canonical];
+      if (stars === null || stars === undefined) return '<td class="sm-cell sm-cell-null">—</td>';
+      const n = Math.max(0, Math.min(5, Math.round(Number(stars))));
+      return `<td class="sm-cell" title="${stars}">${'★'.repeat(n)}<span class="sm-empty">${'☆'.repeat(5 - n)}</span></td>`;
+    }).join('');
+    return `<tr>
+      <td class="sm-rider">${esc(rider)}</td>
+      ${cells}
+      <td class="sm-avg">${avg.toFixed(2)}</td>
+      <td class="sm-total">${total.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+
+  host.innerHTML = `
+    <div class="panel-header-bar">
+      <span>Expert star matrix · ${rows.length} riders × ${sources.length} sources</span>
+    </div>
+    <div class="sm-scroll">
+      <table class="star-matrix-table">
+        <thead>
+          <tr>
+            <th class="sm-rider-col">Rider</th>
+            ${headerCols}
+            <th class="sm-avg-col">AVG</th>
+            <th class="sm-total-col">TOTAL</th>
+          </tr>
+        </thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    </div>`;
 }
 
 /* ── Odds table ──────────────────────────────────────────────────────── */
@@ -1803,11 +1979,13 @@ async function loadSavedIntel() {
       renderIntel();
       renderForwardIntelAll();
       renderOdds();
+      renderStarMatrix();  // S17-INTEL Phase 2 (2026-05-16)
       updateIntelHeader(targetStage, data._gathered_at);
     } else {
       S.intelData = null;
       renderIntel();
       renderForwardIntelAll();
+      renderStarMatrix();  // S17-INTEL Phase 2 — render "gather intel" placeholder
     }
   } catch(_) {}
 }
@@ -2857,6 +3035,8 @@ async function init() {
   updateHeader();
 
   await loadAffinityOverrides();  // S17-AFFINITY: populate override state before first render
+  await loadSourcesConfig();      // S17-INTEL Phase 2 — yaml source list for controls + star matrix
+  renderSourceControls();          // re-render controls now that S.sourcesConfig is populated
   await loadRiders();
   await loadSnapshot();
   await loadSavedOdds();
