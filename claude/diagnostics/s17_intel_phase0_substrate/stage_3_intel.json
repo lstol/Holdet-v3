@@ -1,0 +1,245 @@
+{
+  "stage": 3,
+  "intel": {
+    "sources_consulted": [
+      "TV2/Axelgaard",
+      "Feltet.dk"
+    ],
+    "sources_not_found": [
+      "Feltet.dk"
+    ],
+    "source_ratings": [
+      {
+        "source": "TV2/Axelgaard",
+        "weight": 1.5,
+        "ratings": [
+          {
+            "rider": "Jonathan Milan",
+            "stars": 5
+          },
+          {
+            "rider": "Paul Magnier",
+            "stars": 4
+          },
+          {
+            "rider": "Dylan Groenewegen",
+            "stars": 4
+          },
+          {
+            "rider": "Tobias Lund",
+            "stars": 3
+          },
+          {
+            "rider": "Matteo Malucelli",
+            "stars": 3
+          },
+          {
+            "rider": "Ethan Vernon",
+            "stars": 3
+          },
+          {
+            "rider": "Kaden Groves",
+            "stars": 3
+          },
+          {
+            "rider": "Arnaud De Lie",
+            "stars": 3
+          },
+          {
+            "rider": "Erlend Blikra",
+            "stars": 2
+          },
+          {
+            "rider": "Ben Turner",
+            "stars": 2
+          },
+          {
+            "rider": "Luca Mozzato",
+            "stars": 2
+          },
+          {
+            "rider": "Pascal Ackermann",
+            "stars": 2
+          },
+          {
+            "rider": "Paul Penhoët",
+            "stars": 2
+          },
+          {
+            "rider": "Casper van Uden",
+            "stars": 2
+          },
+          {
+            "rider": "Orluis Aular",
+            "stars": 2
+          },
+          {
+            "rider": "Madis Mihkels",
+            "stars": 2
+          },
+          {
+            "rider": "Giovanni Lonardi",
+            "stars": 2
+          },
+          {
+            "rider": "Enrico Zanoncello",
+            "stars": 2
+          },
+          {
+            "rider": "David Gonzalez",
+            "stars": 2
+          },
+          {
+            "rider": "Jhonatan Narvaez",
+            "stars": 2
+          },
+          {
+            "rider": "Robert Stannard",
+            "stars": 2
+          },
+          {
+            "rider": "Fabio Christen",
+            "stars": 2
+          },
+          {
+            "rider": "Filippo Magli",
+            "stars": 1
+          },
+          {
+            "rider": "Tord Gudmestad",
+            "stars": 1
+          },
+          {
+            "rider": "Simone Consonni",
+            "stars": 1
+          },
+          {
+            "rider": "Dries Van Gestel",
+            "stars": 1
+          },
+          {
+            "rider": "Jake Stewart",
+            "stars": 1
+          },
+          {
+            "rider": "Edward Planckaert",
+            "stars": 1
+          },
+          {
+            "rider": "Davide Ballerini",
+            "stars": 1
+          },
+          {
+            "rider": "Max Walscheid",
+            "stars": 1
+          },
+          {
+            "rider": "Mick van Dijke",
+            "stars": 1
+          },
+          {
+            "rider": "Timo Kielich",
+            "stars": 1
+          },
+          {
+            "rider": "Robin Froidevaux",
+            "stars": 1
+          },
+          {
+            "rider": "Milan Menten",
+            "stars": 1
+          },
+          {
+            "rider": "Axel Huens",
+            "stars": 1
+          },
+          {
+            "rider": "Mirco Maestri",
+            "stars": 1
+          },
+          {
+            "rider": "Robert Donaldson",
+            "stars": 1
+          },
+          {
+            "rider": "Elmar Reinders",
+            "stars": 1
+          },
+          {
+            "rider": "Ivan Garcia Cortina",
+            "stars": 1
+          },
+          {
+            "rider": "Fredrik Dversnes",
+            "stars": 1
+          },
+          {
+            "rider": "Sakarias Løland",
+            "stars": 1
+          },
+          {
+            "rider": "Antonio Morgado",
+            "stars": 1
+          },
+          {
+            "rider": "Timo de Jong",
+            "stars": 1
+          },
+          {
+            "rider": "Sean Flynn",
+            "stars": 1
+          },
+          {
+            "rider": "Lukas Kubis",
+            "stars": 1
+          },
+          {
+            "rider": "Filippo Ganna",
+            "stars": 1
+          },
+          {
+            "rider": "Edoardo Zambanini",
+            "stars": 1
+          }
+        ]
+      },
+      {
+        "source": "Feltet.dk",
+        "weight": 1.0,
+        "ratings": []
+      }
+    ],
+    "key_signals": [
+      {
+        "rider": "Jonathan Milan",
+        "signal": "Rated 5-star favourite for flat sprint stage to Sofia with ideal finishing circuit on wide, even boulevard",
+        "direction": "up",
+        "strength": "strong"
+      },
+      {
+        "rider": "Arnaud De Lie",
+        "signal": "Dropped on Stage 2 climb but recovered to group; faces another mid-stage Category 2 climb that neutralises well before finish",
+        "direction": "neutral",
+        "strength": "moderate"
+      },
+      {
+        "rider": "Paul Magnier",
+        "signal": "Rated 4-star secondary favourite on pure sprint stage",
+        "direction": "up",
+        "strength": "moderate"
+      },
+      {
+        "rider": "Dylan Groenewegen",
+        "signal": "Rated 4-star secondary favourite on pure sprint stage",
+        "direction": "up",
+        "strength": "moderate"
+      }
+    ],
+    "weather": "Dry roads expected",
+    "stage_notes": "A Category 2 climb midway is positioned far from the finish with extensive flat terrain after, nullifying its effect as a serious selection point. The final 23km features a wide, even, slightly rising boulevard sprint circuit ideal for pure sprinters.",
+    "summary": "Jonathan Milan is a standout 5-star favourite for this pure sprint stage to Sofia, with ideal conditions on a broad, flat finishing boulevard. The mid-stage climb poses no real tactical threat, making this a straightforward sprinters' day after Stage 2's significant crashes and drama.",
+    "gathered_at": "2026-05-11T19:46:29.908314",
+    "stage": 3
+  },
+  "gathered_at": "2026-05-11T19:46:29.909272"
+}

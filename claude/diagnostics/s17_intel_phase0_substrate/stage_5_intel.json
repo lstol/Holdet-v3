@@ -1,0 +1,376 @@
+{
+  "stage": 5,
+  "intel": {
+    "_gathered_at": "2026-05-13T07:55:32.723816",
+    "forward_n1_intel": {
+      "key_signals": [
+        {
+          "direction": "up",
+          "rider": "Jonathan Milan",
+          "signal": "Five-star favourite; favoured for flat sprint finish despite technical cobblestone climb in finale",
+          "strength": "strong"
+        },
+        {
+          "direction": "neutral",
+          "rider": "Paul Magnier",
+          "signal": "Four-star favourite; positioned as second-tier sprinter option",
+          "strength": "moderate"
+        },
+        {
+          "direction": "neutral",
+          "rider": "Tobias Lund",
+          "signal": "Four-star favourite; positioned as second-tier sprinter option",
+          "strength": "moderate"
+        },
+        {
+          "direction": "up",
+          "rider": "Arnaud De Lie",
+          "signal": "Three-star rated; descent and positioning skills suit technical finale better than pure sprinters",
+          "strength": "moderate"
+        },
+        {
+          "direction": "down",
+          "rider": "Dylan Groenewegen",
+          "signal": "Two-star rated; downgraded relative to typical sprinter profile; technical cobblestone finish and positioning requirements favour endurance over pure speed",
+          "strength": "moderate"
+        }
+      ],
+      "source": "generic_preview",
+      "stage_classification": "Flad etape (flat stage with technical cobblestone sprint finish)"
+    },
+    "forward_n2_intel": {
+      "key_signals": [
+        {
+          "direction": "neutral",
+          "rider": "Jonas Vingegaard",
+          "signal": "Five-star favourite; Blockhaus suits diesel climbers on marathon distance; should deliver decisive early mountain split",
+          "strength": "strong"
+        },
+        {
+          "direction": "up",
+          "rider": "Felix Gall",
+          "signal": "Four-star ranking; Blockhaus brutality and 244 km distance favour steady grinders over explosive types",
+          "strength": "moderate"
+        },
+        {
+          "direction": "up",
+          "rider": "Giulio Pellizzari",
+          "signal": "Four-star ranking; stage suits his climbing profile on decisive key mountain",
+          "strength": "moderate"
+        },
+        {
+          "direction": "down",
+          "rider": "Egan Bernal",
+          "signal": "Three-star rating; Blockhaus is brutal and decisive, but distance and accumulated elevation (4500 m) favour endurance over explosivity",
+          "strength": "moderate"
+        },
+        {
+          "direction": "down",
+          "rider": "Michael Storer",
+          "signal": "Three-star rating; explosive climber downgraded on a stage that rewards diesel-type steady power over short punchy attacks",
+          "strength": "weak"
+        },
+        {
+          "direction": "down",
+          "rider": "Jai Hindley",
+          "signal": "Three-star rating; long marathon distance and brutal climb suit steady diesel climbers; explosive profile less advantaged",
+          "strength": "weak"
+        },
+        {
+          "direction": "down",
+          "rider": "Jay Vine",
+          "signal": "Three-star rating; explosive climber in disadvantageous context; Blockhaus brutality suits grinders",
+          "strength": "weak"
+        }
+      ],
+      "source": "generic_preview",
+      "stage_classification": "Bjergetape"
+    },
+    "gathered_at": "2026-05-13T07:55:32.720470",
+    "key_signals": [
+      {
+        "direction": "up",
+        "rider": "Jhonatan Narvaez",
+        "signal": "Rated 5-star favorite by TV2/Axelgaard; established breakaway threat with climbing credentials",
+        "strength": "strong"
+      },
+      {
+        "direction": "up",
+        "rider": "Christian Scaroni",
+        "signal": "Won mountain stage in Giro 2025; 3+ minutes down in classification allowing breakaway participation; both sources rate highly",
+        "strength": "strong"
+      },
+      {
+        "direction": "up",
+        "rider": "Michael Valgren",
+        "signal": "Strong form shown finishing 10th in decimated stage 4 sprint; Danish climber well-positioned for breakaway",
+        "strength": "moderate"
+      },
+      {
+        "direction": "neutral",
+        "rider": "Giulio Ciccone",
+        "signal": "Wears maglia rosa; his defense could force team chase tactics and prevent typical breakaway finish",
+        "strength": "strong"
+      },
+      {
+        "direction": "up",
+        "rider": "Javier Romo",
+        "signal": "4-star rating suggests opportunist climber suited to hard terrain",
+        "strength": "moderate"
+      }
+    ],
+    "source": "axelgaard",
+    "source_ratings": [
+      {
+        "ratings": [
+          {
+            "rider": "Jhonatan Narvaez",
+            "stars": 5
+          },
+          {
+            "rider": "Christian Scaroni",
+            "stars": 4
+          },
+          {
+            "rider": "Javier Romo",
+            "stars": 4
+          },
+          {
+            "rider": "Afonso Eulalio",
+            "stars": 3
+          },
+          {
+            "rider": "Giulio Ciccone",
+            "stars": 3
+          },
+          {
+            "rider": "Harold Martin Lopez",
+            "stars": 3
+          },
+          {
+            "rider": "Michael Valgren",
+            "stars": 3
+          },
+          {
+            "rider": "Johannes Kulset",
+            "stars": 3
+          },
+          {
+            "rider": "Igor Arrieta",
+            "stars": 2
+          },
+          {
+            "rider": "Lennert Van Eetvelt",
+            "stars": 2
+          },
+          {
+            "rider": "Ben Turner",
+            "stars": 2
+          },
+          {
+            "rider": "Orluis Aular",
+            "stars": 2
+          },
+          {
+            "rider": "Alessandro Pinarello",
+            "stars": 2
+          },
+          {
+            "rider": "Andrea Raccagni Noviero",
+            "stars": 2
+          },
+          {
+            "rider": "Florian Stork",
+            "stars": 2
+          },
+          {
+            "rider": "Felix Engelhardt",
+            "stars": 2
+          },
+          {
+            "rider": "Aleksandr Vlasov",
+            "stars": 2
+          },
+          {
+            "rider": "Magnus Sheffield",
+            "stars": 2
+          },
+          {
+            "rider": "Jan Christen",
+            "stars": 2
+          },
+          {
+            "rider": "Diego Ulissi",
+            "stars": 2
+          },
+          {
+            "rider": "Giulio Pellizzari",
+            "stars": 2
+          },
+          {
+            "rider": "Damiano Caruso",
+            "stars": 2
+          },
+          {
+            "rider": "Jonas Vingegaard",
+            "stars": 2
+          },
+          {
+            "rider": "Thomas Silva",
+            "stars": 2
+          },
+          {
+            "rider": "Wout Poels",
+            "stars": 2
+          },
+          {
+            "rider": "Andreas Leknessund",
+            "stars": 2
+          },
+          {
+            "rider": "Martin Tjøtta",
+            "stars": 2
+          },
+          {
+            "rider": "Simone Gualdi",
+            "stars": 2
+          },
+          {
+            "rider": "Ludovico Crescioli",
+            "stars": 2
+          },
+          {
+            "rider": "Markel Beloki",
+            "stars": 1
+          },
+          {
+            "rider": "Jefferson Cepeda",
+            "stars": 1
+          },
+          {
+            "rider": "Juan Pedro Lopez",
+            "stars": 1
+          },
+          {
+            "rider": "Filippo Zana",
+            "stars": 1
+          },
+          {
+            "rider": "Mathys Rondel",
+            "stars": 1
+          },
+          {
+            "rider": "Einer Rubio",
+            "stars": 1
+          },
+          {
+            "rider": "Filippo Ganna",
+            "stars": 1
+          },
+          {
+            "rider": "Corbin Strong",
+            "stars": 1
+          },
+          {
+            "rider": "Fabio Christen",
+            "stars": 1
+          },
+          {
+            "rider": "Koen Bouwman",
+            "stars": 1
+          },
+          {
+            "rider": "Giovanni Aleotti",
+            "stars": 1
+          },
+          {
+            "rider": "Antonio Morgado",
+            "stars": 1
+          },
+          {
+            "rider": "Egan Bernal",
+            "stars": 1
+          },
+          {
+            "rider": "Josh Kench",
+            "stars": 1
+          },
+          {
+            "rider": "Chris Harper",
+            "stars": 1
+          },
+          {
+            "rider": "David De La Cruz",
+            "stars": 1
+          },
+          {
+            "rider": "Gijs Leemreize",
+            "stars": 1
+          },
+          {
+            "rider": "Edoardo Zambanini",
+            "stars": 1
+          },
+          {
+            "rider": "Gianmarco Garofoli",
+            "stars": 1
+          },
+          {
+            "rider": "Jan Hirt",
+            "stars": 1
+          },
+          {
+            "rider": "Remy Rochas",
+            "stars": 1
+          },
+          {
+            "rider": "Thomas Pesenti",
+            "stars": 1
+          },
+          {
+            "rider": "Andrea Mifsu",
+            "stars": 1
+          },
+          {
+            "rider": "Mattia Bais",
+            "stars": 1
+          },
+          {
+            "rider": "Gregor Mühlberger",
+            "stars": 1
+          },
+          {
+            "rider": "Lorenzo Milesi",
+            "stars": 1
+          }
+        ],
+        "source": "TV2/Axelgaard",
+        "weight": 1.5
+      },
+      {
+        "ratings": [
+          {
+            "rider": "Christian Scaroni",
+            "stars": 5
+          },
+          {
+            "rider": "Michael Valgren",
+            "stars": 5
+          }
+        ],
+        "source": "Feltet.dk",
+        "weight": 1
+      }
+    ],
+    "sources_consulted": [
+      "TV2/Axelgaard",
+      "Feltet.dk"
+    ],
+    "sources_not_found": [],
+    "stage": 5,
+    "stage_notes": "Brutal 203 km stage with 3,700+ meters of climbing creates ideal breakaway conditions unless maglia rosa defense triggers team chase tactics. Final 4 km climb with steep sections (up to 12%) followed by technical descent will be decisive; wet conditions likely to increase difficulty.",
+    "summary": "Stage 5 is built for a breakaway finish with climbing selectors and opportunistic attackers favored, particularly if Ciccone's team doesn't feel compelled to control the race. Christian Scaroni emerges as consensus favorite combining breakaway eligibility with proven mountain stage-winning credentials.",
+    "weather": "Risk of rain expected, especially near finish in Potenza. Cold weather returning to the Giro."
+  },
+  "gathered_at": "2026-05-13T07:55:32.756987"
+}

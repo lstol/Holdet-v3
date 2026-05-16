@@ -1,0 +1,83 @@
+{
+  "purpose": "S17-INTEL Phase 0 calibration substrate — historical Haiku intel outputs paired with actual stage outcomes, persisted for Phase 3 tier-multiplier calibration.",
+  "captured_at": "2026-05-16T10:04:00",
+  "captured_against_commit": "159bfed (S17-10 closure merge — wall-clock determinism landed; subsequent commit f1eeeae adds Phase 0 ROADMAP delta)",
+  "schema_version": "pre-Phase-1 (intel.expert_stars not yet introduced; existing key_signals + source_ratings remain primary)",
+  "source_dir": "/Users/lassestoltenberg/Claude/Holdet-v3/shared/data/snapshots/",
+  "stages": {
+    "1": {
+      "intel_present": true,
+      "results_present": true,
+      "actual_completed": true,
+      "intel_fields": ["_gathered_at", "broadcast_times", "gathered_at", "key_signals", "source_ratings", "sources_consulted", "sources_not_found", "stage", "stage_profile", "summary", "weather"],
+      "notes": "Earliest schema shape — includes broadcast_times + stage_profile (later dropped); missing forward_n1_intel / forward_n2_intel (predates S17-15 timeline 2026-05-12); missing source (predates S17-β 2026-05-12); missing stage_signals (predates Sub-B1 2026-05-14); missing stage_notes."
+    },
+    "2": {
+      "intel_present": true,
+      "results_present": true,
+      "actual_completed": true,
+      "intel_fields": ["forward_n1_intel", "forward_n2_intel", "gathered_at", "key_signals", "source_ratings", "sources_consulted", "sources_not_found", "stage", "stage_notes", "summary", "weather"],
+      "notes": "First stage with forward_n1_intel / forward_n2_intel (S17-15 first operational use). Missing source field (predates S17-β rename) and stage_signals."
+    },
+    "3": {
+      "intel_present": true,
+      "results_present": true,
+      "actual_completed": true,
+      "intel_fields": ["gathered_at", "key_signals", "source_ratings", "sources_consulted", "sources_not_found", "stage", "stage_notes", "summary", "weather"],
+      "notes": "Rest day Stage 4 followed; forward intel keys absent (TV2/Axelgaard hadn't yet published forward previews for Stages 4/5)."
+    },
+    "4": {
+      "intel_present": true,
+      "results_present": true,
+      "actual_completed": true,
+      "intel_fields": ["_gathered_at", "gathered_at", "key_signals", "source_ratings", "sources_consulted", "sources_not_found", "stage", "stage_notes", "summary", "weather"],
+      "notes": "Post-rest-day stage. Forward intel absent — TV2 had not yet published stage 5/6 previews."
+    },
+    "5": {
+      "intel_present": true,
+      "results_present": true,
+      "actual_completed": true,
+      "intel_fields": ["_gathered_at", "forward_n1_intel", "forward_n2_intel", "gathered_at", "key_signals", "source", "source_ratings", "sources_consulted", "sources_not_found", "stage", "stage_notes", "summary", "weather"],
+      "notes": "First stage with source field (S17-β) — tracks whether prose came from axelgaard / generic_preview / both_failed."
+    },
+    "6": {
+      "intel_present": true,
+      "results_present": false,
+      "actual_completed": true,
+      "intel_fields": ["_gathered_at", "forward_n1_intel", "forward_n2_intel", "gathered_at", "key_signals", "source", "source_ratings", "sources_consulted", "sources_not_found", "stage", "stage_notes", "summary", "weather"],
+      "notes": "Results substrate gap: stage_6_results.json is absent (likely never gathered post-race). Stage 6 actual outcomes can still be derived from upstream Holdet API but require fetch. Phase 3 calibration must either backfill or treat Stage 6 as no-actuals."
+    },
+    "7": {
+      "intel_present": false,
+      "results_present": true,
+      "actual_completed": true,
+      "intel_fields": null,
+      "notes": "Intel substrate gap: stage_7_intel.json is absent (intel was not gathered for Stage 7 prep; reasons not documented). Results are present (May 16 09:27 file timestamp — Stage 7 raced earlier today). Phase 3 calibration cannot evaluate Stage 7 Haiku predictions vs actuals because there were no Haiku predictions."
+    }
+  },
+  "known_gaps": [
+    "Stage 1 intel uses an older schema (broadcast_times + stage_profile present; stage_notes absent).",
+    "Stages 1-4 intel missing forward_n1_intel / forward_n2_intel (predate S17-15 operational integration 2026-05-12).",
+    "Stages 1-4 intel missing source field (predates S17-β rename 2026-05-12).",
+    "All stages 1-6 intel missing stage_signals (predates Sub-B1 schema extension 2026-05-14). Only Stage 8 intel currently contains stage_signals.stage_type.",
+    "Stage 6 has NO results.json — substrate gap.",
+    "Stage 7 has NO intel.json — substrate gap. Results present."
+  ],
+  "current_pipeline_summary": {
+    "haiku_prompt_location": "server.py gather_intel() route handler / _haiku_current closure (lines ~1238-1296 as of commit f1eeeae; line numbers will shift — locate by function name)",
+    "sources_currently_named_in_prompt": ["TV2/Axelgaard", "Feltet.dk", "Inner Ring (background only, no weight)"],
+    "source_ratings_schema_existing": "intel.source_ratings = [{source, weight, ratings: [{rider, stars}]}] — per-source star ratings ALREADY produced by Haiku as of current schema; just not consumed by optimizer (downstream consumer reads key_signals only).",
+    "weight_semantics_current": "f-string substitution into Haiku prompt as `{tv2_w}` and `{feltet_w}` — prompt-string nudge, not numerical multiplier downstream. Confirmed prior S17-1 Sub-B Design Diagnostic finding.",
+    "intel_mult_consumer_location": "optimizer.py build_probabilities — per-rider adj dict built from key_signals direction+strength tuples via INTEL_MULT 6-cell lookup, applied to base bookmaker probability, then renormalised across all riders (total mass preservation invariant).",
+    "intel_mult_table": {"('up','strong')": 1.20, "('up','moderate')": 1.10, "('up','weak')": 1.05, "('down','strong')": 0.75, "('down','moderate')": 0.85, "('down','weak')": 0.95}
+  },
+  "phase_3_calibration_sketch": {
+    "what_phase_3_would_compute": [
+      "Per-source historical rider-rating distribution — which sources rate which riders, how often, with what star averages.",
+      "Correlation between rated-strength (per source) and actual top-15 finish frequency — Phase 3's calibration target. Computed per source so per-source weights can be data-driven, not user-set.",
+      "Inter-source agreement rate when multiple sources rate the same rider — direction agreement on key_signals; star-band agreement on source_ratings (Phase 1 expert_stars will replace the latter)."
+    ],
+    "what_is_persisted_here_only": "Raw substrate. Phase 0 does NOT execute the analysis; Phase 3 implementation handoff does it.",
+    "minimum_viable_phase_3_input": "Stages 2-5 are the cleanest substrate for initial Phase 3 calibration (consistent schema, both intel + results present, source_ratings populated). Stages 1 and 6-7 carry known gaps; Stage 8 has not raced yet at substrate-capture time."
+  }
+}

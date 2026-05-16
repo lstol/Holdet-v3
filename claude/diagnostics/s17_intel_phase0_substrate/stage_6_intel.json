@@ -1,0 +1,354 @@
+{
+  "stage": 6,
+  "intel": {
+    "_gathered_at": "2026-05-14T09:12:17.335018",
+    "forward_n1_intel": {
+      "key_signals": [
+        {
+          "direction": "up",
+          "rider": "Jonas Vingegaard",
+          "signal": "Five-star favourite on brutal Blockhaus finish after 244 km marathon; diesel climbers strongly favoured on this year's significantly harder mountain stage",
+          "strength": "strong"
+        },
+        {
+          "direction": "neutral",
+          "rider": "Felix Gall",
+          "signal": "Four-star rating on explosive mountain finale suited to strong climbers",
+          "strength": "moderate"
+        },
+        {
+          "direction": "neutral",
+          "rider": "Giulio Pellizzari",
+          "signal": "Four-star rating on explosive mountain finale suited to strong climbers",
+          "strength": "moderate"
+        },
+        {
+          "direction": "down",
+          "rider": "Egan Bernal",
+          "signal": "Three-star on diesel climber stage; competitive but not among top favourites",
+          "strength": "moderate"
+        },
+        {
+          "direction": "down",
+          "rider": "Jai Hindley",
+          "signal": "Three-star on diesel climber stage; competitive but not among top favourites",
+          "strength": "moderate"
+        },
+        {
+          "direction": "down",
+          "rider": "Jay Vine",
+          "signal": "Three-star on diesel climber stage; competitive but not among top favourites",
+          "strength": "moderate"
+        }
+      ],
+      "source": "generic_preview",
+      "stage_classification": "Bjergetape"
+    },
+    "forward_n2_intel": {
+      "key_signals": [
+        {
+          "direction": "up",
+          "rider": "Lennert Van Eetvelt",
+          "signal": "5-star favourite; explosive puncheur type ideally suited to steep final wall finish",
+          "strength": "strong"
+        },
+        {
+          "direction": "up",
+          "rider": "Christian Scaroni",
+          "signal": "4-star favourite; well-positioned for explosive terrain",
+          "strength": "moderate"
+        },
+        {
+          "direction": "up",
+          "rider": "Jan Christen",
+          "signal": "4-star favourite; well-positioned for explosive terrain",
+          "strength": "moderate"
+        },
+        {
+          "direction": "down",
+          "rider": "Jhonatan Narvaez",
+          "signal": "3-star; suited to puncheur-type finale but downgraded vs classic stage-win odds",
+          "strength": "weak"
+        },
+        {
+          "direction": "neutral",
+          "rider": "Giulio Ciccone",
+          "signal": "3-star Ardennes-type rider; has form for breakaway wins as seen in recent Giro mountain stages",
+          "strength": "moderate"
+        },
+        {
+          "direction": "down",
+          "rider": "Damiano Caruso",
+          "signal": "3-star; GC contender but final climb insufficient to force significant time gaps",
+          "strength": "weak"
+        }
+      ],
+      "source": "generic_preview",
+      "stage_classification": "Bakketop — hilly stage with steep final climb"
+    },
+    "gathered_at": "2026-05-14T09:12:17.332150",
+    "key_signals": [
+      {
+        "direction": "up",
+        "rider": "Paul Magnier",
+        "signal": "Won both previous sprint stages at Giro 2026; confident form; capable of winning from wheel-sucking position; has strong team lead-out",
+        "strength": "strong"
+      },
+      {
+        "direction": "up",
+        "rider": "Jonathan Milan",
+        "signal": "Lost narrowly on stage 3 to Magnier due to early sprint opener; seeking redemption; frustrated but has the speed to beat Magnier; first mass sprint suited to his abilities",
+        "strength": "strong"
+      },
+      {
+        "direction": "neutral",
+        "rider": "Tobias Lund",
+        "signal": "Rated 4-star by TV2/Axelgaard as secondary Danish contender",
+        "strength": "moderate"
+      },
+      {
+        "direction": "neutral",
+        "rider": "Ethan Vernon",
+        "signal": "Listed as 3-star contender; not mentioned in primary analysis",
+        "strength": "weak"
+      },
+      {
+        "direction": "neutral",
+        "rider": "Ben Turner",
+        "signal": "Listed as 3-star contender; not mentioned in primary analysis",
+        "strength": "weak"
+      },
+      {
+        "direction": "neutral",
+        "rider": "Corbin Strong",
+        "signal": "Listed as 3-star contender; not mentioned in primary analysis",
+        "strength": "weak"
+      }
+    ],
+    "source": "axelgaard",
+    "source_ratings": [
+      {
+        "ratings": [
+          {
+            "rider": "Paul Magnier",
+            "stars": 5
+          },
+          {
+            "rider": "Jonathan Milan",
+            "stars": 4
+          },
+          {
+            "rider": "Tobias Lund",
+            "stars": 4
+          },
+          {
+            "rider": "Ethan Vernon",
+            "stars": 3
+          },
+          {
+            "rider": "Ben Turner",
+            "stars": 3
+          },
+          {
+            "rider": "Corbin Strong",
+            "stars": 3
+          },
+          {
+            "rider": "Jhonatan Narvaez",
+            "stars": 3
+          },
+          {
+            "rider": "Dylan Groenewegen",
+            "stars": 3
+          },
+          {
+            "rider": "Matteo Malucelli",
+            "stars": 2
+          },
+          {
+            "rider": "Paul Penhoët",
+            "stars": 2
+          },
+          {
+            "rider": "Orluis Aular",
+            "stars": 2
+          },
+          {
+            "rider": "Madis Mihkels",
+            "stars": 2
+          },
+          {
+            "rider": "Pascal Ackermann",
+            "stars": 2
+          },
+          {
+            "rider": "Luca Mozzato",
+            "stars": 2
+          },
+          {
+            "rider": "Edoardo Zambanini",
+            "stars": 2
+          },
+          {
+            "rider": "Fabio Christen",
+            "stars": 2
+          },
+          {
+            "rider": "Robert Stannard",
+            "stars": 2
+          },
+          {
+            "rider": "David Gonzalez",
+            "stars": 2
+          },
+          {
+            "rider": "Erlend Blikra",
+            "stars": 2
+          },
+          {
+            "rider": "Toon Aerts",
+            "stars": 2
+          },
+          {
+            "rider": "Jensen Plowright",
+            "stars": 2
+          },
+          {
+            "rider": "Giovanni Lonardi",
+            "stars": 2
+          },
+          {
+            "rider": "Casper van Uden",
+            "stars": 2
+          },
+          {
+            "rider": "Filippo Magli",
+            "stars": 2
+          },
+          {
+            "rider": "Enrico Zanoncello",
+            "stars": 2
+          },
+          {
+            "rider": "Edward Planckaert",
+            "stars": 2
+          },
+          {
+            "rider": "Robin Froidevaux",
+            "stars": 2
+          },
+          {
+            "rider": "Dries Van Gestel",
+            "stars": 1
+          },
+          {
+            "rider": "Tord Gudmestad",
+            "stars": 1
+          },
+          {
+            "rider": "Jake Stewart",
+            "stars": 1
+          },
+          {
+            "rider": "Davie Ballerini",
+            "stars": 1
+          },
+          {
+            "rider": "Fredrik Dversnes",
+            "stars": 1
+          },
+          {
+            "rider": "Max Walscheid",
+            "stars": 1
+          },
+          {
+            "rider": "Simone Consonni",
+            "stars": 1
+          },
+          {
+            "rider": "Elmar Reinders",
+            "stars": 1
+          },
+          {
+            "rider": "Filippo Ganna",
+            "stars": 1
+          },
+          {
+            "rider": "Lennert Van Eetvelt",
+            "stars": 1
+          },
+          {
+            "rider": "Simone Gualdi",
+            "stars": 1
+          },
+          {
+            "rider": "Lukas Kubis",
+            "stars": 1
+          },
+          {
+            "rider": "Axel Huens",
+            "stars": 1
+          },
+          {
+            "rider": "Ivan Garcia Cortina",
+            "stars": 1
+          },
+          {
+            "rider": "Mirco Maestri",
+            "stars": 1
+          },
+          {
+            "rider": "Robert Donaldson",
+            "stars": 1
+          },
+          {
+            "rider": "Sakarias Løland",
+            "stars": 1
+          },
+          {
+            "rider": "Sean Flynn",
+            "stars": 1
+          },
+          {
+            "rider": "Mick van Dijke",
+            "stars": 1
+          },
+          {
+            "rider": "Timo Kielich",
+            "stars": 1
+          },
+          {
+            "rider": "Antonio Morgado",
+            "stars": 1
+          }
+        ],
+        "source": "TV2/Axelgaard",
+        "weight": 1.5
+      },
+      {
+        "ratings": [
+          {
+            "rider": "Paul Magnier",
+            "stars": 5
+          },
+          {
+            "rider": "Jonathan Milan",
+            "stars": 4
+          }
+        ],
+        "source": "Feltet.dk",
+        "weight": 1
+      }
+    ],
+    "sources_consulted": [
+      "TV2/Axelgaard",
+      "Feltet.dk"
+    ],
+    "sources_not_found": [],
+    "stage": 6,
+    "stage_notes": "Technical finale with 90-degree turns and U-bend in Naples streets, finishing on weak cobblestone climb 300m before line. Magnier and Milan likely to contest; Milan seeking revenge after stage 3 loss; strong team support crucial.",
+    "summary": "Paul Magnier arrives as overwhelming favourite after two consecutive sprint wins, but Jonathan Milan has redemption motivation after a narrow stage 3 defeat and cannot be discounted in a technical Naples finish. The cobblestone ramp finale favours sprinters with technical bike handling and strong support teams.",
+    "weather": ""
+  },
+  "gathered_at": "2026-05-14T09:12:17.364757"
+}

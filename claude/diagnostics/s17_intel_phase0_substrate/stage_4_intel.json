@@ -1,0 +1,369 @@
+{
+  "stage": 4,
+  "intel": {
+    "_gathered_at": "2026-05-12T19:02:43.668080",
+    "gathered_at": "2026-05-12T19:02:43.665369",
+    "key_signals": [
+      {
+        "direction": "neutral",
+        "rider": "Tobias Lund",
+        "signal": "Top favorite at 5 stars from TV2, but needs to recover from Sunday disappointment; climb finale may deter sprinters",
+        "strength": "moderate"
+      },
+      {
+        "direction": "up",
+        "rider": "Michael Valgren",
+        "signal": "Feltet identifies as prime favorite—deliberately conservative in Bulgaria, climbing power suits Cozzo Tunno gradient, strong breakaway candidate",
+        "strength": "strong"
+      },
+      {
+        "direction": "up",
+        "rider": "Filippo Ganna",
+        "signal": "Feltet highlights climbing ability on category 2 climb, comparable to Cipressa performance; strong Ineos team support to set tempo",
+        "strength": "strong"
+      },
+      {
+        "direction": "neutral",
+        "rider": "Corbin Strong",
+        "signal": "TV2 rates 4 stars; Feltet notes not quick enough for sprint finish but podium contender if sprinters dropped on climb",
+        "strength": "moderate"
+      },
+      {
+        "direction": "neutral",
+        "rider": "Paul Magnier",
+        "signal": "TV2 rates 3 stars as sprinter with breakaway potential; ranked for win chances rather than survival, may struggle on final climb",
+        "strength": "moderate"
+      },
+      {
+        "direction": "down",
+        "rider": "Jonathan Milan",
+        "signal": "TV2 rates 3 stars as sprint contender; climb finale poses risk for pure sprinters in technical finish",
+        "strength": "moderate"
+      },
+      {
+        "direction": "down",
+        "rider": "Kaden Groves",
+        "signal": "TV2 rates 3 stars but categorized as sprinter needing harder racing; climb may eliminate him before Cosenza",
+        "strength": "moderate"
+      },
+      {
+        "direction": "down",
+        "rider": "Dylan Groenewegen",
+        "signal": "TV2 rates 1 star; getting progressively disadvantaged as parcours harden through race",
+        "strength": "strong"
+      }
+    ],
+    "source_ratings": [
+      {
+        "ratings": [
+          {
+            "rider": "Tobias Lund",
+            "stars": 5
+          },
+          {
+            "rider": "Corbin Strong",
+            "stars": 4
+          },
+          {
+            "rider": "Jhonatan Narvaez",
+            "stars": 4
+          },
+          {
+            "rider": "Ben Turner",
+            "stars": 3
+          },
+          {
+            "rider": "Orluis Aular",
+            "stars": 3
+          },
+          {
+            "rider": "Kaden Groves",
+            "stars": 3
+          },
+          {
+            "rider": "Paul Magnier",
+            "stars": 3
+          },
+          {
+            "rider": "Jonathan Milan",
+            "stars": 3
+          },
+          {
+            "rider": "Thomas Silva",
+            "stars": 2
+          },
+          {
+            "rider": "Lukas Kubis",
+            "stars": 2
+          },
+          {
+            "rider": "Edoardo Zambanini",
+            "stars": 2
+          },
+          {
+            "rider": "Antonio Morgado",
+            "stars": 2
+          },
+          {
+            "rider": "Filippo Ganna",
+            "stars": 2
+          },
+          {
+            "rider": "Ethan Vernon",
+            "stars": 2
+          },
+          {
+            "rider": "Davide Ballerini",
+            "stars": 2
+          },
+          {
+            "rider": "Jasper Stuyven",
+            "stars": 2
+          },
+          {
+            "rider": "Fabio Christen",
+            "stars": 2
+          },
+          {
+            "rider": "Fredrik Dversnes",
+            "stars": 2
+          },
+          {
+            "rider": "Giulio Ciccone",
+            "stars": 2
+          },
+          {
+            "rider": "Simone Gualdi",
+            "stars": 2
+          },
+          {
+            "rider": "Andrea Raccagni Noviero",
+            "stars": 2
+          },
+          {
+            "rider": "Paul Penhoët",
+            "stars": 2
+          },
+          {
+            "rider": "Thomas Pesenti",
+            "stars": 2
+          },
+          {
+            "rider": "Francesco Busatto",
+            "stars": 2
+          },
+          {
+            "rider": "Toon Aerts",
+            "stars": 2
+          },
+          {
+            "rider": "David Gonzalez",
+            "stars": 2
+          },
+          {
+            "rider": "Axel Huens",
+            "stars": 2
+          },
+          {
+            "rider": "Florian Stork",
+            "stars": 2
+          },
+          {
+            "rider": "Felix Engelhardt",
+            "stars": 2
+          },
+          {
+            "rider": "Madis Mihkels",
+            "stars": 2
+          },
+          {
+            "rider": "Milan Menten",
+            "stars": 2
+          },
+          {
+            "rider": "Luca Mozzato",
+            "stars": 2
+          },
+          {
+            "rider": "Sakarias Løland",
+            "stars": 2
+          },
+          {
+            "rider": "Aleksandr Vlasov",
+            "stars": 1
+          },
+          {
+            "rider": "Jan Christen",
+            "stars": 1
+          },
+          {
+            "rider": "Remy Rochas",
+            "stars": 1
+          },
+          {
+            "rider": "Martin Marcellusi",
+            "stars": 1
+          },
+          {
+            "rider": "Nikita Tsvetkov",
+            "stars": 1
+          },
+          {
+            "rider": "Edward Planckaert",
+            "stars": 1
+          },
+          {
+            "rider": "Robert Stannard",
+            "stars": 1
+          },
+          {
+            "rider": "Pascal Ackermann",
+            "stars": 1
+          },
+          {
+            "rider": "Arnaud De Lie",
+            "stars": 1
+          },
+          {
+            "rider": "Matteo Malucelli",
+            "stars": 1
+          },
+          {
+            "rider": "Dylan Groenewegen",
+            "stars": 1
+          },
+          {
+            "rider": "Mirco Maestri",
+            "stars": 1
+          },
+          {
+            "rider": "Giovanni Lonardi",
+            "stars": 1
+          },
+          {
+            "rider": "Robin Froidevaux",
+            "stars": 1
+          },
+          {
+            "rider": "Casper van Uden",
+            "stars": 1
+          },
+          {
+            "rider": "Timo de Jong",
+            "stars": 1
+          },
+          {
+            "rider": "Samuele Battistella",
+            "stars": 1
+          },
+          {
+            "rider": "Matteo Sobrero",
+            "stars": 1
+          },
+          {
+            "rider": "Michael Valgren",
+            "stars": 1
+          },
+          {
+            "rider": "Jonas Vingegaard",
+            "stars": 1
+          },
+          {
+            "rider": "Egan Bernal",
+            "stars": 1
+          },
+          {
+            "rider": "Javier Romo",
+            "stars": 1
+          },
+          {
+            "rider": "Giulio Pellizzari",
+            "stars": 1
+          },
+          {
+            "rider": "Matyas Kopecky",
+            "stars": 1
+          },
+          {
+            "rider": "Ludovico Crescioli",
+            "stars": 1
+          },
+          {
+            "rider": "Mick van Dijke",
+            "stars": 1
+          },
+          {
+            "rider": "Timo Kielich",
+            "stars": 1
+          },
+          {
+            "rider": "Niklas Larsen",
+            "stars": 1
+          },
+          {
+            "rider": "Robert Donaldson",
+            "stars": 1
+          },
+          {
+            "rider": "Sean Flynn",
+            "stars": 1
+          },
+          {
+            "rider": "Damiano Caruso",
+            "stars": 1
+          },
+          {
+            "rider": "Gianmarco Garofoli",
+            "stars": 1
+          },
+          {
+            "rider": "Jensen Plowright",
+            "stars": 1
+          },
+          {
+            "rider": "Ivan Garcia Cortina",
+            "stars": 1
+          },
+          {
+            "rider": "Jake Stewart",
+            "stars": 1
+          },
+          {
+            "rider": "Warren Barguil",
+            "stars": 1
+          }
+        ],
+        "source": "TV2/Axelgaard",
+        "weight": 1.5
+      },
+      {
+        "ratings": [
+          {
+            "rider": "Michael Valgren",
+            "stars": 5
+          },
+          {
+            "rider": "Filippo Ganna",
+            "stars": 5
+          },
+          {
+            "rider": "Corbin Strong",
+            "stars": 5
+          }
+        ],
+        "source": "Feltet.dk",
+        "weight": 1
+      }
+    ],
+    "sources_consulted": [
+      "TV2/Axelgaard",
+      "Feltet.dk"
+    ],
+    "sources_not_found": [],
+    "stage": 4,
+    "stage_notes": "The early climb from Catanzaro (5 min effort) may seed a strong breakaway, followed by the decisive 14.4km Category 2 Cozzo Tunno climb midway (first 8km at ~7%, steep enough to eliminate pure sprinters). The 40km descent and flat run-in to technical Cosenza finish favors climbers who can time their effort and lighter riders over raw sprint power.",
+    "summary": "Michael Valgren (Feltet) and Filippo Ganna (Feltet) are elevated above raw odds as climbing specialists suited to the deceptively tough Cozzo Tunno, while Tobias Lund (TV2 5⭐) must rediscover form on a stage where the 15km climb and technical finish penalize pure sprinters. Dylan Groenewegen and other flat-terrain specialists face mounting pressure as the parcours hardens.",
+    "weather": ""
+  },
+  "gathered_at": "2026-05-12T19:02:43.694886"
+}
