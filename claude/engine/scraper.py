@@ -592,15 +592,29 @@ def _fetch_article_text(url: str, source_label: str, min_chars: int = 500) -> st
             article = (soup.find('div', class_='entry-content')
                        or soup.find('div', class_='post-content')
                        or soup.find('main'))
-        if not article:
-            return ''
-        # Strip script / style / nav noise before extracting text
-        for tag in article(['script', 'style', 'nav', 'aside', 'footer']):
+        if article:
+            # Strip script / style / nav noise before extracting text
+            for tag in article(['script', 'style', 'nav', 'aside', 'footer']):
+                tag.decompose()
+            text = article.get_text(' ', strip=True)
+            if len(text) >= min_chars:
+                return text
+        # S17-INTEL Phase 1c (2026-05-16): SPA / Tailwind-styled sites
+        # (e.g. Indeleiderstrui) don't use <article> or WordPress class
+        # conventions. Final fallback: scan body-level descendant divs;
+        # pick the largest text-bearing one whose text length crosses
+        # min_chars. Strip script/style/nav globally first to avoid
+        # boilerplate inflating the size of layout containers.
+        for tag in soup(['script', 'style', 'nav', 'aside', 'footer', 'header']):
             tag.decompose()
-        text = article.get_text(' ', strip=True)
-        if len(text) < min_chars:
-            return ''
-        return text
+        best_text = ''
+        for div in soup.find_all('div'):
+            t = div.get_text(' ', strip=True)
+            if len(t) > len(best_text):
+                best_text = t
+        if len(best_text) >= min_chars:
+            return best_text
+        return ''
     except Exception:
         return ''
 
@@ -697,6 +711,251 @@ def fetch_cyclingnews_preview(stage: int) -> str:
     """
     url = f"https://www.cyclingnews.com/pro-cycling/racing/2026-giro-d-italia-stage-{stage}-preview/"
     return _fetch_article_text(url, source_label='cyclingnews')
+
+
+# ── S17-INTEL Phase 1c (2026-05-16): 4 trickier scrapers ─────────────────────
+#
+# Three sources via search-result URL discovery (Indeleiderstrui via site
+# search; Cicloweb + TodayCycling via RSS-first / search-fallback) — all use
+# the shared _fetch_article_text helper from Phase 1b to extract the article
+# body once URL is discovered.
+#
+# One source via hub-section extraction (Cyclingstage). Probe surfaced that
+# the hub uses plain-text "Stage N of the Giro" markers inside the article
+# body (not h2/h3 headers); section extraction slices on text boundaries.
+#
+# Wielerflits via Playwright (Cloudflare bypass — direct curl returns 403).
+# Reuses async_playwright pattern from existing TV2/Axelgaard / Feltet
+# scrapers; navigates to category page, finds stage-specific link via DOM
+# search, follows to article, extracts.
+#
+# SpazioCiclismo (cyclingpro.net) deferred to Phase 4 per Phase 1c §7
+# conditional outcome: probe found SpazioCiclismo publishes per-stage live
+# coverage + analysis but no per-stage preview/favoriti posts matching the
+# Phase 1 source-type. Phase 1 source list narrows to 12.
+
+
+def _resolve_via_rss(rss_url: str, stage_n: int, title_pattern: re.Pattern) -> str:
+    """RSS-first URL discovery: parse RSS feed, find item with title matching
+    title_pattern + reference to the target stage. Returns matched item link
+    or empty string. Caller follows up with _fetch_article_text.
+    """
+    try:
+        resp = requests.get(rss_url, headers=_REALISTIC_HEADERS, timeout=10)
+        if resp.status_code != 200:
+            return ''
+        if not resp.encoding or resp.encoding.lower() == 'iso-8859-1':
+            resp.encoding = 'utf-8'
+        from xml.etree import ElementTree as ET
+        root = ET.fromstring(resp.text)
+        for item in root.iter('item'):
+            title = (item.findtext('title') or '').lower()
+            link  = item.findtext('link') or ''
+            if title_pattern.search(title) and link:
+                return link
+    except Exception:
+        pass
+    return ''
+
+
+def _resolve_via_search(search_url: str, link_pattern: re.Pattern,
+                        base_url: str) -> str:
+    """Search-fallback URL discovery: fetch search results page, find first
+    anchor whose href matches link_pattern. Returns absolute URL or empty.
+    """
+    try:
+        resp = requests.get(search_url, headers=_REALISTIC_HEADERS, timeout=10)
+        if resp.status_code != 200:
+            return ''
+        if not resp.encoding or resp.encoding.lower() == 'iso-8859-1':
+            resp.encoding = 'utf-8'
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        for a in soup.find_all('a', href=True):
+            href = a['href']
+            if link_pattern.search(href):
+                if href.startswith('http'):
+                    return href
+                if href.startswith('/'):
+                    return f'{base_url.rstrip("/")}{href}'
+        return ''
+    except Exception:
+        return ''
+
+
+def fetch_indeleiderstrui_preview(stage: int) -> str:
+    """S17-INTEL Phase 1c: site-search-based Indeleiderstrui scraper.
+
+    Indeleiderstrui's RSS returns 404; per-stage URL has descriptive slug
+    that varies per stage. Discovery via site-search at `/?s=...`, match
+    anchor with `favorieten-etappe-{N}-giro-ditalia-2026` in href.
+    Probe verified canonical URL for Stage 8:
+      indeleiderstrui.nl/wielrennen/favorieten-etappe-8-giro-ditalia-2026-...
+    """
+    search_url = f"https://www.indeleiderstrui.nl/?s=favorieten+etappe+{stage}+giro+2026"
+    pattern = re.compile(rf'favorieten-etappe-{stage}-giro-ditalia-2026', re.IGNORECASE)
+    article_url = _resolve_via_search(search_url, pattern, 'https://www.indeleiderstrui.nl')
+    if not article_url:
+        return ''
+    return _fetch_article_text(article_url, source_label='indeleiderstrui')
+
+
+def fetch_cicloweb_preview(stage: int) -> str:
+    """S17-INTEL Phase 1c: RSS-first / search-fallback Cicloweb scraper.
+
+    Italian ordinal slug: '8a-tappa' for Stage 8 (ottava). Probe-verified
+    canonical URL for Stage 8: cicloweb.it/news/.../8a-tappa-favoriti-...
+    """
+    # Italian ordinal numerals — RSS title pattern needs both "8a tappa"
+    # (post format) plus broader "tappa N" tolerance.
+    title_pat = re.compile(rf'\b{stage}a\s*tappa\b.*\bfavoriti\b'
+                           rf'|\bfavoriti\b.*\b{stage}a\s*tappa\b',
+                           re.IGNORECASE)
+    article_url = _resolve_via_rss('https://www.cicloweb.it/feed/', stage, title_pat)
+    if not article_url:
+        search_url = f"https://www.cicloweb.it/?s=giro+italia+2026+{stage}a+tappa+favoriti"
+        link_pat = re.compile(rf'{stage}a-tappa-favoriti', re.IGNORECASE)
+        article_url = _resolve_via_search(search_url, link_pat, 'https://www.cicloweb.it')
+    if not article_url:
+        return ''
+    return _fetch_article_text(article_url, source_label='cicloweb')
+
+
+def fetch_todaycycling_preview(stage: int) -> str:
+    """S17-INTEL Phase 1c: RSS-first / search-fallback TodayCycling scraper.
+
+    French slug uses 'etape-{N}'. Probe-verified RSS item for Stage 8:
+      todaycycling.com/giro-2026-etape-8-parcours-profil-et-favoris-...
+    """
+    title_pat = re.compile(rf'\bgiro\s+2026\b.*\b[eé]tape\s+{stage}\b'
+                           rf'|\b[eé]tape\s+{stage}\b.*\bgiro\s+2026\b',
+                           re.IGNORECASE)
+    article_url = _resolve_via_rss('https://todaycycling.com/feed/', stage, title_pat)
+    if not article_url:
+        search_url = f"https://todaycycling.com/?s=giro+2026+etape+{stage}"
+        # Strict: require giro-2026-etape-{N}- in path to filter Vuelta/TdF noise
+        link_pat = re.compile(rf'giro-2026-etape-{stage}-', re.IGNORECASE)
+        article_url = _resolve_via_search(search_url, link_pat, 'https://todaycycling.com')
+    if not article_url:
+        return ''
+    return _fetch_article_text(article_url, source_label='todaycycling')
+
+
+def fetch_cyclingstage_preview(stage: int) -> str:
+    """S17-INTEL Phase 1c: hub-section extraction Cyclingstage scraper.
+
+    Single hub URL covers all 21 stages inline. Probe surfaced that per-stage
+    sections are delimited by plain-text "Stage N of the Giro" markers
+    inside the article body (not h2/h3 headers). Slice from "Stage {N} of
+    the Giro" anchor up to "Stage {N+1} of the Giro" (or end-of-article).
+    """
+    hub_url = "https://www.cyclingstage.com/giro-2026-favourites/"
+    try:
+        resp = requests.get(hub_url, headers=_REALISTIC_HEADERS, timeout=15)
+        if resp.status_code != 200:
+            return ''
+        if not resp.encoding or resp.encoding.lower() == 'iso-8859-1':
+            resp.encoding = 'utf-8'
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        article = (soup.find('article')
+                   or soup.find('div', class_='entry-content')
+                   or soup.find('main'))
+        if not article:
+            return ''
+        for tag in article(['script', 'style', 'nav', 'aside', 'footer']):
+            tag.decompose()
+        body = article.get_text(' ', strip=True)
+        start_marker = re.compile(rf'Stage\s+{stage}\s+of\s+the\s+Giro', re.IGNORECASE)
+        end_marker = re.compile(rf'Stage\s+{stage + 1}\s+of\s+the\s+Giro', re.IGNORECASE)
+        m_start = start_marker.search(body)
+        if not m_start:
+            return ''
+        m_end = end_marker.search(body, m_start.end())
+        section = body[m_start.start():m_end.start()] if m_end else body[m_start.start():]
+        # Cyclingstage sections are concise — relax min_chars from 500 → 200.
+        return section.strip() if len(section.strip()) >= 200 else ''
+    except Exception:
+        return ''
+
+
+async def _fetch_wielerflits_preview_async(stage: int) -> str:
+    """S17-INTEL Phase 1c: Playwright Wielerflits scraper (Cloudflare bypass).
+
+    Direct curl returns 403 (Cloudflare); Playwright's real browser context
+    bypasses the challenge. Pattern: load category page, find link matching
+    `giro-2026-voorbeschouwing-etappe-{N}`, navigate to article, extract
+    body via JS innerText (sidesteps DOM parsing edge cases on dynamic page).
+    """
+    category_url = "https://www.wielerflits.nl/nieuws/category/voorbeschouwingen/"
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        try:
+            context = await browser.new_context(
+                user_agent=_REALISTIC_HEADERS['User-Agent'],
+                viewport={'width': 1280, 'height': 800},
+            )
+            page = await context.new_page()
+            await page.goto(category_url, wait_until='domcontentloaded', timeout=25000)
+            # Find link matching slug pattern
+            slug_pattern = f"giro-2026-voorbeschouwing-etappe-{stage}"
+            link = await page.query_selector(f'a[href*="{slug_pattern}"]')
+            if not link:
+                return ''
+            article_url = await link.get_attribute('href')
+            if not article_url:
+                return ''
+            if not article_url.startswith('http'):
+                article_url = f"https://www.wielerflits.nl{article_url}"
+            await page.goto(article_url, wait_until='domcontentloaded', timeout=25000)
+            article_text = await page.evaluate("""() => {
+                const a = document.querySelector('article')
+                       || document.querySelector('.entry-content')
+                       || document.querySelector('.post-content')
+                       || document.querySelector('main');
+                return a ? a.innerText : '';
+            }""")
+            return article_text if article_text and len(article_text) > 500 else ''
+        except Exception:
+            return ''
+        finally:
+            await browser.close()
+
+
+def fetch_wielerflits_preview(stage: int) -> str:
+    """Sync wrapper for the async Playwright Wielerflits scraper."""
+    try:
+        return asyncio.run(_fetch_wielerflits_preview_async(stage)) or ''
+    except Exception:
+        return ''
+
+
+def scrape_phase1c_sources(stage: int) -> dict:
+    """Parallel-fetch Phase 1c sources. Wielerflits Playwright runs in its
+    own thread alongside the 4 HTTP-based sources; ThreadPoolExecutor handles
+    the I/O parallelism. Total wall-clock dominated by slowest scraper
+    (typically Wielerflits Playwright at ~5-10s for browser launch + 2 page
+    loads).
+
+    Returns {canonical: text_or_empty_string} for the 5 Phase 1c canonicals.
+    SpazioCiclismo deferred to Phase 4 (no per-stage preview content surface
+    discovered at cyclingpro.net/spaziociclismo/).
+    """
+    import concurrent.futures
+    dispatch = {
+        'wielerflits':     fetch_wielerflits_preview,
+        'indeleiderstrui': fetch_indeleiderstrui_preview,
+        'cicloweb':        fetch_cicloweb_preview,
+        'todaycycling':    fetch_todaycycling_preview,
+        'cyclingstage':    fetch_cyclingstage_preview,
+    }
+    out = {canonical: '' for canonical in dispatch}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(dispatch)) as ex:
+        futures = {canonical: ex.submit(fn, stage) for canonical, fn in dispatch.items()}
+        for canonical, fut in futures.items():
+            try:
+                out[canonical] = fut.result(timeout=45) or ''
+            except Exception:
+                out[canonical] = ''
+    return out
 
 
 def scrape_phase1b_sources(stage: int) -> dict:

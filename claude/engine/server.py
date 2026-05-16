@@ -1253,19 +1253,27 @@ def gather_intel():
         app.logger.info(f"Scraping intel for Stage {stage}...")
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         from scraper import (scrape_all_intel, fetch_tv2_generic_preview,
-                             scrape_phase1b_sources)
+                             scrape_phase1b_sources, scrape_phase1c_sources)
         # S17-INTEL Phase 1b (2026-05-16): scrape_phase1b_sources runs in
         # parallel with the existing scrape_all_intel + forward TV2 calls.
         # Returns {inner_ring, touretappe, total_velo, cyclingnews}.
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as scrape_executor:
+        # S17-INTEL Phase 1c (2026-05-16): scrape_phase1c_sources adds
+        # {wielerflits, indeleiderstrui, cicloweb, todaycycling,
+        #  cyclingstage}. Wielerflits uses Playwright; the other four are
+        # HTTP. ThreadPoolExecutor handles all five in parallel.
+        # SpazioCiclismo deferred to Phase 4 (yaml entry retained as
+        # placeholder; orchestrator never invokes it).
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as scrape_executor:
             current_scrape_future = scrape_executor.submit(scrape_all_intel, int(stage))
             n1_fwd_future = scrape_executor.submit(fetch_tv2_generic_preview, int(stage) + 1)
             n2_fwd_future = scrape_executor.submit(fetch_tv2_generic_preview, int(stage) + 2)
             phase1b_future = scrape_executor.submit(scrape_phase1b_sources, int(stage))
+            phase1c_future = scrape_executor.submit(scrape_phase1c_sources, int(stage))
             raw_sources = current_scrape_future.result()
             n1_fwd = n1_fwd_future.result()
             n2_fwd = n2_fwd_future.result()
             phase1b_sources = phase1b_future.result()
+            phase1c_sources = phase1c_future.result()
 
         # S17-β: current-stage Axelgaard fallback. If the Playwright scraper returned the
         # not-found sentinel (Axelgaard hasn't published his detailed column yet), substitute
@@ -1310,7 +1318,12 @@ def gather_intel():
             f"p1b_inner_ring={len(phase1b_sources.get('inner_ring') or '')} "
             f"p1b_touretappe={len(phase1b_sources.get('touretappe') or '')} "
             f"p1b_total_velo={len(phase1b_sources.get('total_velo') or '')} "
-            f"p1b_cyclingnews={len(phase1b_sources.get('cyclingnews') or '')}"
+            f"p1b_cyclingnews={len(phase1b_sources.get('cyclingnews') or '')} "
+            f"p1c_wielerflits={len(phase1c_sources.get('wielerflits') or '')} "
+            f"p1c_indeleiderstrui={len(phase1c_sources.get('indeleiderstrui') or '')} "
+            f"p1c_cicloweb={len(phase1c_sources.get('cicloweb') or '')} "
+            f"p1c_todaycycling={len(phase1c_sources.get('todaycycling') or '')} "
+            f"p1c_cyclingstage={len(phase1c_sources.get('cyclingstage') or '')}"
         )
 
         # Step 2: structure with 3 parallel Haiku calls — current stage + forward n+1 + forward n+2 (S17-15)
@@ -1343,19 +1356,30 @@ def gather_intel():
         if not _feltet_text or _feltet_text.startswith('[Feltet'):
             _feltet_text = None
 
-        # Source-text dispatch. Phase 1a wired: tv2_axelgaard, tv2_generic,
-        # feltet. Phase 1b (2026-05-16) wired: inner_ring, touretappe,
-        # total_velo, cyclingnews via direct-HTTP scrape_phase1b_sources.
-        # Phase 1c will wire: wielerflits, indeleiderstrui, cyclingstage,
-        # todaycycling, cicloweb, spaziociclismo.
+        # Source-text dispatch.
+        #   Phase 1a wired: tv2_axelgaard, tv2_generic, feltet.
+        #   Phase 1b (2026-05-16) wired via scrape_phase1b_sources:
+        #     inner_ring, touretappe, total_velo, cyclingnews.
+        #   Phase 1c (2026-05-16) wired via scrape_phase1c_sources:
+        #     wielerflits (Playwright), indeleiderstrui, cicloweb,
+        #     todaycycling, cyclingstage (hub-section).
+        #   SpazioCiclismo deferred to Phase 4 (yaml entry retains as
+        #     placeholder; no orchestrator call → automatic
+        #     "[Article not found for this stage]" injection in Haiku
+        #     prompt).
         source_texts = {
-            'tv2_axelgaard': _tv2_axelgaard_text,
-            'tv2_generic':   _tv2_generic_text,
-            'feltet':        _feltet_text,
-            'inner_ring':    phase1b_sources.get('inner_ring')  or None,
-            'touretappe':    phase1b_sources.get('touretappe')  or None,
-            'total_velo':    phase1b_sources.get('total_velo')  or None,
-            'cyclingnews':   phase1b_sources.get('cyclingnews') or None,
+            'tv2_axelgaard':   _tv2_axelgaard_text,
+            'tv2_generic':     _tv2_generic_text,
+            'feltet':          _feltet_text,
+            'inner_ring':      phase1b_sources.get('inner_ring')      or None,
+            'touretappe':      phase1b_sources.get('touretappe')      or None,
+            'total_velo':      phase1b_sources.get('total_velo')      or None,
+            'cyclingnews':     phase1b_sources.get('cyclingnews')     or None,
+            'wielerflits':     phase1c_sources.get('wielerflits')     or None,
+            'indeleiderstrui': phase1c_sources.get('indeleiderstrui') or None,
+            'cicloweb':        phase1c_sources.get('cicloweb')        or None,
+            'todaycycling':    phase1c_sources.get('todaycycling')    or None,
+            'cyclingstage':    phase1c_sources.get('cyclingstage')    or None,
         }
 
         def _haiku_current():

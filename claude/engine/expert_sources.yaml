@@ -78,4 +78,4 @@ sources:
     canonical: spaziociclismo
     weight: 0.8
     language: it
-    scraper: spaziociclismo_search  # placeholder — wired in Phase 1c
+    scraper: deferred_phase_4  # S17-INTEL Phase 1c (2026-05-16): deferred. Probe found spaziociclismo.it host doesn't resolve; cyclingpro.net/spaziociclismo/ exists but search returns no per-stage preview/favoriti articles — source publishes live coverage + analysis rather than pre-race previews matching Phase 1 source-type. Phase 1 final source list narrows to 12 wired + this entry as deferred. Phase 4 source registry grows by one.
