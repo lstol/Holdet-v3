@@ -1420,6 +1420,7 @@ Rules:
 - Include every rider mentioned by any source's article in that source's source_ratings.ratings list
 - TV2 / Feltet content is in Danish — translate and summarise each rider mention in English. Other-language sources similarly.
 - Keep stage_notes and summary short (max 2 sentences each)
+- key_signals coverage: generate 15-25 directional signals about specific riders for this stage, INDEPENDENT of how many sources provided articles. Even if some sources show "[Article not found for this stage]" placeholders, generate signals based on (a) available source content, (b) stage profile and known rider characteristics implied by stage_signals + general race context, (c) recent form signals if available in any source, (d) cross-stage continuity with prior stages. Coverage target: 15-25 key_signals per stage. Do NOT produce fewer than 10 signals even if source coverage is thin — generate from available evidence. This applies regardless of source-fetch-success ratio.
 - stage_signals.stage_type — classify the stage into ONE of these categories:
   * "sprint" — flat or rolling, expected bunch sprint finish, minimal GC movement
   * "gc_day" — mountain stage with summit finish or hard climb in final 20km, GC time gaps expected to be significant (>30s)
