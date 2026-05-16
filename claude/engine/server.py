@@ -2024,18 +2024,111 @@ def fetch_stage_results_endpoint():
 
 # ── Save weights ──────────────────────────────────────────────────────────────
 
-@app.route('/save-weights', methods=['POST', 'OPTIONS'])
-def save_weights():
+@app.route('/sources-config', methods=['GET', 'OPTIONS'])
+def sources_config():
+    """S17-INTEL Phase 2 (2026-05-16): expose current expert_sources.yaml
+    to dashboard for per-source controls + star-matrix rendering. Filters
+    out deferred sources (scraper field starts with `deferred_`) so the
+    UI shows only operationally-wired sources.
+
+    Response shape: JSON array of source objects, each with name,
+    canonical, weight, language, scraper, enabled. Order matches yaml
+    order (Phase 1 source-list canonical ordering).
+    """
     if request.method == 'OPTIONS':
         return '', 204
     if not HAS_YAML:
         return jsonify({'status': 'error', 'message': 'pyyaml not installed'}), 500
     try:
-        weights = request.get_json(force=True).get('weights', [])
-        payload = {'sources': [{'name': w['name'], 'weight': round(float(w['weight']), 1)} for w in weights]}
-        with open(EXPERT_SOURCES, 'w') as f:
-            yaml.dump(payload, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
-        return jsonify({'status': 'ok'})
+        with open(EXPERT_SOURCES) as f:
+            config = yaml.safe_load(f) or {}
+        sources = config.get('sources', []) or []
+        visible = []
+        for src in sources:
+            scraper = src.get('scraper') or ''
+            if scraper.startswith('deferred_'):
+                continue
+            visible.append({
+                'name':      src.get('name'),
+                'canonical': src.get('canonical'),
+                'weight':    float(src.get('weight', 1.0)),
+                'language':  src.get('language', ''),
+                'scraper':   scraper,
+                'enabled':   bool(src.get('enabled', True)),
+            })
+        return jsonify(visible)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/save-weights', methods=['POST', 'OPTIONS'])
+def save_weights():
+    """S17-INTEL Phase 2 (2026-05-16): hardened to preserve yaml fields
+    (canonical / language / scraper) on weight/enabled updates. Phase 1a
+    finding §7.4 noted the prior shape overwrote yaml with name+weight
+    only, dropping the Phase 1a additions; this fix merges updates into
+    the existing yaml structure.
+
+    Accepts both payload shapes for backward compat:
+      (a) legacy: {'weights': [{'name': '<display>', 'weight': 1.5}, ...]}
+          — keyed by display name; weight-only update
+      (b) new:    {'<canonical>': {'weight': 1.5, 'enabled': true}, ...}
+          — keyed by canonical; weight + optional enabled toggle
+      (c) new bare-weight: {'<canonical>': 1.5, ...}
+          — convenience scalar variant of (b)
+    """
+    if request.method == 'OPTIONS':
+        return '', 204
+    if not HAS_YAML:
+        return jsonify({'status': 'error', 'message': 'pyyaml not installed'}), 500
+    try:
+        body = request.get_json(force=True) or {}
+
+        # Load existing yaml — every field other than weight/enabled is
+        # preserved per source. Sources not mentioned in the payload pass
+        # through unchanged.
+        with open(EXPERT_SOURCES) as f:
+            config = yaml.safe_load(f) or {}
+        sources = config.get('sources', []) or []
+
+        updated = []
+
+        # Shape (a): legacy {'weights': [{'name', 'weight'}, ...]} — match by display name
+        if isinstance(body, dict) and 'weights' in body and isinstance(body['weights'], list):
+            by_name = {w.get('name'): w for w in body['weights'] if isinstance(w, dict)}
+            for src in sources:
+                if src.get('name') in by_name:
+                    w = by_name[src['name']].get('weight')
+                    if w is not None:
+                        src['weight'] = round(float(w), 1)
+                        updated.append(src.get('canonical', src.get('name')))
+        else:
+            # Shape (b)/(c): {<canonical>: <update>, ...}
+            for src in sources:
+                canonical = src.get('canonical')
+                if canonical not in body:
+                    continue
+                update = body[canonical]
+                if isinstance(update, (int, float)):
+                    src['weight'] = round(float(update), 1)
+                elif isinstance(update, dict):
+                    if 'weight' in update and update['weight'] is not None:
+                        src['weight'] = round(float(update['weight']), 1)
+                    if 'enabled' in update:
+                        src['enabled'] = bool(update['enabled'])
+                updated.append(canonical)
+                # name / canonical / language / scraper preserved by construction
+                # (mutating other keys via this endpoint is intentionally not allowed)
+
+        # Atomic write: tmpfile + rename so a mid-write interruption can't
+        # corrupt expert_sources.yaml.
+        tmp_path = EXPERT_SOURCES + '.tmp'
+        with open(tmp_path, 'w') as f:
+            yaml.dump(config, f, default_flow_style=False,
+                      allow_unicode=True, sort_keys=False)
+        os.replace(tmp_path, EXPERT_SOURCES)
+
+        return jsonify({'status': 'ok', 'sources_updated': updated})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
