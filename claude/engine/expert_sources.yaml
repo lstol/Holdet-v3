@@ -1,5 +1,81 @@
+# S17-INTEL Phase 1a (2026-05-16): extended from 2 entries → 13.
+# Schema per source: name (human-readable), canonical (snake_case key —
+# used in source_ratings + expert_stars + dashboard), weight (initial
+# default; tuned operationally), language (2-letter code), scraper
+# (function-name identifier dispatched by scraper.py orchestrator).
+#
+# Wired scrapers (Phase 1a): tv2_axelgaard, tv2_generic, feltet.
+# Placeholder scrapers (not yet wired): all others — orchestrator returns
+# None; Haiku prompt injects "[Article not found for this stage]" block.
+# Wiring schedule:
+#   Phase 1b: touretappe, total_velo, cyclingnews, inner_ring
+#   Phase 1c: wielerflits_playwright, indeleiderstrui_search,
+#             cyclingstage_hub, todaycycling_search, cicloweb_search,
+#             spaziociclismo_search
+
 sources:
-- name: Emil Axelgaard / TV2 Sport
-  weight: 1.5
-- name: Feltet.dk
-  weight: 1.0
+  - name: TV2/Axelgaard
+    canonical: tv2_axelgaard
+    weight: 1.5
+    language: da
+    scraper: tv2_axelgaard
+  - name: TV2 generic preview
+    canonical: tv2_generic
+    weight: 1.0
+    language: da
+    scraper: tv2_generic
+  - name: Feltet
+    canonical: feltet
+    weight: 1.2
+    language: da
+    scraper: feltet
+  - name: Inner Ring
+    canonical: inner_ring
+    weight: 1.2
+    language: en
+    scraper: inner_ring  # placeholder — wired in Phase 1b
+  - name: Touretappe
+    canonical: touretappe
+    weight: 1.0
+    language: nl
+    scraper: touretappe  # placeholder — wired in Phase 1b
+  - name: Wielerflits
+    canonical: wielerflits
+    weight: 1.0
+    language: nl
+    scraper: wielerflits_playwright  # placeholder — wired in Phase 1c
+  - name: Indeleiderstrui
+    canonical: indeleiderstrui
+    weight: 0.8
+    language: nl
+    scraper: indeleiderstrui_search  # placeholder — wired in Phase 1c
+  - name: Cyclingnews
+    canonical: cyclingnews
+    weight: 1.0
+    language: en
+    scraper: cyclingnews  # placeholder — wired in Phase 1b
+  - name: Cyclingstage
+    canonical: cyclingstage
+    weight: 0.8
+    language: en
+    scraper: cyclingstage_hub  # placeholder — wired in Phase 1c
+  - name: Total-velo
+    canonical: total_velo
+    weight: 1.0
+    language: fr
+    scraper: total_velo  # placeholder — wired in Phase 1b
+  - name: TodayCycling
+    canonical: todaycycling
+    weight: 0.8
+    language: fr
+    scraper: todaycycling_search  # placeholder — wired in Phase 1c
+  - name: Cicloweb
+    canonical: cicloweb
+    weight: 0.8
+    language: it
+    scraper: cicloweb_search  # placeholder — wired in Phase 1c
+  - name: SpazioCiclismo
+    canonical: spaziociclismo
+    weight: 0.8
+    language: it
+    scraper: spaziociclismo_search  # placeholder — wired in Phase 1c

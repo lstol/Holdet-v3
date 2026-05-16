@@ -133,6 +133,71 @@ def _load_riders_merged(prefer_snapshot: bool = False) -> dict:
     return data
 
 
+def _derive_expert_stars(source_ratings, all_known_sources, all_riders):
+    """S17-INTEL Phase 1a (2026-05-16): transform Haiku's source_ratings
+    (per-source-then-per-rider) into expert_stars (per-rider-then-per-source).
+
+    source_ratings: [{source, weight, ratings: [{rider, stars}]}] from Haiku.
+    all_known_sources: list of canonical source identifiers from
+                      expert_sources.yaml `canonical` field.
+    all_riders: active rider roster for match_rider_name canonicalisation
+               (may be empty list — falls back to raw Haiku-emitted name).
+
+    Returns: {canonical_rider_name: {source_canonical: stars_or_null}}.
+    Null-for-unrated: if a source did not rate a rider, the entry is
+    None (zero-means-missing invariant; 0 would be a downvote).
+    Phase 3 consumer math interprets null as "no signal → no lift".
+    """
+    expert_stars = {}
+
+    def _canonicalise_name(raw):
+        if not raw:
+            return None
+        if all_riders:
+            matched = match_rider_name(raw, all_riders)
+            if matched:
+                return matched['name']
+        return raw  # fallback to raw name; surfaces in expert_stars as-is
+
+    # Pass 1: collect every rider mentioned across any source; init null row.
+    for entry in source_ratings or []:
+        if not isinstance(entry, dict):
+            continue
+        for rating in (entry.get('ratings') or []):
+            if not isinstance(rating, dict):
+                continue
+            canonical_name = _canonicalise_name(rating.get('rider'))
+            if canonical_name and canonical_name not in expert_stars:
+                expert_stars[canonical_name] = {s: None for s in all_known_sources}
+
+    # Pass 2: fill in actual ratings. Bound stars to [1, 5]; tolerate float.
+    for entry in source_ratings or []:
+        if not isinstance(entry, dict):
+            continue
+        source_canonical = entry.get('source')
+        if source_canonical not in all_known_sources:
+            continue  # unknown source (shouldn't happen if Haiku follows prompt)
+        for rating in (entry.get('ratings') or []):
+            if not isinstance(rating, dict):
+                continue
+            canonical_name = _canonicalise_name(rating.get('rider'))
+            if not canonical_name or canonical_name not in expert_stars:
+                continue
+            stars_raw = rating.get('stars')
+            try:
+                stars_val = float(stars_raw)
+            except (TypeError, ValueError):
+                continue  # unparseable; leave as None
+            if not (1 <= stars_val <= 5):
+                continue  # out of range; leave as None
+            # Prefer int when round-tripping cleanly (matches Haiku output shape).
+            expert_stars[canonical_name][source_canonical] = (
+                int(stars_val) if stars_val == int(stars_val) else stars_val
+            )
+
+    return expert_stars
+
+
 def _log(msg: str) -> None:
     os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     with open(LOG_FILE, 'a') as f:
@@ -1228,45 +1293,87 @@ def gather_intel():
         )
 
         # Step 2: structure with 3 parallel Haiku calls — current stage + forward n+1 + forward n+2 (S17-15)
-        sources = yaml.safe_load(open(EXPERT_SOURCES))['sources']
-        source_weights = {s['name']: s['weight'] for s in sources}
+        # S17-INTEL Phase 1a (2026-05-16): refactored to yaml-driven N-source
+        # iteration. expert_sources.yaml lists 13 sources (canonical + weight
+        # + scraper); _haiku_current builds per-source context blocks via
+        # iteration, injecting "[Article not found for this stage]" for
+        # sources where scraper hasn't been wired (Phase 1b/1c) or returned
+        # no content. Wired in Phase 1a: tv2_axelgaard, tv2_generic, feltet.
+        sources_config = yaml.safe_load(open(EXPERT_SOURCES))['sources']
+        all_known_sources = [s['canonical'] for s in sources_config]
 
         client = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
-        tv2_w    = source_weights.get('Emil Axelgaard / TV2 Sport', 1.5)
-        feltet_w = source_weights.get('Feltet.dk', 1.3)
+
+        # Per-source article-text dispatch. Phase 1a wires 3; the other 10
+        # return None (placeholder). The fallback logic above already
+        # mutated raw_sources['tv2'] to the generic preview when Axelgaard
+        # was absent — for the new tv2_axelgaard / tv2_generic separation,
+        # use the ORIGINAL Axelgaard text (sentinel → None) and ALWAYS
+        # attempt the generic shell separately (independent source).
+        _axelgaard_orig = raw_sources.get('tv2', '')
+        _axelgaard_failed = (_axelgaard_orig.startswith('[TV2/Axelgaard:')
+                             or _axelgaard_orig.startswith('[TV2 '))
+        _tv2_axelgaard_text = None if _axelgaard_failed else (_axelgaard_orig or None)
+        # tv2_generic: reuse fallback result if already fetched; else fetch now.
+        _tv2_generic_result = locals().get('fallback') or fetch_tv2_generic_preview(int(stage))
+        _tv2_generic_text = _tv2_generic_result.get('prose') or None
+        # Feltet: existing scrape; sentinel-check.
+        _feltet_text = raw_sources.get('feltet', '')
+        if not _feltet_text or _feltet_text.startswith('[Feltet'):
+            _feltet_text = None
+
+        # Source-text dispatch. Phase 1b adds inner_ring/touretappe/
+        # total_velo/cyclingnews; Phase 1c adds the rest.
+        source_texts = {
+            'tv2_axelgaard': _tv2_axelgaard_text,
+            'tv2_generic':   _tv2_generic_text,
+            'feltet':        _feltet_text,
+            # Inner Ring scraper exists but returns stale 2024 content per S11
+            # archaeology; Phase 1a treats as placeholder. Phase 1b ships
+            # the new direct-HTTP Inner Ring scraper against
+            # inrng.com/{YYYY}/{MM}/giro-stage-{N}-preview-{slug}/.
+        }
 
         def _haiku_current():
-            return call_with_retry(lambda: client.messages.create(
-                model='claude-haiku-4-5-20251001',
-                max_tokens=8000,
-                messages=[{'role': 'user', 'content': f"""Structure this cycling expert analysis for Stage {stage} Giro d'Italia 2026 into JSON.
+            # Build SOURCE WEIGHTS section + per-source context blocks via
+            # yaml iteration. Placeholder injected for un-wired or failed
+            # scrapers — keeps Haiku aware of attempted-but-absent sources.
+            weight_lines = []
+            source_blocks = []
+            for src in sources_config:
+                canonical = src['canonical']
+                weight_lines.append(f"- {src['name']} ({canonical}): weight {src['weight']}")
+                article = source_texts.get(canonical)
+                header = f"=== {src['name'].upper()} (canonical: {canonical}, weight: {src['weight']}, lang: {src['language']}) ==="
+                if article:
+                    source_blocks.append(f"{header}\n{article[:2500]}")
+                else:
+                    source_blocks.append(f"{header}\n[Article not found for this stage]")
 
-SOURCE WEIGHTS:
-- TV2/Axelgaard: {tv2_w} (highest priority, content in Danish)
-- Feltet.dk: {feltet_w}
+            weights_section = "\n".join(weight_lines)
+            articles_section = "\n\n".join(source_blocks)
+            canonical_list = ", ".join(all_known_sources)
 
-TV2/AXELGAARD (Danish — summarise in English):
-{raw_sources['tv2'][:2500]}
+            prompt = f"""Structure this cycling expert analysis for Stage {stage} Giro d'Italia 2026 into JSON.
 
-FELTET.DK:
-{raw_sources['feltet'][:2500]}
+SOURCE WEIGHTS (canonical names in parentheses; use canonical names in source_ratings output):
+{weights_section}
 
-INNER RING (background context only, no weight):
-{raw_sources['inner_ring'][:1500]}
+{articles_section}
 
 Return ONLY the JSON object below. No text before or after. No markdown fences.
 {{
-  "sources_consulted": ["TV2/Axelgaard", "Feltet.dk"],
-  "sources_not_found": [],
+  "sources_consulted": ["<canonical names where article text was provided>"],
+  "sources_not_found": ["<canonical names where '[Article not found for this stage]' was injected>"],
   "source_ratings": [
     {{
-      "source": "TV2/Axelgaard",
-      "weight": {tv2_w},
+      "source": "tv2_axelgaard",
+      "weight": 1.5,
       "ratings": [{{"rider": "Jonathan Milan", "stars": 5}}, {{"rider": "Paul Magnier", "stars": 4}}]
     }},
     {{
-      "source": "Feltet.dk",
-      "weight": {feltet_w},
+      "source": "feltet",
+      "weight": 1.2,
       "ratings": [{{"rider": "Corbin Strong", "stars": 5}}]
     }}
   ],
@@ -1282,10 +1389,12 @@ Return ONLY the JSON object below. No text before or after. No markdown fences.
 }}
 
 Rules:
+- For source_ratings, emit ONE entry per source where article text was provided (not "[Article not found for this stage]"). List sources without article text in sources_not_found.
+- Use these EXACT canonical source names (snake_case) for the `source` field: {canonical_list}
 - direction: up = favoured beyond raw odds, down = risk not in odds, neutral = in line with odds
 - strength: strong / moderate / weak
-- Include every rider mentioned by either source in source_ratings
-- TV2 content is in Danish — translate and summarise each rider mention in English
+- Include every rider mentioned by any source's article in that source's source_ratings.ratings list
+- TV2 / Feltet content is in Danish — translate and summarise each rider mention in English. Other-language sources similarly.
 - Keep stage_notes and summary short (max 2 sentences each)
 - stage_signals.stage_type — classify the stage into ONE of these categories:
   * "sprint" — flat or rolling, expected bunch sprint finish, minimal GC movement
@@ -1293,7 +1402,12 @@ Rules:
   * "breakaway" — terrain favors a breakaway sticking (transitional mountain stages, classics-style profiles), GC peloton may finish together
   * "itt" — individual time trial
   * "hybrid_mountain" — mountain stage that doesn't fit cleanly into gc_day or breakaway (long descent after final climb, medium-mountain with multiple small climbs, etc.)
-  Pick the closest single category. If genuinely ambiguous, prefer the more conservative (smaller-GC-movement) option."""}]
+  Pick the closest single category. If genuinely ambiguous, prefer the more conservative (smaller-GC-movement) option."""
+
+            return call_with_retry(lambda: client.messages.create(
+                model='claude-haiku-4-5-20251001',
+                max_tokens=8000,
+                messages=[{'role': 'user', 'content': prompt}]
             ))
 
         # Run current-stage Haiku + forward n+1 + forward n+2 in parallel.
@@ -1325,6 +1439,40 @@ Rules:
         # came from Axelgaard's detailed Playwright scrape (or the generic URL's
         # redirect to it) versus the lighter generic preview page.
         result['source'] = current_source
+
+        # S17-INTEL Phase 1a (2026-05-16): derive expert_stars per-rider ×
+        # per-source matrix from Haiku's source_ratings output. Co-exists
+        # with source_ratings (diagnostic value preserved); Phase 3
+        # consumer math reads expert_stars only.
+        try:
+            _rider_data = _load_riders_merged()
+            _active_riders_for_match = [r for r in _rider_data['riders']
+                                        if not r.get('isOut') and r.get('status') != 'dns']
+        except Exception as _e:
+            _log(f"gather-intel: failed to load active_riders for derive_expert_stars: {_e}")
+            _active_riders_for_match = []
+        result['expert_stars'] = _derive_expert_stars(
+            result.get('source_ratings', []),
+            all_known_sources,
+            _active_riders_for_match,
+        )
+
+        # Phase 1a token-budget verification logging — captures input/output
+        # token usage so 13-source budget can be characterised before
+        # Phase 1b/1c add real scrapers (which expand source_ratings output).
+        try:
+            _usage = getattr(structure_message, 'usage', None)
+            if _usage:
+                _log(
+                    f"gather-intel haiku usage stage={stage} "
+                    f"input_tokens={getattr(_usage, 'input_tokens', '?')} "
+                    f"output_tokens={getattr(_usage, 'output_tokens', '?')} "
+                    f"sources_wired={sum(1 for v in source_texts.values() if v)} "
+                    f"sources_total={len(all_known_sources)} "
+                    f"expert_stars_riders={len(result['expert_stars'])}"
+                )
+        except Exception as _e:
+            _log(f"gather-intel: usage capture failed: {_e}")
         # S17-15: nest forward intel inside the inner intel dict so the dashboard's
         # /load-intel unwrap pattern finds it. Omit the key entirely when extraction
         # failed. S17-γ note: forward intel is now UI substrate only (rendered by
