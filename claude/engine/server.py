@@ -1451,25 +1451,30 @@ For sources that use explicit rating systems (stars, chain-rings, or other symbo
 indicating tiered rider strength), prioritize the rating table/list over rider
 mentions in prose discussion.
 
-- Inner Ring (`inner_ring`) structure: the article has multiple sections including
-  a "Stage X Review" (recap of YESTERDAY's stage) and a "The Contenders" section
-  for TODAY's stage. The contender ratings come from the Contenders section ONLY.
-  At the end of the Contenders section, Inner Ring typically provides a final
-  tier-grouped list naming the top contenders (e.g., a sentence like
-  "Narvaez, Christen, Scaroni  Ciccone, Sheffield, Van Eetvelt" where the
-  spacing/break separates top-tier from second-tier picks). When this final
-  list is present, treat the FIRST tier as 4-5 stars and the SECOND tier as
-  3-4 stars; riders named only in the descriptive Contenders prose without
-  appearing in the final list are 3 stars. If the article uses chain-ring icons
-  (sometimes rendered as image alts or 🔗 symbols), map 3 rings → 5 stars,
-  2 rings → 4 stars, 1 ring → 3 stars.
-  CRITICAL: Riders mentioned only in the "Stage X Review" section
-  (yesterday's stage winner being recapped, GC standings discussion) are NOT
-  contenders for TODAY's stage unless they ALSO appear in the Contenders
-  section. Do not emit ratings for riders that only appear in review prose.
-  If the Contenders section is absent or unclear, still extract the riders
-  the article identifies as today's stage favourites — do NOT return zero
-  ratings just because the exact tier-list format is missing.
+- Inner Ring (`inner_ring`) content is scraper-preprocessed (S17-INTEL
+  Inner Ring scraper preprocessing, 2026-05-17): you receive ONLY the
+  "The Contenders" section text — Stage Review, Route/Finish description,
+  and Postcard historical sidebar have been stripped at the scraper layer
+  before reaching this prompt. Inner Ring's chain-ring tier images are
+  converted to plain-text markers in the article body:
+    `[3-rings]` — top tier (highest probability contenders) → 5 stars
+    `[2-rings]` — mid tier (strong contenders) → 4 stars
+    `[1-ring]`  — lower tier (still contenders, lower probability) → 3 stars
+  Expected substrate shape:
+    "[prose paragraph naming today's top picks and breakaway candidates]
+     [3-rings] Rider A, Rider B
+     [2-rings] Rider C, Rider D, Rider E
+     [1-ring] Rider F, Rider G, ..."
+  Extract ratings ONLY from the tier-marked rider lists. Rider names
+  appearing in the prose contender discussion (BEFORE the tier table) that
+  ALSO appear in a tier-marked list use the tier-list rating. Rider names
+  appearing ONLY in prose as counterexamples (e.g., "80kg riders like Max
+  Walscheid stand no chance") are NOT contenders and should NOT be rated.
+  If the `[3-rings]` / `[2-rings]` / `[1-ring]` markers are absent from the
+  text (unexpected article shape), fall back to extracting riders explicitly
+  identified in the Contenders prose as today's favourites; map prose
+  strength signals to stars conservatively (4-5 for top picks, 3 for
+  strong mentions, 2 for brief mentions).
 
 - Touretappe (`touretappe`) uses literal asterisk symbols inline in the article
   body (e.g., "*** Milan ** Groenewegen * Vernon"). Map directly:
