@@ -650,19 +650,124 @@ def _load_stage_meta(stage_n: int) -> dict:
     return {}
 
 
+# S17-INTEL Inner Ring scraper preprocessing (2026-05-17): chain-ring image
+# filename → text-marker mapping. Inner Ring encodes contender tiers via
+# <img src=".../threerings.jpg"> / tworings.jpg / onering.jpg. BeautifulSoup
+# strips <img> tags during text extraction, flattening the tier signal. We
+# substitute the image tags with plain-text markers in raw HTML BEFORE BS4
+# processes — preserving tier-to-rider mapping for Haiku.
+_INNER_RING_CHAIN_RING_MARKERS = {
+    'threerings.jpg':  '[3-rings]',
+    'threerings.png':  '[3-rings]',
+    'tworings.jpg':    '[2-rings]',
+    'tworings.png':    '[2-rings]',
+    'onering.jpg':     '[1-ring]',
+    'onering.png':     '[1-ring]',
+}
+
+
+def _preprocess_inner_ring_html(html: str) -> str:
+    """Substitute Inner Ring chain-ring <img> tags with plain-text tier
+    markers in raw HTML. Idempotent if applied twice (no-op on second pass
+    since <img> tags are already gone). Other <img> tags untouched."""
+    for filename, marker in _INNER_RING_CHAIN_RING_MARKERS.items():
+        # Match <img ...> containing the filename in any attribute (typically
+        # src=). Match is non-greedy on <img...> to avoid swallowing past >.
+        pattern = re.compile(
+            rf'<img[^>]*?{re.escape(filename)}[^>]*?>',
+            re.IGNORECASE,
+        )
+        html = pattern.sub(marker, html)
+    return html
+
+
+# Regex anchors for Inner Ring's "The Contenders" section boundaries.
+# Section starts at "The Contenders:" or "**The Contenders**:" header; ends
+# at next section header (Weather / TV / Postcard / comments). Patterns are
+# tolerant of bold-markdown variants (**Section**) and plain ("Section :")
+# rendering. Compiled here for clarity; applied in _extract_contenders_section.
+_CONTENDERS_START = re.compile(
+    r'(?:\*\*The Contenders\*\*\s*:|(?<![\w-])The Contenders\s*:)',
+    re.IGNORECASE,
+)
+_CONTENDERS_END_PATTERNS = [
+    re.compile(r'\*\*Weather\*\*', re.IGNORECASE),
+    re.compile(r'(?<![\w-])Weather\s*:', re.IGNORECASE),
+    re.compile(r'\*\*TV\*\*', re.IGNORECASE),
+    re.compile(r'(?<![\w-])TV\s*:', re.IGNORECASE),
+    re.compile(r'\*\*Postcard\b', re.IGNORECASE),
+    re.compile(r'(?<![\w-])Postcard\s+from\b', re.IGNORECASE),
+    re.compile(r'\d+\s+thoughts\s+on', re.IGNORECASE),  # comments header
+]
+
+
+def _extract_contenders_section(article_text: str) -> str:
+    """Slice the Contenders section from Inner Ring article body. Returns
+    empty string if the section header isn't found OR the slice is too short
+    to be useful; caller falls back to full article on empty return."""
+    m = _CONTENDERS_START.search(article_text)
+    if not m:
+        return ''
+    start = m.end()
+    # Find the earliest section-end marker after start
+    end = len(article_text)
+    for pat in _CONTENDERS_END_PATTERNS:
+        em = pat.search(article_text, start)
+        if em and em.start() < end:
+            end = em.start()
+    section = article_text[start:end].strip()
+    return section if len(section) >= 100 else ''
+
+
+def _fetch_inner_ring_article_text(url: str) -> str:
+    """Inner-Ring-specific fetch path. Wraps _fetch_article_text-equivalent
+    logic but injects the chain-ring image preprocessing step BEFORE BS4
+    processes raw HTML. Then runs the standard <article> / fallback chain.
+    """
+    try:
+        resp = requests.get(url, headers=_REALISTIC_HEADERS, timeout=15,
+                            allow_redirects=True)
+        if resp.status_code != 200:
+            return ''
+        if not resp.encoding or resp.encoding.lower() == 'iso-8859-1':
+            resp.encoding = 'utf-8'
+        # Phase preprocessing: chain-ring images → text markers
+        preprocessed = _preprocess_inner_ring_html(resp.text)
+        soup = BeautifulSoup(preprocessed, 'html.parser')
+        article = soup.find('article')
+        if not article:
+            article = (soup.find('div', class_='entry-content')
+                       or soup.find('div', class_='post-content')
+                       or soup.find('main'))
+        if not article:
+            return ''
+        for tag in article(['script', 'style', 'nav', 'aside', 'footer']):
+            tag.decompose()
+        text = article.get_text(' ', strip=True)
+        return text if len(text) >= 500 else ''
+    except Exception:
+        return ''
+
+
 def fetch_inner_ring_preview_http(stage: int) -> str:
-    """S17-INTEL Phase 1b: direct-HTTP Inner Ring scraper.
+    """S17-INTEL Phase 1b + Inner Ring scraper preprocessing (2026-05-17):
+    direct-HTTP scraper with section isolation + tier-marker preservation.
 
     URL pattern: inrng.com/{YYYY}/05/giro-stage-{N}-preview-{slug}/
     where slug = lowercase finish city from stages_giro2026.json.
 
-    Replaces the deprecated Playwright version above (kept in source for
-    archaeology; no longer invoked by scrape_all_intel). The slug-based
-    URL bypasses the S11 stale-data root cause — historical 2024 content
-    no longer in the canonical 2026 path.
-
-    Note the `_http` suffix — kept distinct from the existing async
-    `fetch_inner_ring_preview` symbol so callers explicitly opt in.
+    Two-stage preprocessing (S17-INTEL Inner Ring scraper-preprocessing
+    handoff 2026-05-17):
+      (1) _preprocess_inner_ring_html — chain-ring <img> tags substituted
+          with plain-text markers ([3-rings] / [2-rings] / [1-ring]) before
+          BS4 strips <img> tags. Preserves tier signal that encodes Inner
+          Ring's contender ratings.
+      (2) _extract_contenders_section — slice only "The Contenders" section
+          from full article body. Isolates Haiku's substrate from Stage
+          Review / Route / Finish / Postcard sections that previously
+          confused multi-section extraction. Falls back to full article
+          if section extraction fails (preserves Phase 1b behavior under
+          unexpected article structure).
     """
     meta = _load_stage_meta(stage)
     finish_city = meta.get('finish_city')
@@ -672,7 +777,13 @@ def fetch_inner_ring_preview_http(stage: int) -> str:
     if not slug:
         return ''
     url = f"https://inrng.com/2026/05/giro-stage-{stage}-preview-{slug}/"
-    return _fetch_article_text(url, source_label='inner_ring')
+    full_article = _fetch_inner_ring_article_text(url)
+    if not full_article:
+        return ''
+    contenders = _extract_contenders_section(full_article)
+    # Fall back to full article when section extraction fails — preserves
+    # Phase 1b operational behavior under unexpected article structure.
+    return contenders if contenders else full_article
 
 
 def fetch_touretappe_preview(stage: int) -> str:
