@@ -1,0 +1,165 @@
+
+########################################################################################
+# EV-function asymmetry verification — Stage 9
+# Verifies compute_team_ev (SA objective) ↔ simulate_stage (reported Net EV)
+# rank rosters oppositely.
+########################################################################################
+========================================================================================
+  SECTION A — Function implementation inspection
+========================================================================================
+
+### compute_team_ev — optimizer.py:720
+
+```python
+def compute_team_ev(team, probs):
+    """
+    Fast analytical expected value for a team of 8 rider dicts.
+
+    Components:
+      1. Stage finish + sprint + jersey + GC EV per rider (all precomputed in total_ev)
+      2. Captain bonus ≈ best rider's total_ev (doubling all positive outcomes)
+      3. Team bonus EV — pairs only, composition-aware
+      4. Depth bonus EV
+    """
+    total_evs = [probs.get(r['name'], {}).get('total_ev',
+                 probs.get(r['name'], {}).get('finish_ev', 0.0)) for r in team]
+    total  = sum(total_evs)
+    total += max(total_evs) if total_evs else 0.0   # captain bonus
+    total += compute_team_bonus_ev(team, probs)
+    exp_top15 = sum(probs.get(r['name'], {}).get('top15', 0.0) for r in team)
+    total += DEPTH_BONUS.get(min(8, round(exp_top15)), 0)
+    return total
+```
+
+### simulate_stage — optimizer.py:1867
+
+```python
+def simulate_stage(team_riders, all_probs, captain_name, all_riders=None,
+                   n_sims=10_000, stage_config=None, scoring=None, seed=None):
+    """
+    Simulate n_sims stage outcomes using Plackett-Luce sampling.
+
+    Scoring: stage finish · sprint (final + intermediates) · jersey · GC bonus ·
+             KOM/climb points · team bonus · depth bonus.
+    Captain: ALL positive per-rider components are doubled.
+
+    stage_config: dict from stage_scoring.json['stages']['N']
+    scoring:      full stage_scoring.json dict
+    seed:         int for the Plackett-Luce RNG. None → unseeded (legacy).
+    Returns {'mean', 'cdf': {p25,p50,p75,p90}, 'breakdown': {...}}.
+    """
+    if stage_config is None:
+    ...
+    Simulate n_sims stage outcomes using Plackett-Luce sampling.
+
+    Scoring: stage finish · sprint (final + intermediates) · jersey · GC bonus ·
+             KOM/climb points · team bonus · depth bonus.
+    Captain: ALL positive per-rider components are doubled.
+
+    ...
+```
+
+### Method classification
+
+| Function           | Method                                              | Mutual-exclusivity |
+|--------------------|-----------------------------------------------------|--------------------|
+| compute_team_ev    | Naive marginal sum (Σ per-rider total_ev + max + ε) | NOT modeled        |
+| simulate_stage     | Plackett-Luce Monte Carlo (n_sims=10,000 joint draws) | YES (one rider per finish position) |
+
+### Call site enumeration
+
+compute_team_ev:
+  - optimizer.py:819   _compute_objective('ev' branch)   — SA objective fallback
+  - optimizer.py:943   fast_optimize SA loop (initial)   — forward-stage proxy
+  - optimizer.py:972   fast_optimize SA inner            — forward-stage proxy iter
+  - optimizer.py:1031  compute_objective(team, ...)      — multi-strategy SA objective
+  - optimizer.py:1449  post-SA reporting                 — 'true analytical EV' for diags
+simulate_stage:
+  - optimizer.py:1687  generate_candidate_teams chain eval — produces displayed Net EV
+  (No SA call site uses simulate_stage; SA uses compute_team_ev exclusively.)
+
+### Hypothesis assessment at code level
+
+  Q: Does compute_team_ev use bookmaker marginal probabilities directly
+     (independence-assuming)?
+  A: YES. Line 730-731 reads pre-computed `total_ev` per rider (= sum of
+     finish_ev/sprint_ev/gc_ev/jersey_ev/kom_ev marginals from build_probabilities).
+     Line 733 adds `max(total_evs)` as captain bonus. Line 734 adds team_bonus_ev.
+     Line 735-736 adds depth_bonus from `round(sum(top15))` — sums marginal top-15 probs
+     into a single expected-top-15-count integer and looks up DEPTH_BONUS table.
+     NO modelling of which rider actually finishes 1st vs 2nd vs ... in joint dist.
+
+  Q: Does simulate_stage sample stage outcomes with mutual-exclusivity preserved?
+  A: YES. Plackett-Luce scoring at line 1920-1923:
+       u      = rng.uniform(1e-12, 1.0, (n_sims, n_field))
+       scores = -log(u) / field_probs   # one score per (sim, rider)
+       order  = argsort(scores, axis=1) # argsort → finish order per sim
+     Exactly ONE rider gets each finish position per simulation. Per-position points
+     (FINISH_POINTS table) are accumulated only for the rider at that position.
+     n_sims=10,000 joint realizations across the full ~170-rider field.
+
+  → Hypothesis CONFIRMED at code level:
+    - compute_team_ev independence-assuming marginal sum
+    - simulate_stage joint-distribution Plackett-Luce MC
+    - SA loops invoke compute_team_ev (line 1031); displayed Net EV uses simulate_stage
+    - These are genuinely different EV formulations.
+
+========================================================================================
+  SECTION B — Direct numerical comparison
+========================================================================================
+
+  Optimal best-corr roster (SHA b2bed0e50232): ['Afonso Eulálio', 'Christian Scaroni', 'Felix Gall', 'Gianmarco Garofoli', 'Giulio Ciccone', 'Jai Hindley', 'Jan Christen', 'Javier Romo']
+  Depth dominant   roster (SHA 49283f3b8263): ['Christian Scaroni', 'Felix Gall', 'Giulio Ciccone', 'Igor Arrieta', 'Jai Hindley', 'Jan Christen', 'Javier Romo', 'Wout Poels']
+  Lookahead dominant roster (SHA a33da892cd1c): ['Afonso Eulálio', 'Christian Scaroni', 'Gijs Leemreize', 'Giulio Ciccone', 'Jonas Vingegaard', 'Josh Kench', 'Lennert Van Eetvelt', 'Wout Poels']
+
+  Evaluation under both functions (compute_team_ev marginal-sum vs simulate_stage MC):
+
+  Roster                        Cap                        compute_team_ev    simulate_stage       Δ_abs    Δ_pct    which_higher
+  ----------------------------  ------------------------  ----------------  ----------------  ----------  -------  --------------
+  1_optimal_bestcorr            Felix Gall                       1,669,332           774,833    -894,499   -53.6%  compute_team_ev
+  2_lookahead_bestcorr          Jonas Vingegaard                 1,530,742         1,210,427    -320,314   -20.9%  compute_team_ev
+  3_depth_dominant              Felix Gall                       1,667,538           851,902    -815,636   -48.9%  compute_team_ev
+  4_opt_swap_in_ving            Jonas Vingegaard                 2,101,610         1,356,912    -744,698   -35.4%  compute_team_ev
+  5_loo_swap_in_gall            Felix Gall                       1,343,684           659,883    -683,801   -50.9%  compute_team_ev
+  6_current_team                [SKIP: only 7 riders matched out of 8 — {'Remy Rochas'}]
+
+### Critical test: Optimal vs Lookahead
+
+  compute_team_ev:  optimal 1,669,332  vs  lookahead 1,530,742  (Δ_opt_vs_loo = +138,591; optimal higher)
+  simulate_stage:   optimal 774,833  vs  lookahead 1,210,427  (Δ_opt_vs_loo = -435,594; lookahead higher)
+
+  → Functions RANK OPPOSITELY: compute_team_ev prefers optimal; simulate_stage prefers lookahead.
+  → Hypothesis CONFIRMED numerically.
+
+========================================================================================
+  SECTION C — Synthetic stress-test
+========================================================================================
+
+  Roster A — '1 big favorite (Vingegaard-like, p_win=30%) + 7 medium':
+    Riders: ['Afonso Eulálio', 'Alan Hatherly', 'Alberto Bettiol', 'Alec Segaert', 'Aleksandr Vlasov', 'Alessandro Pinarello', 'Alessandro Tonelli', 'Amanuel Ghebreigzabhier']
+  Roster B — '8 medium with no big favorite':
+    Riders: ['Andrea Mifsud', 'Andrea Raccagni Noviero', 'Andreas Leknessund', 'António Morgado', 'Arjen Livyns', 'Axel Huens', 'Ayco Bastiaens', 'Bart Lemmen']
+
+  Roster        Captain                    compute_team_ev    simulate_stage       Δ_abs    which_higher
+  ------------  ------------------------  ----------------  ----------------  ----------  --------------
+  A             Afonso Eulálio                   1,187,707           968,028    -219,679  compute_team_ev
+  B             Andrea Mifsud                    1,123,497           531,615    -591,882  compute_team_ev
+
+  Cross-roster ranking:
+    compute_team_ev: A > B  (Δ = 64,210)
+    simulate_stage:  A > B  (Δ = 436,413)
+
+  → Functions AGREE (A preferred by both).
+  → Difference is magnitude not direction.
+
+========================================================================================
+  FINAL VERDICT
+========================================================================================
+  Section A (code level):    CONFIRMED_AT_CODE_LEVEL
+  Section B (real rosters):  CONFIRMED_RANK_OPPOSITELY
+  Section C (stress test):   AGREEMENT
+
+  Final: PARTIAL — functions differ structurally + at least one numerical test ranks oppositely; details below
+
+Persisted: /tmp/s17_intel_ev_function_audit.json
+

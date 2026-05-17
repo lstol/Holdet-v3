@@ -1,0 +1,158 @@
+{
+  "section_a": {
+    "compute_team_ev": {
+      "method": "naive_marginal_sum",
+      "mutual_exclusivity": false,
+      "call_sites": [
+        "optimizer.py:819 (_compute_objective ev branch)",
+        "optimizer.py:943 (fast_optimize initial)",
+        "optimizer.py:972 (fast_optimize inner)",
+        "optimizer.py:1031 (compute_objective)",
+        "optimizer.py:1449 (post-SA reporting)"
+      ]
+    },
+    "simulate_stage": {
+      "method": "plackett_luce_monte_carlo",
+      "n_sims_default": 10000,
+      "mutual_exclusivity": true,
+      "call_sites": [
+        "optimizer.py:1687 (generate_candidate_teams chain eval \u2014 displayed Net EV)"
+      ]
+    },
+    "hypothesis_verdict": "CONFIRMED_AT_CODE_LEVEL"
+  },
+  "section_b": {
+    "rosters": [
+      {
+        "label": "1_optimal_bestcorr",
+        "roster": [
+          "Afonso Eul\u00e1lio",
+          "Christian Scaroni",
+          "Felix Gall",
+          "Gianmarco Garofoli",
+          "Giulio Ciccone",
+          "Jai Hindley",
+          "Jan Christen",
+          "Javier Romo"
+        ],
+        "captain": "Felix Gall",
+        "compute_team_ev": 1669332.4874291117,
+        "simulate_stage_mean": 774833.4,
+        "delta_abs": -894499.0874291117,
+        "delta_pct": -53.58423766176759,
+        "which_higher": "compute_team_ev"
+      },
+      {
+        "label": "2_lookahead_bestcorr",
+        "roster": [
+          "Afonso Eul\u00e1lio",
+          "Christian Scaroni",
+          "Gijs Leemreize",
+          "Giulio Ciccone",
+          "Jonas Vingegaard",
+          "Josh Kench",
+          "Lennert Van Eetvelt",
+          "Wout Poels"
+        ],
+        "captain": "Jonas Vingegaard",
+        "compute_team_ev": 1530741.590096618,
+        "simulate_stage_mean": 1210427.3,
+        "delta_abs": -320314.290096618,
+        "delta_pct": -20.925431971597522,
+        "which_higher": "compute_team_ev"
+      },
+      {
+        "label": "3_depth_dominant",
+        "roster": [
+          "Christian Scaroni",
+          "Felix Gall",
+          "Giulio Ciccone",
+          "Igor Arrieta",
+          "Jai Hindley",
+          "Jan Christen",
+          "Javier Romo",
+          "Wout Poels"
+        ],
+        "captain": "Felix Gall",
+        "compute_team_ev": 1667538.2148078133,
+        "simulate_stage_mean": 851901.9,
+        "delta_abs": -815636.3148078133,
+        "delta_pct": -48.91260107654065,
+        "which_higher": "compute_team_ev"
+      },
+      {
+        "label": "4_opt_swap_in_ving",
+        "roster": [
+          "Afonso Eul\u00e1lio",
+          "Christian Scaroni",
+          "Felix Gall",
+          "Giulio Ciccone",
+          "Jai Hindley",
+          "Jan Christen",
+          "Javier Romo",
+          "Jonas Vingegaard"
+        ],
+        "captain": "Jonas Vingegaard",
+        "compute_team_ev": 2101610.046124764,
+        "simulate_stage_mean": 1356912.1,
+        "delta_abs": -744697.9461247637,
+        "delta_pct": -35.43463962298523,
+        "which_higher": "compute_team_ev"
+      },
+      {
+        "label": "5_loo_swap_in_gall",
+        "roster": [
+          "Afonso Eul\u00e1lio",
+          "Christian Scaroni",
+          "Gijs Leemreize",
+          "Giulio Ciccone",
+          "Josh Kench",
+          "Lennert Van Eetvelt",
+          "Wout Poels",
+          "Felix Gall"
+        ],
+        "captain": "Felix Gall",
+        "compute_team_ev": 1343684.4483196805,
+        "simulate_stage_mean": 659883.4,
+        "delta_abs": -683801.0483196805,
+        "delta_pct": -50.89000242391695,
+        "which_higher": "compute_team_ev"
+      },
+      {
+        "label": "6_current_team",
+        "skip_reason": "matched 7/8"
+      }
+    ],
+    "critical_test": "CONFIRMED_RANK_OPPOSITELY"
+  },
+  "section_c": {
+    "roster_A_names": [
+      "Afonso Eul\u00e1lio",
+      "Alan Hatherly",
+      "Alberto Bettiol",
+      "Alec Segaert",
+      "Aleksandr Vlasov",
+      "Alessandro Pinarello",
+      "Alessandro Tonelli",
+      "Amanuel Ghebreigzabhier"
+    ],
+    "roster_B_names": [
+      "Andrea Mifsud",
+      "Andrea Raccagni Noviero",
+      "Andreas Leknessund",
+      "Ant\u00f3nio Morgado",
+      "Arjen Livyns",
+      "Axel Huens",
+      "Ayco Bastiaens",
+      "Bart Lemmen"
+    ],
+    "roster_A_compute_team_ev": 1187707.142857143,
+    "roster_A_simulate_stage": 968027.8,
+    "roster_B_compute_team_ev": 1123497.142857143,
+    "roster_B_simulate_stage": 531614.8,
+    "cte_winner": "A",
+    "sim_winner": "A",
+    "verdict": "AGREEMENT"
+  },
+  "final_verdict": "PARTIAL \u2014 functions differ structurally + at least one numerical test ranks oppositely; details below"
+}
