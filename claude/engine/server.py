@@ -1451,17 +1451,25 @@ For sources that use explicit rating systems (stars, chain-rings, or other symbo
 indicating tiered rider strength), prioritize the rating table/list over rider
 mentions in prose discussion.
 
-- Inner Ring (`inner_ring`) uses chain-ring icons (1-3 rings). The chain-ring
-  contender table appears near the END of the article, after the route
-  description and the "Stage X Review" recap of YESTERDAY's stage. Mapping
-  to stars:
-    3 rings → 5 stars  (tier-1 contenders, highest probability)
-    2 rings → 4 stars  (tier-2 contenders)
-    1 ring  → 3 stars  (tier-3 contenders, still in the conversation)
+- Inner Ring (`inner_ring`) structure: the article has multiple sections including
+  a "Stage X Review" (recap of YESTERDAY's stage) and a "The Contenders" section
+  for TODAY's stage. The contender ratings come from the Contenders section ONLY.
+  At the end of the Contenders section, Inner Ring typically provides a final
+  tier-grouped list naming the top contenders (e.g., a sentence like
+  "Narvaez, Christen, Scaroni  Ciccone, Sheffield, Van Eetvelt" where the
+  spacing/break separates top-tier from second-tier picks). When this final
+  list is present, treat the FIRST tier as 4-5 stars and the SECOND tier as
+  3-4 stars; riders named only in the descriptive Contenders prose without
+  appearing in the final list are 3 stars. If the article uses chain-ring icons
+  (sometimes rendered as image alts or 🔗 symbols), map 3 rings → 5 stars,
+  2 rings → 4 stars, 1 ring → 3 stars.
   CRITICAL: Riders mentioned only in the "Stage X Review" section
-  (e.g., yesterday's stage winner being recapped) are NOT contenders for
-  TODAY's stage unless they ALSO appear in the chain-ring table. Do not
-  emit ratings for riders that only appear in the recap prose.
+  (yesterday's stage winner being recapped, GC standings discussion) are NOT
+  contenders for TODAY's stage unless they ALSO appear in the Contenders
+  section. Do not emit ratings for riders that only appear in review prose.
+  If the Contenders section is absent or unclear, still extract the riders
+  the article identifies as today's stage favourites — do NOT return zero
+  ratings just because the exact tier-list format is missing.
 
 - Touretappe (`touretappe`) uses literal asterisk symbols inline in the article
   body (e.g., "*** Milan ** Groenewegen * Vernon"). Map directly:
