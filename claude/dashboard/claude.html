@@ -214,6 +214,17 @@ input[type=range]::-webkit-slider-thumb {
 .weight-row label { display: flex; justify-content: space-between; font-size: 11px; color: var(--color-text-2); margin-bottom: 3px; }
 .weight-row label span { font-family: var(--font-mono); color: var(--color-text); }
 
+/* ── S17-INTEL substrate-quality fix (2026-05-16): source-row tickbox ─ */
+/* Phase 2 V4d operator check surfaced tickbox column rendering invisible
+   on per-source controls panel — bare browser-default checkbox in tight
+   grid column. Explicit sizing + appearance ensures consistent render
+   across Chromium/Firefox/Safari. */
+.source-row input[type="checkbox"] {
+  width: 16px; height: 16px; margin: 0; cursor: pointer;
+  appearance: auto; -webkit-appearance: checkbox;
+  accent-color: var(--color-accent, #4a90e2);
+}
+
 /* ── S17-INTEL Phase 2 (2026-05-16): Expert star matrix ──────────── */
 .star-matrix-table { width: 100%; border-collapse: collapse; font-size: 11px; }
 .star-matrix-table th, .star-matrix-table td { padding: 4px 6px; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
@@ -1522,7 +1533,7 @@ function renderSourceControls() {
   const rowsHtml = sources.map((src, i) => {
     const wLabel = (Number(src.weight) || 0).toFixed(1);
     const checked = src.enabled !== false ? 'checked' : '';
-    return `<div class="source-row" style="display:grid;grid-template-columns:18px 1fr 80px 28px;gap:6px;align-items:center;font-size:11px;padding:2px 0;">
+    return `<div class="source-row" style="display:grid;grid-template-columns:22px 1fr 80px 28px;gap:6px;align-items:center;font-size:11px;padding:2px 0;">
       <input type="checkbox" data-canonical="${esc(src.canonical)}"
              onchange="onSourceToggle('${esc(src.canonical)}', this.checked)"
              ${checked} title="Include in extraction + consumption">

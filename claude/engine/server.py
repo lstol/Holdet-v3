@@ -1444,6 +1444,56 @@ Rules:
 - Include every rider mentioned by any source's article in that source's source_ratings.ratings list
 - TV2 / Feltet content is in Danish — translate and summarise each rider mention in English. Other-language sources similarly.
 - Keep stage_notes and summary short (max 2 sentences each)
+
+SOURCE-SPECIFIC EXTRACTION RULES (S17-INTEL substrate-quality fix 2026-05-16):
+
+For sources that use explicit rating systems (stars, chain-rings, or other symbols
+indicating tiered rider strength), prioritize the rating table/list over rider
+mentions in prose discussion.
+
+- Inner Ring (`inner_ring`) uses chain-ring icons (1-3 rings). The chain-ring
+  contender table appears near the END of the article, after the route
+  description and the "Stage X Review" recap of YESTERDAY's stage. Mapping
+  to stars:
+    3 rings → 5 stars  (tier-1 contenders, highest probability)
+    2 rings → 4 stars  (tier-2 contenders)
+    1 ring  → 3 stars  (tier-3 contenders, still in the conversation)
+  CRITICAL: Riders mentioned only in the "Stage X Review" section
+  (e.g., yesterday's stage winner being recapped) are NOT contenders for
+  TODAY's stage unless they ALSO appear in the chain-ring table. Do not
+  emit ratings for riders that only appear in the recap prose.
+
+- Touretappe (`touretappe`) uses literal asterisk symbols inline in the article
+  body (e.g., "*** Milan ** Groenewegen * Vernon"). Map directly:
+  *** → 5 stars, ** → 4 stars, * → 3 stars (typical 3-star max scale).
+  Confirm the source's max-star convention from the article before extraction.
+
+- Total-velo (`total_velo`) and TodayCycling (`todaycycling`) use star emoji
+  symbols inline (e.g., ⭐⭐⭐ MAGNIER ⭐⭐ MILAN ⭐ VERNON). Map directly;
+  max convention is typically 3 stars.
+
+When a source has BOTH a rating table AND prose discussion, the rating table is
+AUTHORITATIVE. Riders mentioned only in prose context (race recap, historical
+references, narrative color commentary) are NOT extracted as rated for the
+upcoming stage.
+
+CURRENT STARTLIST CONSTRAINT (applies to ALL sources):
+
+Only extract ratings for riders who are confirmed starters in the 2026 Giro
+d'Italia. Ignore:
+- Historical references to past winners (e.g., "this stage recalls Merckx's
+  1972 win", "Argentin's style would have suited this profile", "channeling
+  Pantani on this climb")
+- Comparisons to retired riders, riders not on this year's startlist, or
+  non-starters
+- Color commentary that names riders not on the current startlist
+- Stage profile descriptions that use historical rider names for narrative
+  effect
+
+If a source's preview text contains many historical references (common in
+Cyclingstage hub-section content and SpazioCiclismo historical-context coverage),
+extract only the riders explicitly identified as contenders for the UPCOMING
+stage in the current year's race — not the historical / comparative names.
 - key_signals coverage: generate 15-25 directional signals about specific riders for this stage, INDEPENDENT of how many sources provided articles. Even if some sources show "[Article not found for this stage]" placeholders, generate signals based on (a) available source content, (b) stage profile and known rider characteristics implied by stage_signals + general race context, (c) recent form signals if available in any source, (d) cross-stage continuity with prior stages. Coverage target: 15-25 key_signals per stage. Do NOT produce fewer than 10 signals even if source coverage is thin — generate from available evidence. This applies regardless of source-fetch-success ratio.
 - stage_signals.stage_type — classify the stage into ONE of these categories:
   * "sprint" — flat or rolling, expected bunch sprint finish, minimal GC movement
