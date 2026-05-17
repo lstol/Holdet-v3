@@ -93,6 +93,7 @@ Items currently executing — handoff mid-flight or feature work in active devel
 
 Short, scoped work at top of critical path.
 
+- ✅ **Per-rider EV diagnostic + strategy-basin investigation — Stage 9** *(closed 2026-05-17)* — Read-only diagnostic answering two operator-surfaced questions on Stage 9: (Q1) why optimal reports ~430k Net EV behind lookahead; (Q2) why optimal/depth select Felix Gall captain while lookahead selects Vingegaard. Per-rider stage_EV decomposition (top-30 universe + per-card mini-tables) with pre/post-INTEL_MULT columns + key_signals trace + expert_stars summary. Per-strategy basin reachability across 10 SA chains per strategy. Cross-strategy roster diff. Diagnostic persisted at [claude/diagnostics/s17_intel_per_rider_ev_dump.py](claude/diagnostics/s17_intel_per_rider_ev_dump.py) — reusable for future substrate investigations. Findings + Q1-Q5 answers: see handoff report on commit body.
 - ✅ **tc_n2-staleness** — Closed-no-bug 2026-05-14. Per-chain instrumentation (10 lookahead chains on Stage 6 substrate) confirmed `tc_n2` is identical (198,600) across all chains despite 8 distinct `team_ci` and 9 distinct `tc_current`/`tc_n1` values.
 
   **Root cause: architectural, not a function-level bug.** `team_n1` and `team_n2` are produced by `fast_optimize(probs_n1)` and `fast_optimize(probs_n2)` ([optimizer.py:767-768](claude/engine/optimizer.py:767)) — in-vacuum global optima that don't take a starting-team argument. Therefore `tc_n2 = compute_transfer_cost(team_n1, team_n2)` is chain-invariant by construction.
