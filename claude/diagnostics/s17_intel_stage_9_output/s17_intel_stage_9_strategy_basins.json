@@ -1,0 +1,716 @@
+{
+  "stage": 9,
+  "substrate_shas": {
+    "odds_sha": "f41fc0b80ed4888a",
+    "intel_sha": "9ed5e5ae6efe44e8",
+    "standings_sha": "11726709405ca6be",
+    "prev_results_sha": "c9cc2a31ad8c5502"
+  },
+  "chains_by_strategy": {
+    "optimal": {
+      "chains": [
+        {
+          "chain": 0,
+          "stage_ev": 771818,
+          "transfer_cost": 411040,
+          "net_ev": 360778,
+          "look_obj": -218595,
+          "captain": "Felix Gall",
+          "roster_sha": "b2bed0e50232",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Christian Scaroni",
+            "Felix Gall",
+            "Gianmarco Garofoli",
+            "Giulio Ciccone",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo"
+          ]
+        },
+        {
+          "chain": 1,
+          "stage_ev": 725305,
+          "transfer_cost": 413120,
+          "net_ev": 312185,
+          "look_obj": -267188,
+          "captain": "Felix Gall",
+          "roster_sha": "dd815e93af18",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Christian Scaroni",
+            "Diego Ulissi",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Giulio Pellizzari",
+            "Jai Hindley",
+            "Koen Bouwman"
+          ]
+        },
+        {
+          "chain": 2,
+          "stage_ev": 849934,
+          "transfer_cost": 461150,
+          "net_ev": 388784,
+          "look_obj": -190589,
+          "captain": "Felix Gall",
+          "roster_sha": "49283f3b8263",
+          "team_names": [
+            "Christian Scaroni",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Igor Arrieta",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 3,
+          "stage_ev": 771818,
+          "transfer_cost": 411040,
+          "net_ev": 360778,
+          "look_obj": -218595,
+          "captain": "Felix Gall",
+          "roster_sha": "b2bed0e50232",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Christian Scaroni",
+            "Felix Gall",
+            "Gianmarco Garofoli",
+            "Giulio Ciccone",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo"
+          ]
+        },
+        {
+          "chain": 4,
+          "stage_ev": 770898,
+          "transfer_cost": 413410,
+          "net_ev": 357488,
+          "look_obj": -221885,
+          "captain": "Felix Gall",
+          "roster_sha": "0e13075a7600",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Alessandro Pinarello",
+            "Christian Scaroni",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo"
+          ]
+        },
+        {
+          "chain": 5,
+          "stage_ev": 771818,
+          "transfer_cost": 411040,
+          "net_ev": 360778,
+          "look_obj": -218595,
+          "captain": "Felix Gall",
+          "roster_sha": "b2bed0e50232",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Christian Scaroni",
+            "Felix Gall",
+            "Gianmarco Garofoli",
+            "Giulio Ciccone",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo"
+          ]
+        },
+        {
+          "chain": 6,
+          "stage_ev": 726294,
+          "transfer_cost": 413320,
+          "net_ev": 312974,
+          "look_obj": -266399,
+          "captain": "Felix Gall",
+          "roster_sha": "fd750b80092a",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Amanuel Ghebreigzabhier",
+            "Christian Scaroni",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Giulio Pellizzari",
+            "Jai Hindley",
+            "Magnus Sheffield"
+          ]
+        },
+        {
+          "chain": 7,
+          "stage_ev": 770898,
+          "transfer_cost": 413410,
+          "net_ev": 357488,
+          "look_obj": -221885,
+          "captain": "Felix Gall",
+          "roster_sha": "0e13075a7600",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Alessandro Pinarello",
+            "Christian Scaroni",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo"
+          ]
+        },
+        {
+          "chain": 8,
+          "stage_ev": 747829,
+          "transfer_cost": 411670,
+          "net_ev": 336159,
+          "look_obj": -243214,
+          "captain": "Felix Gall",
+          "roster_sha": "9d9678b340ea",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Amanuel Ghebreigzabhier",
+            "Christian Scaroni",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Giulio Pellizzari",
+            "Igor Arrieta",
+            "Jai Hindley"
+          ]
+        },
+        {
+          "chain": 9,
+          "stage_ev": 715459,
+          "transfer_cost": 411580,
+          "net_ev": 303879,
+          "look_obj": -275494,
+          "captain": "Felix Gall",
+          "roster_sha": "87c9bae47882",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Christian Scaroni",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jai Hindley",
+            "Jan Christen",
+            "Mathys Rondel",
+            "Wout Poels"
+          ]
+        }
+      ],
+      "distinct_basins": 7,
+      "dominant_sha": "b2bed0e50232",
+      "dominant_count": 3,
+      "best_seen": {
+        "chain": 2,
+        "stage_ev": 849934,
+        "transfer_cost": 461150,
+        "net_ev": 388784,
+        "look_obj": -190589,
+        "captain": "Felix Gall",
+        "roster_sha": "49283f3b8263",
+        "team_names": [
+          "Christian Scaroni",
+          "Felix Gall",
+          "Giulio Ciccone",
+          "Igor Arrieta",
+          "Jai Hindley",
+          "Jan Christen",
+          "Javier Romo",
+          "Wout Poels"
+        ]
+      },
+      "best_corr": {
+        "chain": 0,
+        "stage_ev": 771818,
+        "transfer_cost": 411040,
+        "net_ev": 360778,
+        "look_obj": -218595,
+        "captain": "Felix Gall",
+        "roster_sha": "b2bed0e50232",
+        "team_names": [
+          "Afonso Eul\u00e1lio",
+          "Christian Scaroni",
+          "Felix Gall",
+          "Gianmarco Garofoli",
+          "Giulio Ciccone",
+          "Jai Hindley",
+          "Jan Christen",
+          "Javier Romo"
+        ]
+      }
+    },
+    "depth": {
+      "chains": [
+        {
+          "chain": 0,
+          "stage_ev": 834433,
+          "transfer_cost": 444710,
+          "net_ev": 389723,
+          "look_obj": -189650,
+          "captain": "Felix Gall",
+          "roster_sha": "ab9d443f8e6f",
+          "team_names": [
+            "Felix Gall",
+            "Filippo Zana",
+            "Giulio Ciccone",
+            "Igor Arrieta",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 1,
+          "stage_ev": 849934,
+          "transfer_cost": 461150,
+          "net_ev": 388784,
+          "look_obj": -190589,
+          "captain": "Felix Gall",
+          "roster_sha": "49283f3b8263",
+          "team_names": [
+            "Christian Scaroni",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Igor Arrieta",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 2,
+          "stage_ev": 849934,
+          "transfer_cost": 461150,
+          "net_ev": 388784,
+          "look_obj": -190589,
+          "captain": "Felix Gall",
+          "roster_sha": "49283f3b8263",
+          "team_names": [
+            "Christian Scaroni",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Igor Arrieta",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 3,
+          "stage_ev": 849934,
+          "transfer_cost": 461150,
+          "net_ev": 388784,
+          "look_obj": -190589,
+          "captain": "Felix Gall",
+          "roster_sha": "49283f3b8263",
+          "team_names": [
+            "Christian Scaroni",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Igor Arrieta",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 4,
+          "stage_ev": 849934,
+          "transfer_cost": 461150,
+          "net_ev": 388784,
+          "look_obj": -190589,
+          "captain": "Felix Gall",
+          "roster_sha": "49283f3b8263",
+          "team_names": [
+            "Christian Scaroni",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Igor Arrieta",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 5,
+          "stage_ev": 840271,
+          "transfer_cost": 460010,
+          "net_ev": 380261,
+          "look_obj": -199112,
+          "captain": "Felix Gall",
+          "roster_sha": "ea42dd5ae91d",
+          "team_names": [
+            "Christian Scaroni",
+            "Felix Gall",
+            "Filippo Zana",
+            "Giulio Ciccone",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 6,
+          "stage_ev": 849934,
+          "transfer_cost": 461150,
+          "net_ev": 388784,
+          "look_obj": -190589,
+          "captain": "Felix Gall",
+          "roster_sha": "49283f3b8263",
+          "team_names": [
+            "Christian Scaroni",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Igor Arrieta",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 7,
+          "stage_ev": 849934,
+          "transfer_cost": 461150,
+          "net_ev": 388784,
+          "look_obj": -190589,
+          "captain": "Felix Gall",
+          "roster_sha": "49283f3b8263",
+          "team_names": [
+            "Christian Scaroni",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Igor Arrieta",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 8,
+          "stage_ev": 849934,
+          "transfer_cost": 461150,
+          "net_ev": 388784,
+          "look_obj": -190589,
+          "captain": "Felix Gall",
+          "roster_sha": "49283f3b8263",
+          "team_names": [
+            "Christian Scaroni",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Igor Arrieta",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 9,
+          "stage_ev": 849934,
+          "transfer_cost": 461150,
+          "net_ev": 388784,
+          "look_obj": -190589,
+          "captain": "Felix Gall",
+          "roster_sha": "49283f3b8263",
+          "team_names": [
+            "Christian Scaroni",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Igor Arrieta",
+            "Jai Hindley",
+            "Jan Christen",
+            "Javier Romo",
+            "Wout Poels"
+          ]
+        }
+      ],
+      "distinct_basins": 3,
+      "dominant_sha": "49283f3b8263",
+      "dominant_count": 8,
+      "best_seen": {
+        "chain": 1,
+        "stage_ev": 849934,
+        "transfer_cost": 461150,
+        "net_ev": 388784,
+        "look_obj": -190589,
+        "captain": "Felix Gall",
+        "roster_sha": "49283f3b8263",
+        "team_names": [
+          "Christian Scaroni",
+          "Felix Gall",
+          "Giulio Ciccone",
+          "Igor Arrieta",
+          "Jai Hindley",
+          "Jan Christen",
+          "Javier Romo",
+          "Wout Poels"
+        ]
+      },
+      "best_corr": {
+        "chain": 1,
+        "stage_ev": 849934,
+        "transfer_cost": 461150,
+        "net_ev": 388784,
+        "look_obj": -190589,
+        "captain": "Felix Gall",
+        "roster_sha": "49283f3b8263",
+        "team_names": [
+          "Christian Scaroni",
+          "Felix Gall",
+          "Giulio Ciccone",
+          "Igor Arrieta",
+          "Jai Hindley",
+          "Jan Christen",
+          "Javier Romo",
+          "Wout Poels"
+        ]
+      }
+    },
+    "lookahead": {
+      "chains": [
+        {
+          "chain": 0,
+          "stage_ev": 1203950,
+          "transfer_cost": 131430,
+          "net_ev": 1072520,
+          "look_obj": 493147,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "a33da892cd1c",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Christian Scaroni",
+            "Gijs Leemreize",
+            "Giulio Ciccone",
+            "Jonas Vingegaard",
+            "Josh Kench",
+            "Lennert Van Eetvelt",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 1,
+          "stage_ev": 1203950,
+          "transfer_cost": 131430,
+          "net_ev": 1072520,
+          "look_obj": 493147,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "a33da892cd1c",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Christian Scaroni",
+            "Gijs Leemreize",
+            "Giulio Ciccone",
+            "Jonas Vingegaard",
+            "Josh Kench",
+            "Lennert Van Eetvelt",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 2,
+          "stage_ev": 1203950,
+          "transfer_cost": 131430,
+          "net_ev": 1072520,
+          "look_obj": 493147,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "a33da892cd1c",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Christian Scaroni",
+            "Gijs Leemreize",
+            "Giulio Ciccone",
+            "Jonas Vingegaard",
+            "Josh Kench",
+            "Lennert Van Eetvelt",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 3,
+          "stage_ev": 1168401,
+          "transfer_cost": 232000,
+          "net_ev": 936401,
+          "look_obj": 380168,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "521a40886038",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Alessandro Pinarello",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jonas Vingegaard",
+            "Mathijs Paasschens",
+            "Tobias Bayer",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 4,
+          "stage_ev": 1148808,
+          "transfer_cost": 203340,
+          "net_ev": 945468,
+          "look_obj": 366095,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "f25119aad100",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Christian Scaroni",
+            "Darren Rafferty",
+            "Felix Gall",
+            "Gijs Leemreize",
+            "Giulio Ciccone",
+            "Jonas Vingegaard",
+            "Josh Kench"
+          ]
+        },
+        {
+          "chain": 5,
+          "stage_ev": 1203950,
+          "transfer_cost": 131430,
+          "net_ev": 1072520,
+          "look_obj": 493147,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "a33da892cd1c",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Christian Scaroni",
+            "Gijs Leemreize",
+            "Giulio Ciccone",
+            "Jonas Vingegaard",
+            "Josh Kench",
+            "Lennert Van Eetvelt",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 6,
+          "stage_ev": 1214485,
+          "transfer_cost": 156100,
+          "net_ev": 1058385,
+          "look_obj": 479012,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "aef69385d136",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Amanuel Ghebreigzabhier",
+            "Christian Scaroni",
+            "Gijs Leemreize",
+            "Giulio Ciccone",
+            "Igor Arrieta",
+            "Jonas Vingegaard",
+            "Lennert Van Eetvelt"
+          ]
+        },
+        {
+          "chain": 7,
+          "stage_ev": 1219994,
+          "transfer_cost": 229510,
+          "net_ev": 990484,
+          "look_obj": 440021,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "1c7bbfb96935",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Gijs Leemreize",
+            "Giulio Ciccone",
+            "Igor Arrieta",
+            "Jai Hindley",
+            "Jonas Vingegaard",
+            "Max Walscheid",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 8,
+          "stage_ev": 1184024,
+          "transfer_cost": 231520,
+          "net_ev": 952504,
+          "look_obj": 373131,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "202332763a84",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Darren Rafferty",
+            "Felix Gall",
+            "Gijs Leemreize",
+            "Giulio Ciccone",
+            "Javier Romo",
+            "Jonas Vingegaard",
+            "Koen Bouwman"
+          ]
+        },
+        {
+          "chain": 9,
+          "stage_ev": 1203950,
+          "transfer_cost": 131430,
+          "net_ev": 1072520,
+          "look_obj": 493147,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "a33da892cd1c",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Christian Scaroni",
+            "Gijs Leemreize",
+            "Giulio Ciccone",
+            "Jonas Vingegaard",
+            "Josh Kench",
+            "Lennert Van Eetvelt",
+            "Wout Poels"
+          ]
+        }
+      ],
+      "distinct_basins": 6,
+      "dominant_sha": "a33da892cd1c",
+      "dominant_count": 5,
+      "best_seen": {
+        "chain": 7,
+        "stage_ev": 1219994,
+        "transfer_cost": 229510,
+        "net_ev": 990484,
+        "look_obj": 440021,
+        "captain": "Jonas Vingegaard",
+        "roster_sha": "1c7bbfb96935",
+        "team_names": [
+          "Afonso Eul\u00e1lio",
+          "Gijs Leemreize",
+          "Giulio Ciccone",
+          "Igor Arrieta",
+          "Jai Hindley",
+          "Jonas Vingegaard",
+          "Max Walscheid",
+          "Wout Poels"
+        ]
+      },
+      "best_corr": {
+        "chain": 0,
+        "stage_ev": 1203950,
+        "transfer_cost": 131430,
+        "net_ev": 1072520,
+        "look_obj": 493147,
+        "captain": "Jonas Vingegaard",
+        "roster_sha": "a33da892cd1c",
+        "team_names": [
+          "Afonso Eul\u00e1lio",
+          "Christian Scaroni",
+          "Gijs Leemreize",
+          "Giulio Ciccone",
+          "Jonas Vingegaard",
+          "Josh Kench",
+          "Lennert Van Eetvelt",
+          "Wout Poels"
+        ]
+      }
+    }
+  }
+}
