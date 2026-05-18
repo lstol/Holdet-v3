@@ -1,0 +1,95 @@
+{
+  "phase": "S17-EV-FIX Phase 1 verification",
+  "date": "2026-05-18",
+  "substrate": "synthetic 170-rider field, 4 market-data canaries",
+  "algorithm": "Option C / C.i \u2014 three-pass tiered hybrid PL",
+  "v4a_pass": true,
+  "v4b_pass": false,
+  "v4b_results": [
+    {
+      "rider": "Rider_000",
+      "market_t3": 0.74,
+      "sample_t3": 0.39142,
+      "market_t10": 0.95,
+      "sample_t10": 0.6747,
+      "abs_err_t3": -0.34858,
+      "abs_err_t10": -0.2753
+    },
+    {
+      "rider": "Rider_001",
+      "market_t3": 0.5,
+      "sample_t3": 0.28454,
+      "market_t10": 0.95,
+      "sample_t10": 0.6134,
+      "abs_err_t3": -0.21545999999999998,
+      "abs_err_t10": -0.3366
+    },
+    {
+      "rider": "Rider_005",
+      "market_t3": 0.308,
+      "sample_t3": 0.18224,
+      "market_t10": 0.95,
+      "sample_t10": 0.56028,
+      "abs_err_t3": -0.12575999999999998,
+      "abs_err_t10": -0.38971999999999996
+    },
+    {
+      "rider": "Rider_010",
+      "market_t3": 0.2,
+      "sample_t3": 0.12054,
+      "market_t10": 0.7000000000000001,
+      "sample_t10": 0.4449,
+      "abs_err_t3": -0.07946000000000002,
+      "abs_err_t10": -0.25510000000000005
+    }
+  ],
+  "v4c_pass": true,
+  "v4d_breakdown": {
+    "legacy_mean": 392530.1,
+    "hybrid_mean": 928713.8,
+    "mean_delta": 536183.7000000001,
+    "legacy_breakdown": {
+      "stage_finish": 115931,
+      "sprint_points": 71314,
+      "jersey_bonus": 3965,
+      "gc_bonus": 45775,
+      "kom_points": 0,
+      "captain_bonus": 96048,
+      "team_bonus": 53960,
+      "depth_bonus": 5536
+    },
+    "hybrid_breakdown": {
+      "stage_finish": 277029,
+      "sprint_points": 202370,
+      "jersey_bonus": 16305,
+      "gc_bonus": 132231,
+      "kom_points": 0,
+      "captain_bonus": 221248,
+      "team_bonus": 66389,
+      "depth_bonus": 13141
+    },
+    "legacy_cdf": {
+      "p25": 110000,
+      "p50": 311000,
+      "p75": 589000,
+      "p90": 856000
+    },
+    "hybrid_cdf": {
+      "p25": 592000,
+      "p50": 904000,
+      "p75": 1263000,
+      "p90": 1551000
+    }
+  },
+  "v4e_pass": true,
+  "v4f_runtime": {
+    "legacy_median_ms": 81.26741700107232,
+    "hybrid_median_ms": 177.80112498439848,
+    "ratio_median": 2.1878525434375797,
+    "pass": false
+  },
+  "v4g_shas": {
+    "input_sha": "e19cf99a466d243b",
+    "output_sha": "a5706b88dc2241bf"
+  }
+}
