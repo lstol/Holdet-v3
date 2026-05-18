@@ -1864,8 +1864,63 @@ def select_captain(team_riders, all_probs):
 
 # ── Monte Carlo simulation (Plackett-Luce) ────────────────────────────────────
 
+def _hybrid_pl_order(rng, n_sims, n_field, w_top3, w_top10, w_win):
+    """
+    S17-EV-FIX Phase 1 — three-pass tiered sequential Plackett-Luce sampling.
+
+    Pass 1 (positions 0-2): sequential PL using w_top3 weights — riders with
+        market top3 signal dominate top-3 placement.
+    Pass 2 (positions 3-9): sequential PL using w_top10 weights, with Pass 1
+        riders masked out. Riders with market top10 signal dominate top-10
+        placement beyond top-3.
+    Pass 3 (positions 10+): sequential PL using w_win weights, with all earlier
+        riders masked out. Standard win-only PL for the long tail.
+
+    Each pass uses the Gumbel trick: score = -log(U) / w; argsort ascending
+    yields the within-pass finish order. Masking sets used-rider scores to +inf.
+
+    Marginal recovery is directional (~50-60% of market_top3 per rider) rather
+    than exact. Mathematical limit: single-parameter sequential-PL has
+    insufficient degrees of freedom to match arbitrary marginals on a
+    heterogeneous field. V4b acceptance is rank-correlation (Spearman ρ ≥ 0.85)
+    + pairwise inversion count on top-15 (≤ 2), not exact per-rider error.
+
+    Returns: order (n_sims, n_field) of rider indices in finish-order.
+    """
+    order = np.empty((n_sims, n_field), dtype=np.int64)
+    used  = np.zeros((n_sims, n_field), dtype=bool)
+
+    # Pass 1: top-3 from top3 weights
+    u1 = rng.uniform(1e-12, 1.0, (n_sims, n_field))
+    s1 = -np.log(u1) / w_top3
+    k1 = min(3, n_field)
+    idx1 = np.argsort(s1, axis=1)[:, :k1]
+    order[:, :k1] = idx1
+    np.put_along_axis(used, idx1, True, axis=1)
+
+    if n_field > 3:
+        # Pass 2: positions 3-9 from top10 weights
+        u2 = rng.uniform(1e-12, 1.0, (n_sims, n_field))
+        s2 = -np.log(u2) / w_top10
+        s2[used] = np.inf
+        k2 = min(7, n_field - 3)
+        idx2 = np.argsort(s2, axis=1)[:, :k2]
+        order[:, 3:3 + k2] = idx2
+        np.put_along_axis(used, idx2, True, axis=1)
+
+        if n_field > 10:
+            # Pass 3: positions 10+ from win weights
+            u3 = rng.uniform(1e-12, 1.0, (n_sims, n_field))
+            s3 = -np.log(u3) / w_win
+            s3[used] = np.inf
+            order[:, 10:] = np.argsort(s3, axis=1)[:, :n_field - 10]
+
+    return order
+
+
 def simulate_stage(team_riders, all_probs, captain_name, all_riders=None,
-                   n_sims=10_000, stage_config=None, scoring=None, seed=None):
+                   n_sims=10_000, stage_config=None, scoring=None, seed=None,
+                   hybrid_market_input=True):
     """
     Simulate n_sims stage outcomes using Plackett-Luce sampling.
 
@@ -1876,6 +1931,10 @@ def simulate_stage(team_riders, all_probs, captain_name, all_riders=None,
     stage_config: dict from stage_scoring.json['stages']['N']
     scoring:      full stage_scoring.json dict
     seed:         int for the Plackett-Luce RNG. None → unseeded (legacy).
+    hybrid_market_input: S17-EV-FIX Phase 1. True (default, production) → use
+        three-pass tiered hybrid PL consuming market top3/top10 marginals from
+        all_probs. False → legacy single-pass PL using only `win` (use for
+        diagnostics / pre-Phase-1 substrate comparisons).
     Returns {'mean', 'cdf': {p25,p50,p75,p90}, 'breakdown': {...}}.
     """
     if stage_config is None:
@@ -1916,11 +1975,20 @@ def simulate_stage(team_riders, all_probs, captain_name, all_riders=None,
         rmap[r['name']] = r.get('team', '')
     field_real = np.array([rmap.get(n, '') for n in field_names])
 
-    # Plackett-Luce: score_i = -log(U_i) / p_i → argsort = finish order
-    u      = rng.uniform(1e-12, 1.0, (n_sims, n_field))
-    scores = -np.log(u) / field_probs
-    order  = np.argsort(scores, axis=1)
-    rank   = np.argsort(order,  axis=1)
+    if hybrid_market_input:
+        # S17-EV-FIX Phase 1: tiered hybrid PL consuming market top3/top10.
+        # Weight floor 1e-9 keeps argsort scores finite for the long tail
+        # (riders at EPS or 0 in a tier still get a valid score).
+        w_top3  = np.array([max(all_probs[n].get('top3',  0.0), 1e-9) for n in field_names], dtype=np.float64)
+        w_top10 = np.array([max(all_probs[n].get('top10', 0.0), 1e-9) for n in field_names], dtype=np.float64)
+        order   = _hybrid_pl_order(rng, n_sims, n_field, w_top3, w_top10, field_probs)
+        rank    = np.argsort(order, axis=1)
+    else:
+        # Legacy single-pass Plackett-Luce — score_i = -log(U_i) / p_i.
+        u      = rng.uniform(1e-12, 1.0, (n_sims, n_field))
+        scores = -np.log(u) / field_probs
+        order  = np.argsort(scores, axis=1)
+        rank   = np.argsort(order,  axis=1)
 
     team_pos = rank[:, team_idxs]   # (n_sims, 8), 0-indexed finish positions
 

@@ -1,0 +1,66 @@
+{
+  "phase": "S17-EV-FIX Phase 1 attempt 3 V4i",
+  "date": "2026-05-18",
+  "stage": 2,
+  "note": "Stage 9 substrate not in worktree; Stage 2 substrate used as best-available real substrate slice",
+  "substrate_shas": {
+    "holdet": "5c261e481108260c",
+    "odds": "16ea07b84eec9790",
+    "intel": "805b24fa456725a1",
+    "standings": "ce08f69b846a4719"
+  },
+  "team": [
+    "Guillermo Thomas Silva",
+    "Ant\u00f3nio Morgado",
+    "Corbin Strong",
+    "Giulio Ciccone",
+    "Jan Christen",
+    "Florian Stork",
+    "Lennert Van Eetvelt",
+    "Andrea Vendrame"
+  ],
+  "captain": "Guillermo Thomas Silva",
+  "legacy": {
+    "mean": 1177123.8,
+    "breakdown": {
+      "stage_finish": 477774,
+      "sprint_points": 276334,
+      "jersey_bonus": 20990,
+      "gc_bonus": 206831,
+      "kom_points": 0,
+      "captain_bonus": 55811,
+      "team_bonus": 67595,
+      "depth_bonus": 71788
+    },
+    "cdf": {
+      "p25": 853000,
+      "p50": 1155000,
+      "p75": 1469000,
+      "p90": 1775000
+    }
+  },
+  "hybrid": {
+    "mean": 750323.3,
+    "breakdown": {
+      "stage_finish": 323495,
+      "sprint_points": 162566,
+      "jersey_bonus": 11230,
+      "gc_bonus": 121002,
+      "kom_points": 0,
+      "captain_bonus": 43562,
+      "team_bonus": 48332,
+      "depth_bonus": 40134
+    },
+    "cdf": {
+      "p25": 439000,
+      "p50": 702000,
+      "p75": 1001000,
+      "p90": 1324000
+    }
+  },
+  "runtime_ms": {
+    "legacy": 97.00745798181742,
+    "hybrid": 197.55291601177305,
+    "ratio": 2.036471423143583
+  }
+}

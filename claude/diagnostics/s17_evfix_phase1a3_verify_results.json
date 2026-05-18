@@ -1,0 +1,142 @@
+{
+  "phase": "S17-EV-FIX Phase 1 attempt 3 verification",
+  "date": "2026-05-18",
+  "substrate": "synthetic 170-rider field, 15 canaries",
+  "algorithm": "Option C / C.i \u2014 three-pass tiered hybrid PL",
+  "v4a_pass": true,
+  "v4b_pass": true,
+  "v4b_rho_field": 0.9973253705094621,
+  "v4b_rho_canary": 1.0,
+  "v4b_inversions_top15": 0,
+  "v4b_per_rider": [
+    {
+      "rider": "Rider_000",
+      "market": 0.74,
+      "sampled": 0.29512,
+      "rel_err": -0.6011891891891892
+    },
+    {
+      "rider": "Rider_001",
+      "market": 0.5,
+      "sampled": 0.21258,
+      "rel_err": -0.57484
+    },
+    {
+      "rider": "Rider_002",
+      "market": 0.45,
+      "sampled": 0.1898,
+      "rel_err": -0.5782222222222222
+    },
+    {
+      "rider": "Rider_003",
+      "market": 0.4,
+      "sampled": 0.17254,
+      "rel_err": -0.56865
+    },
+    {
+      "rider": "Rider_004",
+      "market": 0.35,
+      "sampled": 0.14704,
+      "rel_err": -0.5798857142857142
+    },
+    {
+      "rider": "Rider_005",
+      "market": 0.31,
+      "sampled": 0.13476,
+      "rel_err": -0.5652903225806452
+    },
+    {
+      "rider": "Rider_006",
+      "market": 0.25,
+      "sampled": 0.10672,
+      "rel_err": -0.5731200000000001
+    },
+    {
+      "rider": "Rider_008",
+      "market": 0.2,
+      "sampled": 0.08932,
+      "rel_err": -0.5534
+    },
+    {
+      "rider": "Rider_010",
+      "market": 0.17,
+      "sampled": 0.07546,
+      "rel_err": -0.5561176470588236
+    },
+    {
+      "rider": "Rider_012",
+      "market": 0.14,
+      "sampled": 0.0611,
+      "rel_err": -0.5635714285714286
+    },
+    {
+      "rider": "Rider_015",
+      "market": 0.12,
+      "sampled": 0.05256,
+      "rel_err": -0.562
+    },
+    {
+      "rider": "Rider_018",
+      "market": 0.1,
+      "sampled": 0.04524,
+      "rel_err": -0.5476
+    },
+    {
+      "rider": "Rider_021",
+      "market": 0.08,
+      "sampled": 0.0355,
+      "rel_err": -0.55625
+    },
+    {
+      "rider": "Rider_025",
+      "market": 0.07,
+      "sampled": 0.03182,
+      "rel_err": -0.5454285714285715
+    },
+    {
+      "rider": "Rider_030",
+      "market": 0.06,
+      "sampled": 0.02728,
+      "rel_err": -0.5453333333333333
+    }
+  ],
+  "v4b_per_rider_within_50pct": 0,
+  "v4b_per_rider_total": 15,
+  "v4c_pass": true,
+  "v4d_breakdown": {
+    "legacy_mean": 392530.1,
+    "hybrid_mean": 1184362.6,
+    "mean_delta": 791832.5000000001,
+    "legacy_breakdown": {
+      "stage_finish": 115931,
+      "sprint_points": 71314,
+      "jersey_bonus": 3965,
+      "gc_bonus": 45775,
+      "kom_points": 0,
+      "captain_bonus": 96048,
+      "team_bonus": 53960,
+      "depth_bonus": 5536
+    },
+    "hybrid_breakdown": {
+      "stage_finish": 402398,
+      "sprint_points": 290347,
+      "jersey_bonus": 21740,
+      "gc_bonus": 193173,
+      "kom_points": 0,
+      "captain_bonus": 174835,
+      "team_bonus": 71176,
+      "depth_bonus": 30692
+    }
+  },
+  "v4e_pass": true,
+  "v4f_runtime": {
+    "legacy_median_ms": 78.57420801883563,
+    "hybrid_median_ms": 174.7302080038935,
+    "ratio_median": 2.223760345914114,
+    "pass": true
+  },
+  "v4g_shas": {
+    "input_sha": "e19cf99a466d243b",
+    "output_sha": "73ed65e30d6e11aa"
+  }
+}

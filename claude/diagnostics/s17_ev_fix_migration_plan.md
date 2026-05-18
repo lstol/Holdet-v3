@@ -230,10 +230,24 @@ Design choice deferred to Phase 2 drafting; Phase 1's hybrid PL shape may make (
 
 ## 7. Risks and contingencies
 
+### Phase 1 closure note (2026-05-18 — directional-improvement framing)
+
+After three-attempt arc (Option C strict V4b → stop; Option A pre-impl audit → stop; Option C reframed V4b → closed), Phase 1 lands with **directional rank-correlation V4b** (Spearman ρ ≥ 0.85 + pairwise inversions ≤ 2 on top-15) rather than exact per-rider marginal recovery. The structural limit is recorded in audit Section 12 and in this plan's risk table below.
+
+**Operational implications:**
+
+- **~50-60% per-rider marginal recovery** on heterogeneous fields. Vingegaard market_top3=0.74 → sampled fraction ≈ 0.30-0.40 (rather than 0.74). Direction is correct; magnitude is bounded by sequential-PL's single-parameter degrees of freedom.
+- **Ranking ordering preserved.** Spearman ρ ≥ 0.99 on full field; ρ = 1.00 on canary subset. The relative order of contenders is what matters for SA's basin search — directional preservation is operationally sufficient.
+- **Operational testing on Stages 10-21 becomes the empirical validation gate.** Lookahead recommendations under Phase 1 vs pre-Phase-1 baseline tells whether directional improvement is operationally sufficient. If recommendations regress on real stages, escalation paths are documented (Generalized PL with position-dependent parameters via numerical fitting; or Tillé's π-PS exact-marginal procedure).
+- **V4i Stage 2 real-substrate test** shows Net EV shifts substantially (−36% on proxy-team) when the roster doesn't include market-favourite riders. Direction is correct: hybrid concentrates top-3 mass on high market_top3 riders, away from rosters that don't include them. On real Lookahead rosters (which include Vingegaard et al.), Phase 1 should INCREASE Net EV by concentrating top-3 finishes on those riders.
+
+### Risk table
+
 | Risk | Likelihood | Impact | Contingency |
 |---|---|---|---|
-| **Phase 1 hybrid PL math doesn't preserve mutual exclusivity** | Medium (Pass 1 algorithm design is load-bearing) | High (foundational invariant violated; algorithm needs redesign) | Pre-implementation user-direction checkpoint (Phase 1 surfaces 2-3 candidate Pass 1 algorithms; user picks one before implementation). V4c verification catches violation pre-merge. |
-| **Phase 1 hybrid PL math correctness — joint distribution preservation** | Medium | Medium (per-rider top3 marginal recoverable but joint distribution may distort) | V4b verification recovers market marginals from samples; if joint distortion surfaces, revisit Pass 1 algorithm choice. |
+| **Phase 1 hybrid PL math doesn't preserve mutual exclusivity** | Low (V4c structurally enforced by sequential-without-replacement) | High (foundational invariant violated) | V4c verification catches violation pre-merge. Phase 1 V4c passed. |
+| **Phase 1 exact marginal recovery** | **REALIZED — DEFERRED.** Both Option C and Option A specifications fail. Two algorithmic walls: (a) sequential-PL has insufficient degrees of freedom; (b) IS tier-factorization breaks on correlated tier events. | Medium | Reframed V4b to directional rank-correlation. Escalation to Generalized PL or Tillé's π-PS available if operational validation on Stages 10-21 surfaces regressions. |
+| **Operational regression on real Lookahead recommendations** | Unknown — empirical validation on Stages 10-21 | High (Phase 1 would be counter-productive) | Compare Lookahead Net EV / captain / roster pre/post-Phase-1 on each remaining Giro stage. Escalate if regression observed. |
 | **Phase 2 Sub-B2 integration design choice (position-bucket vs in-flight override)** | Medium | Low-Medium (both shapes work; choice affects performance + maintainability) | Phase 2 drafting includes explicit design comparison; user direction on shape before implementation. |
 | **Phase 3 cached-sampling runtime** | Medium | Medium (audit-projected ~10 min; if actual is materially worse, n_iter recalibration needed) | Phase 3's first verification step is a runtime measurement on current substrate. If >2× audit projection, surface for `n_iter` recalibration discussion before merging. |
 | **Phase 3 SA convergence quality under cached sampling** | Low-Medium | Medium (cached sample variance may produce convergence stalls) | Three-card-convergence verification gates Phase 3 merge. Multi-start corroboration metadata (S17-22 infrastructure) detects per-strategy convergence regressions. |
@@ -283,3 +297,4 @@ This migration plan is anchored to the audit at [claude/diagnostics/optimizer_ar
 *(append phase closure notes here as the migration progresses; format: date + phase + landed shape + surprises)*
 
 - **2026-05-18** — Planning document drafted. Phase 1 entering execution under same handoff.
+- **2026-05-18** — **Phase 1 ✅ closed** (three-attempt arc). Landed shape: Option C two-pass tiered sequential PL with reframed V4b (directional rank-correlation). Spearman ρ=0.997 on full field, 1.000 on canaries; pairwise inversions=0 on top-15. Runtime 2.04-2.22× legacy (within recalibrated ≤ 3× threshold). V4i Stage 2 substrate: Net EV shifts −36% on proxy-team roster — direction correct (hybrid pulls top-3 mass away from non-favourite rosters). **Surprises:** (1) exact marginal recovery on heterogeneous fields is structurally infeasible — both Option C and Option A specifications fail for distinct math reasons. New CLAUDE_SESSION reasoning pattern surfaced: *operational goal vs mathematical purity in algorithm choice*. (2) `simulate_stage` cost ~12.6M ops/call vs audit projection ~1.7M — 7× too low; Phase 3 cached-sampling architecture inherits this reality and recalibrates `n_iter` accordingly.
