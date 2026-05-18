@@ -1,0 +1,45 @@
+{
+  "audit_date": "2026-05-18",
+  "phase": "S17-EV-FIX Phase 1 pre-implementation",
+  "substrate": "synthetic 170-rider field (Stage 9 shape)",
+  "profile_results": [
+    {
+      "n_sims": 500,
+      "min_ms": 3.722374967765063,
+      "median_ms": 3.7730830372311175,
+      "mean_ms": 3.8563666166737676,
+      "max_ms": 4.224000032991171,
+      "n_trials": 5,
+      "mean_output": 387518.0
+    },
+    {
+      "n_sims": 1000,
+      "min_ms": 7.4230830068700016,
+      "median_ms": 7.436709012836218,
+      "mean_ms": 7.4853836093097925,
+      "max_ms": 7.668042031582445,
+      "n_trials": 5,
+      "mean_output": 394797.0
+    },
+    {
+      "n_sims": 5000,
+      "min_ms": 38.9795409864746,
+      "median_ms": 39.68487499514595,
+      "mean_ms": 39.73051658831537,
+      "max_ms": 40.35987495444715,
+      "n_trials": 5,
+      "mean_output": 392556.4
+    },
+    {
+      "n_sims": 10000,
+      "min_ms": 75.38225001189858,
+      "median_ms": 76.07741601532325,
+      "mean_ms": 76.71369980089366,
+      "max_ms": 79.34170798398554,
+      "n_trials": 5,
+      "mean_output": 392530.1
+    }
+  ],
+  "audit_projection_ops_per_call": 1700000,
+  "estimated_ops_per_call_log2": 12595964.591434093
+}
