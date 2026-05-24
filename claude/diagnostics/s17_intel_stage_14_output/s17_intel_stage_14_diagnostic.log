@@ -1,0 +1,141 @@
+
+########################################################################################
+# Per-rider EV diagnostic + strategy-basin investigation — Stage 14
+########################################################################################
+
+========================================================================================
+  SECTION A — Per-rider stage_EV decomposition (Stage 14, top-30)
+========================================================================================
+
+  Substrate SHAs:
+    odds:        f956c5fff888573f
+    intel:       28b2b3c5a98ae1e5
+    standings:   180634190cb8b9be
+    prev_result: 7653829c12ea262b
+
+   #  Rider                     Price  rawWin rawT3 rawT10 rawT15    EVpre      ×   EVpost     ΔEV   dir   str  ESavg  sources(*=consulted)          
+  --  ------------------------  -----  ------ ----- ------ ------  -------  -----  -------  ------  ---- -----  -----  ------------------------------
+   1  Jonas Vingegaard          19.88   45.5%   83%    95%    95%  611,347  ×1.00  613,567  +2,220    up stron   5.00
+   2  Felix Gall                10.41    5.6%   62%    95%    95%  391,539  ×0.97  378,785  -12,753  neut moder   4.17
+   3  Giulio Ciccone             9.12   15.5%   50%    95%    95%  339,051  ×0.96  326,683  -12,367  down moder   3.20
+   4  Thymen Arensman            8.77    2.5%   40%    95%    95%  287,609  ×1.01  290,552  +2,942  neut moder   3.80
+   5  Jai Hindley                9.04    1.7%   22%    78%    89%  233,276  ×1.01  236,404  +3,128  neut  weak   3.00
+   6  Giulio Pellizzari         10.21    1.7%   20%    70%    80%  218,663  ×1.01  221,792  +3,128     ·     ·   2.50
+   7  Davide Piganzoli           6.05    0.7%   12%    44%    50%  165,451  ×1.02  169,023  +3,572    up moder   3.50
+   8  Michael Storer             7.47    0.7%    9%    32%    37%  142,868  ×1.02  146,213  +3,345     ·     ·   3.00
+   9  Afonso Eulálio             5.93    0.1%    2%     4%     5%  139,894  ×0.92  128,362  -11,531     ·     ·   3.67
+  10  Ben O'Connor               7.52    0.1%    2%     4%     5%   89,894  ×1.04   93,362  +3,468  neut  weak   3.00
+  11  Chris Harper               4.67    1.1%    9%    32%    37%   81,602  ×1.00   81,326    -275     ·     ·   2.00
+  12  Igor Arrieta               4.81    0.9%    9%    32%    37%   80,791  ×1.00   80,567    -224     ·     ·   1.00
+  13  Wout Poels                 4.61    1.6%    8%    27%    31%   71,606  ×0.99   71,210    -396  neut moder   3.00
+  14  Sepp Kuss                  6.23    0.7%    7%    23%    27%   59,599  ×0.99   59,300    -298  down  weak   3.50
+  15  Egan Bernal                7.85    0.7%    6%    21%    24%   52,806  ×1.00   52,633    -172  neut  weak   2.00
+  16  Jan Hirt                   3.09    0.7%    5%    17%    19%   43,465  ×1.00   43,292    -172  neut  weak   2.00
+  17  Derek Gee                  8.53    0.1%    2%     4%     5%   89,894  ×0.20   17,862  -72,031  neut  weak   3.50
+  18  Tobias Lund Andresen       8.99    0.1%    2%     4%     5%   12,451  ×1.00   12,415     -35     ·     ·     · 
+  19  Tord Gudmestad             2.60    0.1%    2%     4%     5%   12,451  ×1.00   12,415     -35     ·     ·     · 
+  20  Gregor Mühlberger          3.51    0.1%    2%     4%     5%   12,451  ×1.00   12,415     -35     ·     ·     · 
+  21  Oliver Naesen              2.63    0.1%    2%     4%     5%   12,451  ×1.00   12,415     -35     ·     ·     · 
+  22  Rasmus Søjberg Pedersen    2.54    0.1%    2%     4%     5%   12,451  ×1.00   12,415     -35     ·     ·     · 
+  23  Callum Scotson             2.38    0.1%    2%     4%     5%   12,451  ×1.00   12,415     -35     ·     ·   1.00
+  24  Johannes Staune-Mittet     2.83    0.1%    2%     4%     5%   12,451  ×1.00   12,415     -35     ·     ·   1.00
+  25  Filippo Ganna              8.84    0.1%    2%     4%     5%   12,451  ×1.00   12,415     -35     ·     ·     · 
+  26  Jack Haig                  2.81    0.1%    2%     4%     5%   12,451  ×1.00   12,415     -35     ·     ·     · 
+  27  Embret Svestad-Bårdseng    3.37    0.1%    2%     4%     5%   12,451  ×1.00   12,415     -35     ·     ·   1.00
+  28  Connor Swift               2.07    0.1%    2%     4%     5%   12,451  ×1.00   12,415     -35     ·     ·     · 
+  29  Ben Turner                 6.00    0.1%    2%     4%     5%   12,451  ×1.00   12,415     -35     ·     ·     · 
+  30  Will Barta                 2.29    0.1%    2%     4%     5%   12,451  ×1.00   12,415     -35     ·     ·   1.00
+
+========================================================================================
+  SECTION A — Per-card roster mini-tables
+========================================================================================
+
+  [optimizer output not available at /tmp/s17_innerring_v4f_post_optimizer.json; skipping mini-tables]
+
+========================================================================================
+  SECTION B — Per-strategy basin reachability (10 SA chains/strategy)
+========================================================================================
+
+  base_seed: 5857871533604499527
+  budget: 57,684,356
+  current_team: 7 riders
+  biased_pool: 45 riders
+
+  Running 10 chains for strategy=optimal ...
+
+  === optimal ===
+   #   stage_EV       tc     net_EV   look_obj  roster_SHA  count  captain                 
+   0  2,069,030  480,370  +1,588,660   +942,340  028957437071      2  Jonas Vingegaard
+   1  2,010,051  477,190  +1,532,861   +886,541  77bb54ebbbf7      1  Jonas Vingegaard
+   2  2,096,387  479,830  +1,616,557   +970,237  4dcc3df1ecba      1  Jonas Vingegaard
+   3  2,067,693  480,460  +1,587,233   +940,913  f051ea79ce7e      4  Jonas Vingegaard
+   4  2,096,562  479,990  +1,616,572   +970,252  be1c79bc35b0      1  Jonas Vingegaard
+   5  2,067,693  480,460  +1,587,233   +940,913  f051ea79ce7e      4  Jonas Vingegaard
+   6  1,233,864  420,350   +813,514   +167,194  ee2d328a4482      1  Felix Gall
+   7  2,067,693  480,460  +1,587,233   +940,913  f051ea79ce7e      4  Jonas Vingegaard
+   8  2,067,693  480,460  +1,587,233   +940,913  f051ea79ce7e      4  Jonas Vingegaard
+   9  2,069,030  480,370  +1,588,660   +942,340  028957437071      2  Jonas Vingegaard
+
+  Summary:
+    n_chains: 10/10
+    distinct_basins: 6
+    dominant_basin: SHA=f051ea79ce7e count=4/10
+    best_seen:    stage_ev=2,096,562 net_ev=1,616,572 captain=Jonas Vingegaard SHA=be1c79bc35b0 count=1
+    best_corr:    stage_ev=2,069,030 net_ev=1,588,660 look_obj=942,340 captain=Jonas Vingegaard SHA=028957437071 count=2
+    best_seen − best_corroborated stage_ev gap: +27,532
+
+  Running 10 chains for strategy=depth ...
+
+  === depth ===
+   #   stage_EV       tc     net_EV   look_obj  roster_SHA  count  captain                 
+   0  1,974,166  421,600  +1,552,566   +906,246  2d9776ba0c59      2  Jonas Vingegaard
+   1  2,061,271  475,440  +1,585,831   +939,511  871fdb6547f2      1  Jonas Vingegaard
+   2  1,871,255  414,030  +1,457,225   +810,905  83d6c30e4504      1  Jonas Vingegaard
+   3  2,053,632  479,510  +1,574,122   +927,802  e63410dff82b      1  Jonas Vingegaard
+   4  2,065,708  480,140  +1,585,568   +939,248  5dba93a0a87b      1  Jonas Vingegaard
+   5  1,974,166  421,600  +1,552,566   +906,246  2d9776ba0c59      2  Jonas Vingegaard
+   6  2,069,030  480,370  +1,588,660   +942,340  028957437071      1  Jonas Vingegaard
+   7  2,067,693  480,460  +1,587,233   +940,913  f051ea79ce7e      2  Jonas Vingegaard
+   8  2,054,624  480,440  +1,574,184   +927,864  4c5662a9f4df      1  Jonas Vingegaard
+   9  2,067,693  480,460  +1,587,233   +940,913  f051ea79ce7e      2  Jonas Vingegaard
+
+  Summary:
+    n_chains: 10/10
+    distinct_basins: 8
+    dominant_basin: SHA=2d9776ba0c59 count=2/10
+    best_seen:    stage_ev=2,069,030 net_ev=1,588,660 captain=Jonas Vingegaard SHA=028957437071 count=1
+    best_corr:    stage_ev=2,067,693 net_ev=1,587,233 look_obj=940,913 captain=Jonas Vingegaard SHA=f051ea79ce7e count=2
+    best_seen − best_corroborated stage_ev gap: +1,337
+
+  Running 10 chains for strategy=lookahead ...
+
+  === lookahead ===
+   #   stage_EV       tc     net_EV   look_obj  roster_SHA  count  captain                 
+   0  1,906,052  418,550  +1,487,502   +861,202  55bf9704f87f      4  Jonas Vingegaard
+   1  2,009,914  433,650  +1,576,264   +974,644  4fa8353c6960      1  Jonas Vingegaard
+   2  1,992,098  434,010  +1,558,088   +976,488  dcc78821b325      1  Jonas Vingegaard
+   3  1,906,052  418,550  +1,487,502   +861,202  55bf9704f87f      4  Jonas Vingegaard
+   4  1,971,885  428,440  +1,543,445   +988,395  d7a950317f43      1  Jonas Vingegaard
+   5  1,971,032  422,040  +1,548,992   +902,672  c2043674fb38      1  Jonas Vingegaard
+   6  1,871,303  412,710  +1,458,593   +832,293  26ba9d1fe451      1  Jonas Vingegaard
+   7  1,906,052  418,550  +1,487,502   +861,202  55bf9704f87f      4  Jonas Vingegaard
+   8  1,906,052  418,550  +1,487,502   +861,202  55bf9704f87f      4  Jonas Vingegaard
+   9  1,910,085  419,220  +1,490,865   +844,545  073dad2328e6      1  Jonas Vingegaard
+
+  Summary:
+    n_chains: 10/10
+    distinct_basins: 7
+    dominant_basin: SHA=55bf9704f87f count=4/10
+    best_seen:    stage_ev=2,009,914 net_ev=1,576,264 captain=Jonas Vingegaard SHA=4fa8353c6960 count=1
+    best_corr:    stage_ev=1,906,052 net_ev=1,487,502 look_obj=861,202 captain=Jonas Vingegaard SHA=55bf9704f87f count=4
+    best_seen − best_corroborated stage_ev gap: +103,862
+
+========================================================================================
+  SECTION C — Cross-strategy roster diff
+========================================================================================
+
+  [no minis available; skipping]
+
+Persisted:
+  /tmp/s17_intel_stage_14_per_rider_ev.json
+  /tmp/s17_intel_stage_14_strategy_basins.json

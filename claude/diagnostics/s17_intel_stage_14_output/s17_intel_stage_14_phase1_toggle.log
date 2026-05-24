@@ -1,0 +1,56 @@
+Phase 1 active in optimizer import (hybrid_market_input parameter present)
+Active riders: 184
+Odds rows: 39; intel keys: ['stage', 'intel', 'gathered_at']
+probs entries: 184
+Stage 14 config: sprint_type=C; climbs=5
+
+================================================================================
+Phase-1 toggle: simulate_stage diff per strategy best_corr roster
+================================================================================
+
+[optimal] roster_SHA=028957437071  captain=Jonas Vingegaard
+  legacy stage_EV:    2,052,783
+  hybrid stage_EV:    1,178,784
+  delta:               -873,999  (-42.6%)
+  diagnostic stage_EV (in basin JSON, parent repo legacy):   2,069,030
+  component               legacy      hybrid       delta
+  stage_finish            464079      356449     -107630
+  sprint_points                0           0          +0
+  jersey_bonus             17655        8112       -9543
+  gc_bonus                226831      144212      -82619
+  kom_points              579144      311021     -268123
+  captain_bonus           594081      251597     -342484
+  team_bonus              135637       75024      -60613
+  depth_bonus              35354       32368       -2986
+
+[depth] roster_SHA=f051ea79ce7e  captain=Jonas Vingegaard
+  legacy stage_EV:    2,052,437
+  hybrid stage_EV:    1,178,266
+  delta:               -874,171  (-42.6%)
+  diagnostic stage_EV (in basin JSON, parent repo legacy):   2,067,693
+  component               legacy      hybrid       delta
+  stage_finish            463802      356255     -107547
+  sprint_points                0           0          +0
+  jersey_bonus             17660        8097       -9563
+  gc_bonus                226797      144101      -82696
+  kom_points              579249      310774     -268475
+  captain_bonus           594081      251597     -342484
+  team_bonus              135637       75024      -60613
+  depth_bonus              35210       32415       -2795
+
+[lookahead] roster_SHA=55bf9704f87f  captain=Jonas Vingegaard
+  legacy stage_EV:    1,892,120
+  hybrid stage_EV:    1,069,462
+  delta:               -822,658  (-43.5%)
+  diagnostic stage_EV (in basin JSON, parent repo legacy):   1,906,052
+  component               legacy      hybrid       delta
+  stage_finish            403192      316361      -86831
+  sprint_points                0           0          +0
+  jersey_bonus             16752        7030       -9722
+  gc_bonus                197838      128226      -69612
+  kom_points              526636      272641     -253995
+  captain_bonus           594081      251597     -342484
+  team_bonus              130072       70113      -59959
+  depth_bonus              23546       23493         -53
+
+Persisted: claude/diagnostics/s17_intel_stage_14_output/s17_intel_stage_14_phase1_toggle.json

@@ -1,0 +1,716 @@
+{
+  "stage": 14,
+  "substrate_shas": {
+    "odds_sha": "f956c5fff888573f",
+    "intel_sha": "28b2b3c5a98ae1e5",
+    "standings_sha": "180634190cb8b9be",
+    "prev_results_sha": "7653829c12ea262b"
+  },
+  "chains_by_strategy": {
+    "optimal": {
+      "chains": [
+        {
+          "chain": 0,
+          "stage_ev": 2069030,
+          "transfer_cost": 480370,
+          "net_ev": 1588660,
+          "look_obj": 942340,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "028957437071",
+          "team_names": [
+            "Amanuel Ghebreigzabhier",
+            "Chris Harper",
+            "Davide Piganzoli",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard",
+            "Ryan Mullen"
+          ]
+        },
+        {
+          "chain": 1,
+          "stage_ev": 2010051,
+          "transfer_cost": 477190,
+          "net_ev": 1532861,
+          "look_obj": 886541,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "77bb54ebbbf7",
+          "team_names": [
+            "Darren Rafferty",
+            "Davide Piganzoli",
+            "Felix Gall",
+            "Fran Miholjevi\u0107",
+            "Giulio Ciccone",
+            "Igor Arrieta",
+            "Jonas Vingegaard",
+            "Rasmus S\u00f8jberg Pedersen"
+          ]
+        },
+        {
+          "chain": 2,
+          "stage_ev": 2096387,
+          "transfer_cost": 479830,
+          "net_ev": 1616557,
+          "look_obj": 970237,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "4dcc3df1ecba",
+          "team_names": [
+            "Amanuel Ghebreigzabhier",
+            "Davide Piganzoli",
+            "Dion Smith",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 3,
+          "stage_ev": 2067693,
+          "transfer_cost": 480460,
+          "net_ev": 1587233,
+          "look_obj": 940913,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "f051ea79ce7e",
+          "team_names": [
+            "Amanuel Ghebreigzabhier",
+            "Chris Harper",
+            "Davide Piganzoli",
+            "Dion Smith",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "chain": 4,
+          "stage_ev": 2096562,
+          "transfer_cost": 479990,
+          "net_ev": 1616572,
+          "look_obj": 970252,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "be1c79bc35b0",
+          "team_names": [
+            "Amanuel Ghebreigzabhier",
+            "Davide Piganzoli",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard",
+            "Tim Naberman",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 5,
+          "stage_ev": 2067693,
+          "transfer_cost": 480460,
+          "net_ev": 1587233,
+          "look_obj": 940913,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "f051ea79ce7e",
+          "team_names": [
+            "Amanuel Ghebreigzabhier",
+            "Chris Harper",
+            "Davide Piganzoli",
+            "Dion Smith",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "chain": 6,
+          "stage_ev": 1233864,
+          "transfer_cost": 420350,
+          "net_ev": 813514,
+          "look_obj": 167194,
+          "captain": "Felix Gall",
+          "roster_sha": "ee2d328a4482",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Chris Harper",
+            "Davide Piganzoli",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jai Hindley",
+            "Jan Hirt",
+            "Thymen Arensman"
+          ]
+        },
+        {
+          "chain": 7,
+          "stage_ev": 2067693,
+          "transfer_cost": 480460,
+          "net_ev": 1587233,
+          "look_obj": 940913,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "f051ea79ce7e",
+          "team_names": [
+            "Amanuel Ghebreigzabhier",
+            "Chris Harper",
+            "Davide Piganzoli",
+            "Dion Smith",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "chain": 8,
+          "stage_ev": 2067693,
+          "transfer_cost": 480460,
+          "net_ev": 1587233,
+          "look_obj": 940913,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "f051ea79ce7e",
+          "team_names": [
+            "Amanuel Ghebreigzabhier",
+            "Chris Harper",
+            "Davide Piganzoli",
+            "Dion Smith",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "chain": 9,
+          "stage_ev": 2069030,
+          "transfer_cost": 480370,
+          "net_ev": 1588660,
+          "look_obj": 942340,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "028957437071",
+          "team_names": [
+            "Amanuel Ghebreigzabhier",
+            "Chris Harper",
+            "Davide Piganzoli",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard",
+            "Ryan Mullen"
+          ]
+        }
+      ],
+      "distinct_basins": 6,
+      "dominant_sha": "f051ea79ce7e",
+      "dominant_count": 4,
+      "best_seen": {
+        "chain": 4,
+        "stage_ev": 2096562,
+        "transfer_cost": 479990,
+        "net_ev": 1616572,
+        "look_obj": 970252,
+        "captain": "Jonas Vingegaard",
+        "roster_sha": "be1c79bc35b0",
+        "team_names": [
+          "Amanuel Ghebreigzabhier",
+          "Davide Piganzoli",
+          "Felix Gall",
+          "Giulio Ciccone",
+          "Jan Hirt",
+          "Jonas Vingegaard",
+          "Tim Naberman",
+          "Wout Poels"
+        ]
+      },
+      "best_corr": {
+        "chain": 0,
+        "stage_ev": 2069030,
+        "transfer_cost": 480370,
+        "net_ev": 1588660,
+        "look_obj": 942340,
+        "captain": "Jonas Vingegaard",
+        "roster_sha": "028957437071",
+        "team_names": [
+          "Amanuel Ghebreigzabhier",
+          "Chris Harper",
+          "Davide Piganzoli",
+          "Felix Gall",
+          "Giulio Ciccone",
+          "Jan Hirt",
+          "Jonas Vingegaard",
+          "Ryan Mullen"
+        ]
+      }
+    },
+    "depth": {
+      "chains": [
+        {
+          "chain": 0,
+          "stage_ev": 1974166,
+          "transfer_cost": 421600,
+          "net_ev": 1552566,
+          "look_obj": 906246,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "2d9776ba0c59",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Amanuel Ghebreigzabhier",
+            "Davide Piganzoli",
+            "Dion Smith",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jonas Vingegaard",
+            "Ryan Mullen"
+          ]
+        },
+        {
+          "chain": 1,
+          "stage_ev": 2061271,
+          "transfer_cost": 475440,
+          "net_ev": 1585831,
+          "look_obj": 939511,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "871fdb6547f2",
+          "team_names": [
+            "Davide Piganzoli",
+            "Dion Smith",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jonas Vingegaard",
+            "Nick Zukowsky",
+            "Simone Consonni",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 2,
+          "stage_ev": 1871255,
+          "transfer_cost": 414030,
+          "net_ev": 1457225,
+          "look_obj": 810905,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "83d6c30e4504",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Amanuel Ghebreigzabhier",
+            "Davide Piganzoli",
+            "Giulio Ciccone",
+            "Jonas Vingegaard",
+            "Markus Hoelgaard",
+            "Robert Donaldson",
+            "Thymen Arensman"
+          ]
+        },
+        {
+          "chain": 3,
+          "stage_ev": 2053632,
+          "transfer_cost": 479510,
+          "net_ev": 1574122,
+          "look_obj": 927802,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "e63410dff82b",
+          "team_names": [
+            "Davide Piganzoli",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Johannes Staune-Mittet",
+            "Jonas Vingegaard",
+            "Mattia Bais",
+            "Ryan Mullen",
+            "Wout Poels"
+          ]
+        },
+        {
+          "chain": 4,
+          "stage_ev": 2065708,
+          "transfer_cost": 480140,
+          "net_ev": 1585568,
+          "look_obj": 939248,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "5dba93a0a87b",
+          "team_names": [
+            "Amanuel Ghebreigzabhier",
+            "Chris Harper",
+            "Davide Piganzoli",
+            "Fabian Lienhard",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "chain": 5,
+          "stage_ev": 1974166,
+          "transfer_cost": 421600,
+          "net_ev": 1552566,
+          "look_obj": 906246,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "2d9776ba0c59",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Amanuel Ghebreigzabhier",
+            "Davide Piganzoli",
+            "Dion Smith",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jonas Vingegaard",
+            "Ryan Mullen"
+          ]
+        },
+        {
+          "chain": 6,
+          "stage_ev": 2069030,
+          "transfer_cost": 480370,
+          "net_ev": 1588660,
+          "look_obj": 942340,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "028957437071",
+          "team_names": [
+            "Amanuel Ghebreigzabhier",
+            "Chris Harper",
+            "Davide Piganzoli",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard",
+            "Ryan Mullen"
+          ]
+        },
+        {
+          "chain": 7,
+          "stage_ev": 2067693,
+          "transfer_cost": 480460,
+          "net_ev": 1587233,
+          "look_obj": 940913,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "f051ea79ce7e",
+          "team_names": [
+            "Amanuel Ghebreigzabhier",
+            "Chris Harper",
+            "Davide Piganzoli",
+            "Dion Smith",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "chain": 8,
+          "stage_ev": 2054624,
+          "transfer_cost": 480440,
+          "net_ev": 1574184,
+          "look_obj": 927864,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "4c5662a9f4df",
+          "team_names": [
+            "Chris Harper",
+            "Davide Piganzoli",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Hartthijs de Vries",
+            "Jan Hirt",
+            "Johan Jacobs",
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "chain": 9,
+          "stage_ev": 2067693,
+          "transfer_cost": 480460,
+          "net_ev": 1587233,
+          "look_obj": 940913,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "f051ea79ce7e",
+          "team_names": [
+            "Amanuel Ghebreigzabhier",
+            "Chris Harper",
+            "Davide Piganzoli",
+            "Dion Smith",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard"
+          ]
+        }
+      ],
+      "distinct_basins": 8,
+      "dominant_sha": "2d9776ba0c59",
+      "dominant_count": 2,
+      "best_seen": {
+        "chain": 6,
+        "stage_ev": 2069030,
+        "transfer_cost": 480370,
+        "net_ev": 1588660,
+        "look_obj": 942340,
+        "captain": "Jonas Vingegaard",
+        "roster_sha": "028957437071",
+        "team_names": [
+          "Amanuel Ghebreigzabhier",
+          "Chris Harper",
+          "Davide Piganzoli",
+          "Felix Gall",
+          "Giulio Ciccone",
+          "Jan Hirt",
+          "Jonas Vingegaard",
+          "Ryan Mullen"
+        ]
+      },
+      "best_corr": {
+        "chain": 7,
+        "stage_ev": 2067693,
+        "transfer_cost": 480460,
+        "net_ev": 1587233,
+        "look_obj": 940913,
+        "captain": "Jonas Vingegaard",
+        "roster_sha": "f051ea79ce7e",
+        "team_names": [
+          "Amanuel Ghebreigzabhier",
+          "Chris Harper",
+          "Davide Piganzoli",
+          "Dion Smith",
+          "Felix Gall",
+          "Giulio Ciccone",
+          "Jan Hirt",
+          "Jonas Vingegaard"
+        ]
+      }
+    },
+    "lookahead": {
+      "chains": [
+        {
+          "chain": 0,
+          "stage_ev": 1906052,
+          "transfer_cost": 418550,
+          "net_ev": 1487502,
+          "look_obj": 861202,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "55bf9704f87f",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Amanuel Ghebreigzabhier",
+            "Davide Piganzoli",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard",
+            "Thymen Arensman",
+            "Tobias Bayer"
+          ]
+        },
+        {
+          "chain": 1,
+          "stage_ev": 2009914,
+          "transfer_cost": 433650,
+          "net_ev": 1576264,
+          "look_obj": 974644,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "4fa8353c6960",
+          "team_names": [
+            "Amanuel Ghebreigzabhier",
+            "Davide Piganzoli",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jasper Stuyven",
+            "Jonas Vingegaard",
+            "Ryan Mullen"
+          ]
+        },
+        {
+          "chain": 2,
+          "stage_ev": 1992098,
+          "transfer_cost": 434010,
+          "net_ev": 1558088,
+          "look_obj": 976488,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "dcc78821b325",
+          "team_names": [
+            "Davide Piganzoli",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jasper Stuyven",
+            "Jonas Rutsch",
+            "Jonas Vingegaard",
+            "Tobias Bayer"
+          ]
+        },
+        {
+          "chain": 3,
+          "stage_ev": 1906052,
+          "transfer_cost": 418550,
+          "net_ev": 1487502,
+          "look_obj": 861202,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "55bf9704f87f",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Amanuel Ghebreigzabhier",
+            "Davide Piganzoli",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard",
+            "Thymen Arensman",
+            "Tobias Bayer"
+          ]
+        },
+        {
+          "chain": 4,
+          "stage_ev": 1971885,
+          "transfer_cost": 428440,
+          "net_ev": 1543445,
+          "look_obj": 988395,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "d7a950317f43",
+          "team_names": [
+            "Davide Piganzoli",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jasper Stuyven",
+            "Jonas Vingegaard",
+            "Max Walscheid",
+            "Sean Flynn",
+            "Tobias Bayer"
+          ]
+        },
+        {
+          "chain": 5,
+          "stage_ev": 1971032,
+          "transfer_cost": 422040,
+          "net_ev": 1548992,
+          "look_obj": 902672,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "c2043674fb38",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Amanuel Ghebreigzabhier",
+            "Davide Piganzoli",
+            "Felix Gall",
+            "Giulio Ciccone",
+            "Jonas Rutsch",
+            "Jonas Vingegaard",
+            "Sean Flynn"
+          ]
+        },
+        {
+          "chain": 6,
+          "stage_ev": 1871303,
+          "transfer_cost": 412710,
+          "net_ev": 1458593,
+          "look_obj": 832293,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "26ba9d1fe451",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Amanuel Ghebreigzabhier",
+            "Davide Piganzoli",
+            "Giulio Ciccone",
+            "Jonas Vingegaard",
+            "Thymen Arensman",
+            "Tobias Bayer",
+            "Vicente Rojas"
+          ]
+        },
+        {
+          "chain": 7,
+          "stage_ev": 1906052,
+          "transfer_cost": 418550,
+          "net_ev": 1487502,
+          "look_obj": 861202,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "55bf9704f87f",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Amanuel Ghebreigzabhier",
+            "Davide Piganzoli",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard",
+            "Thymen Arensman",
+            "Tobias Bayer"
+          ]
+        },
+        {
+          "chain": 8,
+          "stage_ev": 1906052,
+          "transfer_cost": 418550,
+          "net_ev": 1487502,
+          "look_obj": 861202,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "55bf9704f87f",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Amanuel Ghebreigzabhier",
+            "Davide Piganzoli",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard",
+            "Thymen Arensman",
+            "Tobias Bayer"
+          ]
+        },
+        {
+          "chain": 9,
+          "stage_ev": 1910085,
+          "transfer_cost": 419220,
+          "net_ev": 1490865,
+          "look_obj": 844545,
+          "captain": "Jonas Vingegaard",
+          "roster_sha": "073dad2328e6",
+          "team_names": [
+            "Afonso Eul\u00e1lio",
+            "Amanuel Ghebreigzabhier",
+            "Davide Piganzoli",
+            "Gianni Moscon",
+            "Giulio Ciccone",
+            "Jan Hirt",
+            "Jonas Vingegaard",
+            "Thymen Arensman"
+          ]
+        }
+      ],
+      "distinct_basins": 7,
+      "dominant_sha": "55bf9704f87f",
+      "dominant_count": 4,
+      "best_seen": {
+        "chain": 1,
+        "stage_ev": 2009914,
+        "transfer_cost": 433650,
+        "net_ev": 1576264,
+        "look_obj": 974644,
+        "captain": "Jonas Vingegaard",
+        "roster_sha": "4fa8353c6960",
+        "team_names": [
+          "Amanuel Ghebreigzabhier",
+          "Davide Piganzoli",
+          "Felix Gall",
+          "Giulio Ciccone",
+          "Jan Hirt",
+          "Jasper Stuyven",
+          "Jonas Vingegaard",
+          "Ryan Mullen"
+        ]
+      },
+      "best_corr": {
+        "chain": 0,
+        "stage_ev": 1906052,
+        "transfer_cost": 418550,
+        "net_ev": 1487502,
+        "look_obj": 861202,
+        "captain": "Jonas Vingegaard",
+        "roster_sha": "55bf9704f87f",
+        "team_names": [
+          "Afonso Eul\u00e1lio",
+          "Amanuel Ghebreigzabhier",
+          "Davide Piganzoli",
+          "Giulio Ciccone",
+          "Jan Hirt",
+          "Jonas Vingegaard",
+          "Thymen Arensman",
+          "Tobias Bayer"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "stage": 14,
+  "substrate_shas": {
+    "odds_sha": "f956c5fff888573f",
+    "intel_sha": "28b2b3c5a98ae1e5",
+    "standings_sha": "180634190cb8b9be",
+    "prev_results_sha": "7653829c12ea262b"
+  },
+  "phase_1_optimizer": "worktree (hybrid_market_input parameter present)",
+  "substrate_source": "parent repo /shared/data/snapshots",
+  "results_per_strategy": {
+    "optimal": {
+      "roster": [
+        "Amanuel Ghebreigzabhier",
+        "Chris Harper",
+        "Davide Piganzoli",
+        "Felix Gall",
+        "Giulio Ciccone",
+        "Jan Hirt",
+        "Jonas Vingegaard",
+        "Ryan Mullen"
+      ],
+      "captain": "Jonas Vingegaard",
+      "legacy": {
+        "mean": 2052783.2,
+        "breakdown": {
+          "stage_finish": 464079,
+          "sprint_points": 0,
+          "jersey_bonus": 17655,
+          "gc_bonus": 226831,
+          "kom_points": 579144,
+          "captain_bonus": 594081,
+          "team_bonus": 135637,
+          "depth_bonus": 35354
+        }
+      },
+      "hybrid": {
+        "mean": 1178784.5,
+        "breakdown": {
+          "stage_finish": 356449,
+          "sprint_points": 0,
+          "jersey_bonus": 8112,
+          "gc_bonus": 144212,
+          "kom_points": 311021,
+          "captain_bonus": 251597,
+          "team_bonus": 75024,
+          "depth_bonus": 32368
+        }
+      },
+      "delta": -873998.7,
+      "pct": -42.57627887835403
+    },
+    "depth": {
+      "roster": [
+        "Amanuel Ghebreigzabhier",
+        "Chris Harper",
+        "Davide Piganzoli",
+        "Dion Smith",
+        "Felix Gall",
+        "Giulio Ciccone",
+        "Jan Hirt",
+        "Jonas Vingegaard"
+      ],
+      "captain": "Jonas Vingegaard",
+      "legacy": {
+        "mean": 2052436.7,
+        "breakdown": {
+          "stage_finish": 463802,
+          "sprint_points": 0,
+          "jersey_bonus": 17660,
+          "gc_bonus": 226797,
+          "kom_points": 579249,
+          "captain_bonus": 594081,
+          "team_bonus": 135637,
+          "depth_bonus": 35210
+        }
+      },
+      "hybrid": {
+        "mean": 1178265.9,
+        "breakdown": {
+          "stage_finish": 356255,
+          "sprint_points": 0,
+          "jersey_bonus": 8097,
+          "gc_bonus": 144101,
+          "kom_points": 310774,
+          "captain_bonus": 251597,
+          "team_bonus": 75024,
+          "depth_bonus": 32415
+        }
+      },
+      "delta": -874170.8,
+      "pct": -42.59185191923337
+    },
+    "lookahead": {
+      "roster": [
+        "Afonso Eul\u00e1lio",
+        "Amanuel Ghebreigzabhier",
+        "Davide Piganzoli",
+        "Giulio Ciccone",
+        "Jan Hirt",
+        "Jonas Vingegaard",
+        "Thymen Arensman",
+        "Tobias Bayer"
+      ],
+      "captain": "Jonas Vingegaard",
+      "legacy": {
+        "mean": 1892120.0,
+        "breakdown": {
+          "stage_finish": 403192,
+          "sprint_points": 0,
+          "jersey_bonus": 16752,
+          "gc_bonus": 197838,
+          "kom_points": 526636,
+          "captain_bonus": 594081,
+          "team_bonus": 130072,
+          "depth_bonus": 23546
+        }
+      },
+      "hybrid": {
+        "mean": 1069462.5,
+        "breakdown": {
+          "stage_finish": 316361,
+          "sprint_points": 0,
+          "jersey_bonus": 7030,
+          "gc_bonus": 128226,
+          "kom_points": 272641,
+          "captain_bonus": 251597,
+          "team_bonus": 70113,
+          "depth_bonus": 23493
+        }
+      },
+      "delta": -822657.5,
+      "pct": -43.478082785447015
+    }
+  }
+}
