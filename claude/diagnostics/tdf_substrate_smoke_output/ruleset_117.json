@@ -1,0 +1,202 @@
+{
+  "id": 117,
+  "name": "Cycling Trading 8 Riders - 2025",
+  "salaryCap": 50000000,
+  "transferFee": 0.01,
+  "scoringType": "assets",
+  "emoteUpperThreshold": 0,
+  "emoteLowerThreshold": -1,
+  "properties": {
+    "DisplayPosition": "false",
+    "Format": "cycling",
+    "Minifig": "cycling"
+  },
+  "rules": [
+    {
+      "id": 849,
+      "name": "StagePosition1",
+      "title": "Etapeplacering - 1. plads"
+    },
+    {
+      "id": 850,
+      "name": "StagePosition2",
+      "title": "Etapeplacering - 2. plads"
+    },
+    {
+      "id": 851,
+      "name": "StagePosition3",
+      "title": "Etapeplacering - 3. plads"
+    },
+    {
+      "id": 852,
+      "name": "StagePosition4",
+      "title": "Etapeplacering - 4. plads"
+    },
+    {
+      "id": 853,
+      "name": "StagePosition5",
+      "title": "Etapeplacering - 5. plads"
+    },
+    {
+      "id": 854,
+      "name": "StagePosition6",
+      "title": "Etapeplacering - 6. plads"
+    },
+    {
+      "id": 855,
+      "name": "StagePosition7",
+      "title": "Etapeplacering - 7. plads"
+    },
+    {
+      "id": 856,
+      "name": "StagePosition8",
+      "title": "Etapeplacering - 8. plads"
+    },
+    {
+      "id": 857,
+      "name": "StagePosition9",
+      "title": "Etapeplacering - 9. plads"
+    },
+    {
+      "id": 858,
+      "name": "StagePosition10",
+      "title": "Etapeplacering - 10. plads"
+    },
+    {
+      "id": 859,
+      "name": "StagePosition11",
+      "title": "Etapeplacering - 11. plads"
+    },
+    {
+      "id": 860,
+      "name": "StagePosition12",
+      "title": "Etapeplacering - 12. plads"
+    },
+    {
+      "id": 861,
+      "name": "StagePosition13",
+      "title": "Etapeplacering - 13. plads"
+    },
+    {
+      "id": 862,
+      "name": "StagePosition14",
+      "title": "Etapeplacering - 14. plads"
+    },
+    {
+      "id": 863,
+      "name": "StagePosition15",
+      "title": "Etapeplacering - 15. plads"
+    },
+    {
+      "id": 864,
+      "name": "OverallPosition1",
+      "title": "Løbsplacering - 1. plads"
+    },
+    {
+      "id": 865,
+      "name": "OverallPosition2",
+      "title": "Løbsplacering - 2. plads"
+    },
+    {
+      "id": 866,
+      "name": "OverallPosition3",
+      "title": "Løbsplacering - 3. plads"
+    },
+    {
+      "id": 867,
+      "name": "OverallPosition4",
+      "title": "Løbsplacering - 4. plads"
+    },
+    {
+      "id": 868,
+      "name": "OverallPosition5",
+      "title": "Løbsplacering - 5. plads"
+    },
+    {
+      "id": 869,
+      "name": "OverallPosition6",
+      "title": "Løbsplacering - 6. plads"
+    },
+    {
+      "id": 870,
+      "name": "OverallPosition7",
+      "title": "Løbsplacering - 7. plads"
+    },
+    {
+      "id": 871,
+      "name": "OverallPosition8",
+      "title": "Løbsplacering - 8. plads"
+    },
+    {
+      "id": 872,
+      "name": "OverallPosition9",
+      "title": "Løbsplacering - 9. plads"
+    },
+    {
+      "id": 873,
+      "name": "OverallPosition10",
+      "title": "Løbsplacering - 10. plads"
+    },
+    {
+      "id": 874,
+      "name": "SprintPoint",
+      "title": "Sprintpoint"
+    },
+    {
+      "id": 875,
+      "name": "ClimbPoint",
+      "title": "Bjergpoint"
+    },
+    {
+      "id": 876,
+      "name": "ClassificationLeader",
+      "title": "Førertrøjen"
+    },
+    {
+      "id": 877,
+      "name": "PointLeader",
+      "title": "Pointtrøjen"
+    },
+    {
+      "id": 878,
+      "name": "ClimbLeader",
+      "title": "Bjergtrøjen"
+    },
+    {
+      "id": 879,
+      "name": "YouthLeader",
+      "title": "Ungdomstrøjen"
+    },
+    {
+      "id": 880,
+      "name": "TeamTimeTrialPosition1",
+      "title": "Holdtidskørsel - 1. plads"
+    },
+    {
+      "id": 881,
+      "name": "TeamTimeTrialPosition2",
+      "title": "Holdtidskørsel - 2. plads"
+    },
+    {
+      "id": 882,
+      "name": "TeamTimeTrialPosition3",
+      "title": "Holdtidskørsel - 3. plads"
+    }
+  ],
+  "_embedded": {
+    "positions": [
+      {
+        "id": 264,
+        "rulesetId": 117,
+        "avatar": "none",
+        "name": "cycling_category_rider",
+        "title": "Rytter",
+        "abbreviation": "R",
+        "order": 1,
+        "minimumStartPrice": 0,
+        "maximumStartPrice": 2147483647,
+        "providerPositionId": null
+      }
+    ]
+  }
+}

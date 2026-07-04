@@ -1,0 +1,51 @@
+==============================================================================
+Q1 — fetch /api/games/618/players (Tour cartridge)
+==============================================================================
+  URL: https://nexus-app-fantasy-fargate.holdet.dk/api/games/618/players
+  HTTP 200  content-type=application/json  body_len=51976
+  items: 206  persons: 206  teams: 23
+  First rider parsed: Tiesj Benoot
+
+==============================================================================
+Q2 — Schema diff: Giro rider shape vs Tour rider shape
+==============================================================================
+  Giro item fields: ['id', 'isOut', 'personId', 'points', 'popularity', 'positionId', 'price', 'startPrice', 'teamId']
+  Tour item fields: ['id', 'isOut', 'personId', 'points', 'popularity', 'positionId', 'price', 'startPrice', 'teamId']
+  Item fields only in Giro: []
+  Item fields only in Tour: []
+  Missing from Tour item that fetch_riders_api needs: ['captainPopularity', 'isEliminated', 'isInjured', 'owners']
+
+==============================================================================
+Q3 — Rider count sanity (expected ~184 for Tour startlist)
+==============================================================================
+  Tour riders returned: 206
+  Expected: 184 (23 teams × 8); tolerance [170, 200]
+  Flag: OUT_OF_RANGE
+  Tour teams returned: 23  (expected 23)
+
+==============================================================================
+Q4 — Scoring/rules endpoint + Giro constants comparison
+==============================================================================
+  Game object keys: ['editionId', 'id', 'rulesetId', 'streamId']
+  Scoring-related keys: ['rulesetId']
+
+==============================================================================
+Q5 — Stage 1 TTT scoring shape (Tour Stage 1 novel format)
+==============================================================================
+  https://holdet.dk/da/tour-de-france-2026  HTTP 200  text/html; charset=utf-8  142224b
+  https://holdet.dk/da/tour-de-france-2026/regler  HTTP 200  text/html; charset=utf-8  142222b
+  https://holdet.dk/da/tour-de-france-2026/rules  HTTP 200  text/html; charset=utf-8  142223b
+  https://holdet.dk/tour-de-france-2026  HTTP 200  text/html; charset=utf-8  142222b
+
+==============================================================================
+Q6 — Own-team fetch URL shape for Tour cartridge
+==============================================================================
+  slug='tour-de-france-2026'  HTTP 200  initialLineup=False  fantasyTeamId=True
+  slug='tourspillet-2026'  HTTP 200  initialLineup=False  fantasyTeamId=True
+  slug='tour-2026'  HTTP 200  initialLineup=False  fantasyTeamId=True
+  slug='tourspillet'  HTTP 200  initialLineup=False  fantasyTeamId=True
+  slug='618'  HTTP 200  initialLineup=False  fantasyTeamId=True
+
+==============================================================================
+Report persisted at claude/diagnostics/tdf_substrate_smoke_output/tdf_substrate_smoke_report.json
+==============================================================================

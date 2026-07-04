@@ -1,0 +1,363 @@
+{
+  "diagnostic": "TdF-MIGRATE Phase 1 smoke test",
+  "started_at": "2026-07-04T07:23:29.250900+00:00",
+  "run_git_head": "3189f8e3da05adb7c03a7b26ae05aa38f59714b6",
+  "env_shape": {
+    "HOLDET_COOKIE_len": 2097,
+    "HOLDET_GAME_ID_GIRO": "612",
+    "HOLDET_GAME_ID_TDF (asserted)": "618",
+    "HOLDET_CARTRIDGE (Giro)": "giro-d-italia-2026",
+    "HOLDET_CARTRIDGE_TDF": "tour-de-france-2026",
+    "HOLDET_FANTASY_TEAM_ID_present": true
+  },
+  "q1_riders_api": {
+    "url": "https://nexus-app-fantasy-fargate.holdet.dk/api/games/618/players",
+    "status": 200,
+    "content_type": "application/json",
+    "body_len": 51976,
+    "body_sha16": "7745e3b8b91d83cb",
+    "items_count": 206,
+    "persons_count": 206,
+    "teams_count": 23,
+    "top_level_keys": [
+      "_embedded",
+      "items",
+      "pageInfo"
+    ],
+    "embedded_keys": [
+      "persons",
+      "positions",
+      "teams"
+    ],
+    "first_3_riders_parsed": [
+      {
+        "holdet_id": 50719,
+        "name": "Tiesj Benoot",
+        "team": "Decathlon CMA CGM Team",
+        "team_abbr": "DAT",
+        "startPrice": 4000000,
+        "price": 4000000,
+        "points": 0,
+        "isOut": false,
+        "isInjured": false,
+        "isEliminated": false,
+        "captainPopularity": 0.0,
+        "owners": 0
+      },
+      {
+        "holdet_id": 51456,
+        "name": "Cees Bol",
+        "team": "Decathlon CMA CGM Team",
+        "team_abbr": "DAT",
+        "startPrice": 5000000,
+        "price": 5000000,
+        "points": 0,
+        "isOut": false,
+        "isInjured": false,
+        "isEliminated": false,
+        "captainPopularity": 0.0,
+        "owners": 0
+      },
+      {
+        "holdet_id": 50714,
+        "name": "Stefan Bissegger",
+        "team": "Decathlon CMA CGM Team",
+        "team_abbr": "DAT",
+        "startPrice": 3000000,
+        "price": 3000000,
+        "points": 0,
+        "isOut": true,
+        "isInjured": false,
+        "isEliminated": false,
+        "captainPopularity": 0.0,
+        "owners": 0
+      }
+    ],
+    "first_item_raw": {
+      "id": 50719,
+      "personId": 2973,
+      "teamId": 192,
+      "positionId": 264,
+      "startPrice": 4000000,
+      "price": 4000000,
+      "points": 0,
+      "popularity": 0.031051367766844012,
+      "isOut": false
+    },
+    "possibly_giro_data_flag": false
+  },
+  "q2_schema_diff": {
+    "giro_url": "https://nexus-app-fantasy-fargate.holdet.dk/api/games/612/players",
+    "giro_status": 200,
+    "giro_items_count": 210,
+    "tour_items_count": 206,
+    "item_fields": {
+      "only_in_giro": [],
+      "only_in_tour": [],
+      "shared": [
+        "id",
+        "isOut",
+        "personId",
+        "points",
+        "popularity",
+        "positionId",
+        "price",
+        "startPrice",
+        "teamId"
+      ]
+    },
+    "person_fields": {
+      "only_in_giro": [],
+      "only_in_tour": [],
+      "shared": [
+        "appearance",
+        "firstName",
+        "id",
+        "lastName"
+      ]
+    },
+    "team_fields": {
+      "only_in_giro": [],
+      "only_in_tour": [],
+      "shared": [
+        "abbreviation",
+        "externalId",
+        "id",
+        "imageUrl",
+        "isActive",
+        "name",
+        "providerId",
+        "slug"
+      ]
+    },
+    "item_type_drift": {},
+    "fetch_riders_needs": {
+      "item_needs": [
+        "captainPopularity",
+        "id",
+        "isEliminated",
+        "isInjured",
+        "isOut",
+        "owners",
+        "personId",
+        "points",
+        "price",
+        "startPrice",
+        "teamId"
+      ],
+      "missing_from_tour_item": [
+        "captainPopularity",
+        "isEliminated",
+        "isInjured",
+        "owners"
+      ],
+      "person_needs": [
+        "firstName",
+        "lastName"
+      ],
+      "missing_from_tour_person": [],
+      "team_needs": [
+        "abbreviation",
+        "name"
+      ],
+      "missing_from_tour_team": []
+    },
+    "local_riders_json_fields": [
+      "age",
+      "captainPopularity",
+      "consistency_profile",
+      "data_version",
+      "exclusion_window_compliant",
+      "holdet_id",
+      "isEliminated",
+      "isInjured",
+      "name",
+      "nationality",
+      "owners",
+      "physiological_capacity",
+      "price",
+      "provenance",
+      "recovery_dynamics",
+      "rider_id",
+      "startPrice",
+      "status",
+      "team",
+      "terrain_affinity"
+    ],
+    "local_riders_count": 184,
+    "local_terrain_affinity_present": true
+  },
+  "q3_rider_count": {
+    "tour_items_count": 206,
+    "expected_lower": 170,
+    "expected_upper": 200,
+    "expected_exact_startlist": 184,
+    "flag": "OUT_OF_RANGE",
+    "giro_items_for_reference": 210,
+    "tour_team_count": 23,
+    "expected_team_count": 23
+  },
+  "q4_rules_endpoint": {
+    "game_url": "https://nexus-app-fantasy-fargate.holdet.dk/api/games/618",
+    "game_status": 200,
+    "game_content_type": "application/json",
+    "game_top_level_keys": [
+      "editionId",
+      "id",
+      "rulesetId",
+      "streamId"
+    ],
+    "scoring_hint_keys": [
+      "rulesetId"
+    ],
+    "game.rulesetId": 117,
+    "optimizer_giro_constants": {
+      "DEPTH_BONUS": {
+        "0": 0,
+        "1": 4000,
+        "2": 8000,
+        "3": 15000,
+        "4": 35000,
+        "5": 65000,
+        "6": 120000,
+        "7": 220000,
+        "8": 400000
+      },
+      "POINT_VALUE": 3000,
+      "TRANSFER_COST_RATE": 0.01,
+      "source_file": "claude/engine/optimizer.py:92, :117, :824"
+    }
+  },
+  "q5_ttt_scoring": {
+    "rules_page_probes": [
+      {
+        "url": "https://holdet.dk/da/tour-de-france-2026",
+        "status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "body_len": 142224,
+        "body_sha16": "acd27340427cff68",
+        "ttt_signal": {
+          "contains_holdtidskoersel": false,
+          "contains_ttt": false,
+          "contains_stage_1": false,
+          "contains_individual_time": false,
+          "contains_time_trial": false
+        },
+        "title": "Managerspil baseret alle de største sportsbegivenheder | Holdet.dk",
+        "h1s": []
+      },
+      {
+        "url": "https://holdet.dk/da/tour-de-france-2026/regler",
+        "status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "body_len": 142222,
+        "body_sha16": "2ab30ead8f29baf2",
+        "ttt_signal": {
+          "contains_holdtidskoersel": false,
+          "contains_ttt": false,
+          "contains_stage_1": false,
+          "contains_individual_time": false,
+          "contains_time_trial": false
+        },
+        "title": "Managerspil baseret alle de største sportsbegivenheder | Holdet.dk",
+        "h1s": []
+      },
+      {
+        "url": "https://holdet.dk/da/tour-de-france-2026/rules",
+        "status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "body_len": 142223,
+        "body_sha16": "18bc94c31d129b8e",
+        "ttt_signal": {
+          "contains_holdtidskoersel": false,
+          "contains_ttt": false,
+          "contains_stage_1": false,
+          "contains_individual_time": false,
+          "contains_time_trial": false
+        },
+        "title": "Managerspil baseret alle de største sportsbegivenheder | Holdet.dk",
+        "h1s": []
+      },
+      {
+        "url": "https://holdet.dk/tour-de-france-2026",
+        "status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "body_len": 142222,
+        "body_sha16": "d234b720431aea7b",
+        "ttt_signal": {
+          "contains_holdtidskoersel": false,
+          "contains_ttt": false,
+          "contains_stage_1": false,
+          "contains_individual_time": false,
+          "contains_time_trial": false
+        },
+        "title": "Managerspil baseret alle de største sportsbegivenheder | Holdet.dk",
+        "h1s": []
+      }
+    ],
+    "note": "Optimizer currently has no TTT-specific scoring path. simulate_stage/add_stage_evs treat stage as ITT-shape if sprint_type is unusual; sprint_type=A (regular sprint) uses SPRINT_POINTS_FINAL. Stage 1 Tour is TTT (novel format) — Holdet may score individually per rider even in TTT context. No optimizer path for this today."
+  },
+  "q6_team_url_shape": {
+    "probes": [
+      {
+        "slug": "tour-de-france-2026",
+        "url": "https://nexus-app-fantasy-fargate.holdet.dk/da/tour-de-france-2026/me/fantasyteams/6796783",
+        "status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "body_len": 85824,
+        "body_sha16": "07c696e2636a5b81",
+        "has_initialLineup_marker": false,
+        "has_fantasyTeamId_marker": true,
+        "has_login_redirect_marker": false
+      },
+      {
+        "slug": "tourspillet-2026",
+        "url": "https://nexus-app-fantasy-fargate.holdet.dk/da/tourspillet-2026/me/fantasyteams/6796783",
+        "status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "body_len": 46201,
+        "body_sha16": "f5cacde7d1f92510",
+        "has_initialLineup_marker": false,
+        "has_fantasyTeamId_marker": true,
+        "has_login_redirect_marker": false
+      },
+      {
+        "slug": "tour-2026",
+        "url": "https://nexus-app-fantasy-fargate.holdet.dk/da/tour-2026/me/fantasyteams/6796783",
+        "status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "body_len": 46187,
+        "body_sha16": "a1bc86bc09ad82b1",
+        "has_initialLineup_marker": false,
+        "has_fantasyTeamId_marker": true,
+        "has_login_redirect_marker": false
+      },
+      {
+        "slug": "tourspillet",
+        "url": "https://nexus-app-fantasy-fargate.holdet.dk/da/tourspillet/me/fantasyteams/6796783",
+        "status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "body_len": 46192,
+        "body_sha16": "f01b41c580e5501d",
+        "has_initialLineup_marker": false,
+        "has_fantasyTeamId_marker": true,
+        "has_login_redirect_marker": false
+      },
+      {
+        "slug": "618",
+        "url": "https://nexus-app-fantasy-fargate.holdet.dk/da/618/me/fantasyteams/6796783",
+        "status": 200,
+        "content_type": "text/html; charset=utf-8",
+        "body_len": 46175,
+        "body_sha16": "c181d510c9e97054",
+        "has_initialLineup_marker": false,
+        "has_fantasyTeamId_marker": true,
+        "has_login_redirect_marker": false
+      }
+    ],
+    "fantasy_team_id_present": true
+  },
+  "stop_condition_triggered": null,
+  "notes": [],
+  "completed_at": "2026-07-04T07:23:33.746003+00:00"
+}
