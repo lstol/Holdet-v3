@@ -27,6 +27,12 @@ _API_KEY = os.getenv('ANTHROPIC_API_KEY')
 if not _API_KEY:
     raise RuntimeError("ANTHROPIC_API_KEY not set — check .env at repo root")
 
+# Race dispatch (HOLDET_ACTIVE_RACE → data_dir + stages filename). Import
+# after .env load so env vars resolve.
+sys.path.insert(0, _HERE)
+from race_config import race_config as _race_config  # noqa: E402
+_CFG = _race_config()
+
 from flask import Flask, jsonify, request, send_from_directory
 
 # Python optimizer (imported lazily so server starts even if numpy missing)
@@ -52,9 +58,10 @@ app = Flask(__name__)
 
 BASE_DIR          = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SNAPSHOT_DIR      = os.path.join(BASE_DIR, 'shared', 'data', 'snapshots')
-RIDERS_FILE       = os.path.join(BASE_DIR, 'shared', 'data', 'riders', 'giro_2026', 'riders.json')
-AFFINITY_OVERRIDES_FILE = os.path.join(BASE_DIR, 'shared', 'data', 'riders', 'giro_2026', 'terrain_affinity_overrides.json')
-STAGE_SCORING_FILE= os.path.join(BASE_DIR, 'shared', 'data', 'stages', 'giro_2026', 'stage_scoring.json')
+_DATA_DIR         = _CFG['data_dir']
+RIDERS_FILE       = os.path.join(BASE_DIR, 'shared', 'data', 'riders', _DATA_DIR, 'riders.json')
+AFFINITY_OVERRIDES_FILE = os.path.join(BASE_DIR, 'shared', 'data', 'riders', _DATA_DIR, 'terrain_affinity_overrides.json')
+STAGE_SCORING_FILE= os.path.join(BASE_DIR, 'shared', 'data', 'stages', _DATA_DIR, 'stage_scoring.json')
 EXPERT_SOURCES    = os.path.join(BASE_DIR, 'claude', 'engine', 'expert_sources.yaml')
 FETCH_RIDERS      = os.path.join(BASE_DIR, 'claude', 'engine', 'fetch_riders.py')
 LOG_FILE          = os.path.join(BASE_DIR, 'claude', 'logs', 'server.log')
@@ -403,7 +410,7 @@ def terrain_affinity_overrides_delete(rider_name):
 
 def _latest_stage():
     """Return the most recently active stage number based on today's date."""
-    stages_path = os.path.join(BASE_DIR, 'shared', 'data', 'stages', 'giro_2026', 'stages_giro2026.json')
+    stages_path = os.path.join(BASE_DIR, 'shared', 'data', 'stages', _DATA_DIR, _CFG['stages_file'])
     if not os.path.exists(stages_path):
         return 1
     stages = json.load(open(stages_path)).get('stages', [])

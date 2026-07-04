@@ -155,9 +155,17 @@ import json as _json
 import os as _os
 
 def load_stage_scoring():
-    """Load stage_scoring.json from shared/data/stages/giro_2026/. Returns {} on miss."""
+    """Load stage_scoring.json from active race's data dir (per HOLDET_ACTIVE_RACE).
+    Returns {} on miss."""
+    # Lazy import to avoid circular / import-time env issues; optimizer.py is
+    # imported very early by both the server and diagnostics.
+    try:
+        from race_config import race_config
+        data_dir = race_config()['data_dir']
+    except Exception:
+        data_dir = 'giro_2026'
     base = _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
-    path = _os.path.join(base, 'shared', 'data', 'stages', 'giro_2026', 'stage_scoring.json')
+    path = _os.path.join(base, 'shared', 'data', 'stages', data_dir, 'stage_scoring.json')
     if _os.path.exists(path):
         with open(path) as f:
             return _json.load(f)

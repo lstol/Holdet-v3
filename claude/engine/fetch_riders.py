@@ -26,9 +26,19 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
+# Load .env before importing race_config so HOLDET_ACTIVE_RACE is available.
 ROOT = Path(__file__).resolve().parents[2]
-RIDERS_FILE          = ROOT / "shared" / "data" / "riders"    / "giro_2026" / "riders.json"
-PRICES_SNAPSHOT_FILE = ROOT / "shared" / "data" / "riders"    / "giro_2026" / "prices_stage0_pre.json"
+load_dotenv(ROOT / '.env', override=False)
+
+from race_config import race_config  # noqa: E402
+
+# Race-configurable paths (per HOLDET_ACTIVE_RACE). Falls back to Giro for
+# backward compat. Import-time capture is intentional — the pipeline runs one
+# race at a time; changing HOLDET_ACTIVE_RACE requires process restart.
+_CFG = race_config()
+_DATA_DIR = _CFG['data_dir']
+RIDERS_FILE          = ROOT / "shared" / "data" / "riders"    / _DATA_DIR / "riders.json"
+PRICES_SNAPSHOT_FILE = ROOT / "shared" / "data" / "riders"    / _DATA_DIR / "prices_stage0_pre.json"
 TEAM_STATE_FILE      = ROOT / "shared" / "data" / "snapshots" / "team_state_pre_race.json"
 SNAPSHOT_FILE        = ROOT / "shared" / "data" / "snapshots" / "stage_1_holdet.json"
 
@@ -143,26 +153,28 @@ def fetch_rider_breakdown(player_id: int) -> dict:
     Fetch one rider's per-stage breakdown from Holdet's player-detail
     modal-intercept route. Returns {round_num: {growth, name, eventId, actions}}.
 
-    Endpoint: GET {BASE_URL}/da/giro-d-italia-2026/cycling/players/{player_id}
+    Endpoint: GET {BASE_URL}/da/{cartridge}/cycling/players/{player_id}
               ?event={any_valid_event_id}
     Headers:
       Cookie:   HOLDET_COOKIE
       Rsc:      1
-      Next-Url: /da/giro-d-italia-2026   ← load-bearing modal-intercept gate
+      Next-Url: /da/{cartridge}   ← load-bearing modal-intercept gate
       Accept:   */*
 
     The `event` query param is required by the route but the response carries
     every stage the rider has scored, regardless of which eventId is passed.
-    Using event=48281 (Stage 1) as a stable sentinel.
+    Using event=48281 (Giro Stage 1) as a stable sentinel; verified to work
+    across cartridges because the response ignores eventId's meaning.
 
     Granularity: 1 rider × N stages per call. 8 calls per current-team refresh.
     """
     cookie = _cookie()
-    url = f"{BASE_URL}/da/giro-d-italia-2026/cycling/players/{player_id}?event=48281"
+    cartridge = _CFG['cartridge']
+    url = f"{BASE_URL}/da/{cartridge}/cycling/players/{player_id}?event=48281"
     headers = {
         "Cookie":     cookie,
         "Rsc":        "1",
-        "Next-Url":   "/da/giro-d-italia-2026",
+        "Next-Url":   f"/da/{cartridge}",
         "Accept":     "*/*",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                       "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
@@ -526,78 +538,126 @@ def fetch_team_state(cartridge: str, fantasy_team_id: str, cookie: str, dry_run:
 
 def fetch_team_as_dict(cartridge: str, fantasy_team_id: str, cookie: str) -> dict:
     """
-    Scrape user's Holdet team page and return bank_balance, team_composition,
-    captain holdet_id, player_rank, player_points as a plain dict.
-    Falls back gracefully if the page structure has changed.
+    Return user's current team as {bank_balance, team_composition, captain,
+    captain_id, player_rank, player_points}. Uses Holdet nexus JSON APIs
+    (no HTML scraping):
+
+      GET /api/fantasyteams/{ftid}/rounds/{latest_round}/lineup
+          → 8 players + captain role
+      GET /api/fantasyteams/{ftid}/history
+          → per-round assets (bank_balance = latest round's assets.value)
+      GET /api/games/{game_id}/players
+          → holdet_id → (firstName, lastName) resolution
+
+    Original implementation scraped Next.js RSC chunks from the /me/... HTML
+    page; that broke when Holdet restructured routing (Giro AND Tour URLs
+    return SPA 404 shells with no initialLineup markers, per S17-25 Phase 2
+    substrate refresh). The JSON API path used by fetch_stage_results is the
+    same shape and works cleanly across cartridges. `cartridge` parameter
+    retained for signature compatibility but no longer used (JSON endpoints
+    are cartridge-agnostic; game_id is the discriminator).
     """
-    url = f"{BASE_URL}/da/{cartridge}/me/fantasyteams/{fantasy_team_id}"
-    print(f"\n[fetch_team_as_dict] Fetching: {url}")
+    del cartridge  # silence unused-parameter; retained for signature compat
+    cfg = _CFG
+    game_id = cfg['game_id']
+    print(f"\n[fetch_team_as_dict] JSON-API path (game={game_id}, ftid={fantasy_team_id})")
     result = {
         'bank_balance': None,
         'team_composition': [],
         'captain': None,
+        'captain_id': None,
         'player_rank': None,
         'player_points': None,
     }
+    headers = {'Cookie': cookie, 'Accept': 'application/json',
+               'User-Agent': 'Mozilla/5.0'}
 
-    resp = requests.get(url, headers={"Cookie": cookie}, timeout=20)
-    if resp.status_code in (401, 403):
-        print(f"  [fetch_team_as_dict] HTTP {resp.status_code} — cookie issue")
+    # Resolve latest round from history endpoint (also gives bank + points).
+    hist_url = f"{BASE_URL}/api/fantasyteams/{fantasy_team_id}/history"
+    try:
+        hr = requests.get(hist_url, headers=headers, timeout=15)
+    except requests.exceptions.RequestException as e:
+        print(f"  [fetch_team_as_dict] /history request failed: {e}")
         return result
-    resp.raise_for_status()
+    if hr.status_code in (401, 403):
+        print(f"  [fetch_team_as_dict] HTTP {hr.status_code} on /history — cookie expired")
+        return result
+    if hr.status_code != 200:
+        print(f"  [fetch_team_as_dict] /history HTTP {hr.status_code}")
+        return result
+    hist_items = hr.json().get('items', [])
+    if not hist_items:
+        print("  [fetch_team_as_dict] /history returned empty items — race not started?")
+        # Continue anyway: lineup for round 1 may still exist pre-race
+        latest_round = 1
+        bank_balance = None
+        total_points = None
+    else:
+        # Latest scored round = last item (history is chronologically ordered)
+        latest = hist_items[-1]
+        latest_round = latest.get('round', 1)
+        bank_balance = latest.get('assets', {}).get('value')
+        # History 'points' field is a dict {value, change, ...} in the current
+        # Holdet API — the cumulative "player points" total requires a separate
+        # leaderboard endpoint. Set to None here; callers already handle the
+        # None case (was the HTML-scraper fallback behavior too).
+        total_points = None
 
-    html = resp.text
-    chunks = re.findall(r'self\.__next_f\.push\(\[1,\s*"(.*?)"\]\)', html, re.DOTALL)
+    # Lineup for the latest round.
+    lineup_url = f"{BASE_URL}/api/fantasyteams/{fantasy_team_id}/rounds/{latest_round}/lineup"
+    try:
+        lr = requests.get(lineup_url, headers=headers, timeout=15)
+    except requests.exceptions.RequestException as e:
+        print(f"  [fetch_team_as_dict] /lineup request failed: {e}")
+        return result
+    if lr.status_code != 200:
+        print(f"  [fetch_team_as_dict] /lineup HTTP {lr.status_code}")
+        return result
+    lineup_items = lr.json().get('items', [])
+    if not lineup_items:
+        print(f"  [fetch_team_as_dict] /rounds/{latest_round}/lineup empty")
+        return result
 
-    for chunk in chunks:
-        if "initialLineup" not in chunk:
-            continue
-        try:
-            raw = chunk.encode().decode("unicode_escape")
-        except (UnicodeDecodeError, ValueError):
-            raw = chunk
-        match = re.search(r'\{"fantasyTeamId":\d+.*\}', raw, re.DOTALL)
-        if not match:
-            continue
-        try:
-            team_data = json.loads(match.group())
-        except json.JSONDecodeError:
-            continue
+    captain_player_id = next(
+        (it['playerId'] for it in lineup_items if it.get('role') == 'captain'),
+        None,
+    )
+    lineup_player_ids = [it['playerId'] for it in lineup_items]
 
-        lineup      = team_data.get("initialLineup", [])
-        captain_id  = team_data.get("initialCaptain")
-        bank        = team_data.get("initialBank", 0)
-        rank        = team_data.get("rank") or team_data.get("globalRank")
-        points      = team_data.get("points") or team_data.get("totalPoints")
+    # Resolve player_id → name via the players endpoint.
+    players_url = f"{BASE_URL}/api/games/{game_id}/players"
+    try:
+        pr = requests.get(players_url, headers=headers, timeout=15)
+        pr.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"  [fetch_team_as_dict] /players request failed: {e}")
+        return result
+    pdata = pr.json()
+    persons = pdata.get('_embedded', {}).get('persons', {})
+    id_to_name = {}
+    for item in pdata.get('items', []):
+        pid_str = str(item.get('personId'))
+        person = persons.get(pid_str, {})
+        id_to_name[item['id']] = (
+            f"{person.get('firstName', '')} {person.get('lastName', '')}".strip()
+            or f"player_{item['id']}"
+        )
 
-        # Resolve captain name from lineup
-        captain_name = ""
-        for r in lineup:
-            if r.get("id") == captain_id:
-                captain_name = f"{r.get('firstName', '')} {r.get('lastName', '')}".strip()
-                break
+    team_composition = [id_to_name.get(pid, f'player_{pid}') for pid in lineup_player_ids]
+    captain_name = id_to_name.get(captain_player_id, '') if captain_player_id else ''
 
-        result.update({
-            'bank_balance':     bank,
-            'team_composition': [
-                f"{r.get('firstName', '')} {r.get('lastName', '')}".strip()
-                for r in lineup
-            ],
-            'captain':      captain_name,
-            'captain_id':   captain_id,
-            'player_rank':  rank,
-            'player_points': points,
-        })
-        print(f"  [fetch_team_as_dict] bank={bank:,}  captain={captain_name!r}  riders={len(result['team_composition'])}  rank={rank}")
-        break
-
-    if not result['team_composition']:
-        print("  [fetch_team_as_dict] No team data found.")
-        print(f"  URL fetched: {url}")
-        print(f"  HTTP status: {resp.status_code}")
-        print(f"  Response preview: {html[:500]!r}")
-        print("  Hint: check that HOLDET_COOKIE is valid and the URL resolves to your team page")
-
+    result.update({
+        'bank_balance':     bank_balance,
+        'team_composition': team_composition,
+        'captain':          captain_name,
+        'captain_id':       captain_player_id,
+        'player_rank':      None,  # rank isn't in /history; requires leaderboard endpoint (deferred)
+        'player_points':    total_points,
+    })
+    if bank_balance is not None:
+        print(f"  [fetch_team_as_dict] round={latest_round}  bank={bank_balance:,}  captain={captain_name!r}  riders={len(team_composition)}")
+    else:
+        print(f"  [fetch_team_as_dict] round={latest_round}  bank=?  captain={captain_name!r}  riders={len(team_composition)}")
     return result
 
 
@@ -621,7 +681,7 @@ def fetch_stage_results(stage: int) -> dict:
     (i.e. assets.change != 0 in the history).
     """
     load_dotenv(ROOT / ".env", override=True)
-    game_id         = os.getenv("HOLDET_GAME_ID_GIRO", "612")
+    game_id         = _CFG['game_id']
     fantasy_team_id = os.getenv("HOLDET_FANTASY_TEAM_ID", "6796783")
     cookie          = _cookie()
     headers         = {"Cookie": cookie}
@@ -849,12 +909,12 @@ def fetch_all(stage: int) -> dict:
     Used by /refresh endpoint in server.py.
     """
     load_dotenv(ROOT / ".env")
-    game_id         = os.getenv("HOLDET_GAME_ID_GIRO", "612")
-    cartridge       = os.getenv("HOLDET_CARTRIDGE", "giro-d-italia-2026")
+    game_id         = _CFG['game_id']
+    cartridge       = _CFG['cartridge']
     fantasy_team_id = os.getenv("HOLDET_FANTASY_TEAM_ID", "6796783")
     cookie          = _cookie()
 
-    print(f"[fetch_all] stage={stage}  game={game_id}")
+    print(f"[fetch_all] stage={stage}  race={_CFG['race']}  game={game_id}  cartridge={cartridge}")
     api_riders   = fetch_riders_api(game_id, cookie)
     enriched     = enrich_riders(api_riders)
     team_snapshot = fetch_team_as_dict(cartridge, fantasy_team_id, cookie)
@@ -880,12 +940,12 @@ def main():
 
     load_dotenv(ROOT / ".env")
 
-    game_id = os.getenv("HOLDET_GAME_ID_GIRO", "612")
-    cartridge = os.getenv("HOLDET_CARTRIDGE", "giro-d-italia-2026")
+    game_id = _CFG['game_id']
+    cartridge = _CFG['cartridge']
     fantasy_team_id = os.getenv("HOLDET_FANTASY_TEAM_ID", "6796783")
     cookie = _cookie()
 
-    print(f"Fetching riders from game {game_id}…")
+    print(f"Fetching riders — race={_CFG['race']}  game={game_id}  cartridge={cartridge}")
     api_riders = fetch_riders_api(game_id, cookie)
     print(f"  → {len(api_riders)} riders returned by API")
 

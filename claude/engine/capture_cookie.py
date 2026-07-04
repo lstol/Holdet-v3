@@ -17,9 +17,13 @@ import re
 import sys
 from pathlib import Path
 
-from dotenv import dotenv_values
+from dotenv import dotenv_values, load_dotenv
 
 ROOT = Path(__file__).resolve().parents[2]
+# Load .env before race_config resolves HOLDET_ACTIVE_RACE.
+load_dotenv(ROOT / '.env', override=False)
+from race_config import race_config  # noqa: E402
+_CFG = race_config()
 
 
 def update_env_cookie(cookie_value: str, env_path: Path) -> None:
@@ -87,9 +91,15 @@ def capture_cookie() -> str:
         password_input.press("Enter")
         page.wait_for_timeout(3000)
 
-        # Navigate to the API domain to pick up the nexus `session` cookie
+        # Navigate to the nexus domain to pick up the AWS ALB session cookie.
+        # Any cartridge URL on the nexus domain will trigger the ALB stamping;
+        # use the active race's cartridge slug and a placeholder team ID
+        # (Giro operator team 6796783 by default). Cartridge match is not
+        # load-bearing — the ALB cookie is domain-scoped, not path-scoped.
+        cartridge_for_nav = _CFG['cartridge']
+        ftid_for_nav = env.get("HOLDET_FANTASY_TEAM_ID", "6796783")
         page.goto(
-            "https://nexus-app-fantasy-fargate.holdet.dk/da/giro-d-italia-2026/me/fantasyteams/6796783",
+            f"https://nexus-app-fantasy-fargate.holdet.dk/da/{cartridge_for_nav}/me/fantasyteams/{ftid_for_nav}",
             timeout=30000,
         )
         try:
@@ -121,8 +131,9 @@ def capture_cookie() -> str:
 def verify_cookie(cookie_str: str) -> int:
     import requests
 
+    game_id = _CFG['game_id']
     r = requests.get(
-        "https://nexus-app-fantasy-fargate.holdet.dk/api/games/612/players",
+        f"https://nexus-app-fantasy-fargate.holdet.dk/api/games/{game_id}/players",
         headers={"Cookie": cookie_str, "User-Agent": "Mozilla/5.0"},
         timeout=10,
     )
